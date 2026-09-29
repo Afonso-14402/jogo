@@ -90,6 +90,7 @@ function gerarMasmorra() {
   m.salaEscada = longe;
   m.inicio = { x: (c0.x + 0.5) * TILE, y: (c0.y + 0.5) * TILE };
   m.escada = { x: (ce.x + 0.5) * TILE, y: (ce.y + 0.5) * TILE, ativa: true };
+  if (Math.random() < 0.55) criarSalaSecreta(m); // esconderijo atrás de uma parede rachada
   return m;
 }
 
@@ -174,6 +175,7 @@ function revelar(m, px, py, raio) {
   for (let y = cy - raio; y <= cy + raio; y++) {
     for (let x = cx - raio; x <= cx + raio; x++) {
       if (x < 0 || y < 0 || x >= m.W || y >= m.H) continue;
+      if (m.oculto && m.oculto[y * m.W + x]) continue; // a sala secreta fica escondida até partires a parede
       if ((x - cx) ** 2 + (y - cy) ** 2 <= raio * raio) m.explorado[y * m.W + x] = 1;
     }
   }
@@ -220,6 +222,7 @@ function renderizarMapa(m, andar) {
   }
   if (m.eBoss) for (const tx of [6, 12, 23, 29]) m.tochas.push({ x: (tx + 0.5) * TILE, y: TILE + 12 });
   decorarMapa(m, g, T, andar);
+  desenharRachada(m, g, T);
   return c;
 }
 

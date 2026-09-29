@@ -188,9 +188,9 @@ function desenharMenuMeta(t) {
     });
     if (menuMeta.msg) textoCentro(menuMeta.msg.txt, LARGURA / 2, 606, 16, menuMeta.msg.cor);
   } else if (estado === 'colecao') {
-    const n = Object.keys(meta.colecao).length;
-    textoCentro('COLEÇÃO DE ITENS', LARGURA / 2, 34, 30, '#ffd23f');
-    textoCentro(`Encontraste ${n} de ${ITENS_COLECAO.length} itens`, LARGURA / 2, 70, 14, '#aaa', false);
+    textoCentro('COLEÇÃO', LARGURA / 2, 28, 28, '#ffd23f');
+    desenharAbasColecao();
+    if (desenharColecaoExtra()) return;
     ITENS_COLECAO.forEach((it, i) => {
       const r = retColecao(i), tem = meta.colecao[it.nome], sel = menuMeta.sel === i;
       painel(r.x, r.y, r.w, r.h, sel ? 'rgba(44,38,66,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffffff' : tem ? RARIDADES[it.r].cor : '#2e2640');
@@ -224,16 +224,16 @@ function desenharMenuMeta(t) {
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
     textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
     CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
-      const x = 16 + (i % 3) * 312, y = 88 + Math.floor(i / 3) * 49, w = 304, h = 44;
+      const x = 16 + (i % 3) * 312, y = 88 + Math.floor(i / 3) * 45, w = 304, h = 41;
       const tem = meta.conquistas[c.id];
       painel(x, y, w, h, tem ? 'rgba(40,34,14,0.95)' : 'rgba(18,14,28,0.95)', tem ? '#ffe14d' : '#3a3150');
       iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 20, y + h / 2, 13);
       const premio = c.almas ? `+${c.almas} almas` : `Skin ${SKINS[c.skin].nome}`;
       textoDir(premio, x + w - 8, y + 13, 10, tem ? '#b48cff' : '#666');
-      textoEsq(c.nome, x + 40, y + 13, 12, tem ? '#ffe14d' : '#bbb');
+      textoEsq(c.nome, x + 40, y + 12, 12, tem ? '#ffe14d' : '#bbb');
       ctx.font = fonte(11, 'normal');
       const larg = ctx.measureText(traduzir(c.desc)).width;
-      textoEsq(c.desc, x + 40, y + 32, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
+      textoEsq(c.desc, x + 40, y + 29, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
     });
   }
 }

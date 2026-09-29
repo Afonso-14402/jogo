@@ -264,10 +264,13 @@ function desenhar(t) {
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
   if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
+      estado === 'pacto' || estado === 'registo' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
     else if (estado === 'criar') desenharCriacao(t);
     else if (estado === 'opcoes') desenharOpcoes(t);
+    else if (estado === 'pacto') desenharPacto(t);
+    else if (estado === 'registo') desenharRegisto(t);
     else desenharMenuMeta(t);
     desenharAvisos();
     desenharAvisoRodar();
@@ -531,6 +534,7 @@ function desenharBau(b) {
 }
 
 function desenharObjeto(o, t) {
+  if (desenharObjetoExtra(o, t)) return;
   if (o.tipo === 'mercador') {
     sombra(o.x, o.y + 16, 12);
     spr(SPR.mercador, o.x, o.y - 2);
@@ -958,7 +962,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3' };
+  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', pedestal: '#fff0a0', estatua: '#ff8080' };
   for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
@@ -1009,13 +1013,15 @@ function desenharInfoBau(b) {
 
 function desenharInfoObjeto(o) {
   const sx = ecraX(o.x), sy = ecraY(o.y) - 58;
+  if (desenharInfoExtra(o, sx, sy)) return;
+  const E = modoToque ? 'Usar:' : '[E]';
   if (o.tipo === 'mercador') {
     textoCentro('Mercador', sx, sy - 18, 14, '#3ddc84');
-    textoCentro('[E] Ver a loja', sx, sy, 15, '#ffe680');
+    textoCentro(`${E} Ver a loja`, sx, sy, 15, '#ffe680');
   } else if (o.tipo === 'altar') {
     if (o.usado) textoCentro('O altar já foi usado', sx, sy, 14, '#aaa');
     else {
-      textoCentro(`[E] Sacrificar ${Math.round(S.maxHp * 0.35)} de vida`, sx, sy - 18, 15, '#ff8080');
+      textoCentro(`${E} Sacrificar ${Math.round(S.maxHp * 0.35)} de vida`, sx, sy - 18, 15, '#ff8080');
       textoCentro('e receber um Baú Dourado', sx, sy, 13, '#ffd23f');
     }
   } else if (o.tipo === 'gaiola') {
@@ -1024,10 +1030,10 @@ function desenharInfoObjeto(o) {
     textoCentro(P.desc, sx, sy, 12, '#ddd');
   } else if (o.tipo === 'mesa') {
     textoCentro('Mesa de Encantamentos', sx, sy - 18, 14, '#d9a6ff');
-    textoCentro('[E] Encantar equipamento', sx, sy, 15, '#ffe680');
+    textoCentro(`${E} Encantar equipamento`, sx, sy, 15, '#ffe680');
   } else if (o.tipo === 'cristal') {
     if (o.fase === 'inativo') {
-      textoCentro('[E] Começar o desafio', sx, sy - 18, 15, '#ffe680');
+      textoCentro(`${E} Começar o desafio`, sx, sy - 18, 15, '#ffe680');
       textoCentro('3 ondas de inimigos · prémio: Baú Dourado', sx, sy, 12, '#d9a6ff');
     } else if (o.fase === 'ativo') textoCentro(`Onda ${o.onda}/3`, sx, sy, 15, '#ff6080');
     else textoCentro('Desafio concluído', sx, sy, 14, '#aaa');
@@ -1516,7 +1522,7 @@ function desenharTitulo(t) {
   });
   if (saveInfo) {
     const rs = (RACAS[saveInfo.J.raca] ? RACAS[saveInfo.J.raca].nome : '') + (DIFICULDADES[saveInfo.J.dificuldade] ? ` · ${DIFICULDADES[saveInfo.J.dificuldade].nome}` : '');
-    textoEsq(`Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel} · ${rs}`, 74, 214, 11, '#999', 'normal');
+    textoEsq(`Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel} · ${rs}`, 74, 194, 11, '#999', 'normal');
   }
 
   // como jogar
@@ -1551,7 +1557,7 @@ function desenharTitulo(t) {
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item do jogo!', LARGURA / 2, 548, 16, '#fff', false);
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 584, 13, '#7ec8ff', false);
-  if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas · I: idioma', LARGURA / 2, 612, 11, '#777', false);
+  if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
   botaoIdioma();
   botoesMenuToque(true);
 }
@@ -1566,7 +1572,7 @@ function desenharPausa() {
   botao(B.guardar, modoToque ? 'Guardar e sair' : 'Guardar e sair (G)', '#ffe680');
   botao(B.desistir, modoToque ? 'Desistir' : 'Desistir (X)', '#ff6060');
   const D = dif();
-  textoCentro(`${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}`, LARGURA / 2, 218, 14, '#aaa', false);
+  textoCentro(`${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
   textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 262, 18, '#ffe14d');
   obtidas.forEach((p, i) => {
@@ -1604,14 +1610,15 @@ function desenharMorte() {
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro(J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, 60, J.desistiu ? '#ff9f43' : '#ff4040');
   const D = dif();
-  textoCentro(`${RACAS[J.raca].nome} · ${D.nome}`, LARGURA / 2, 178, 16, D.cor);
+  textoCentro(`${RACAS[J.raca].nome} · ${D.nome}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 178, 16, D.cor);
+  if (!J.desistiu && J.causa) textoCentro(`Morto por: ${J.causa}`, LARGURA / 2, 200, 14, '#ff8080', false);
   const linhas = [
     `Andar alcançado: ${andar}`,
     `Nível: ${J.nivel}`,
     `Inimigos derrotados: ${J.kills}`,
     `Baús abertos: ${J.bausAbertos}`,
   ];
-  linhas.forEach((l, i) => textoCentro(l, LARGURA / 2, 220 + i * 30, 20, '#eee', false));
+  linhas.forEach((l, i) => textoCentro(l, LARGURA / 2, 228 + i * 28, 20, '#eee', false));
   if (J.melhorItem) {
     textoCentro('Melhor item encontrado:', LARGURA / 2, 350, 16, '#aaa', false);
     desenharIcone(J.melhorItem, LARGURA / 2, 392, 48);

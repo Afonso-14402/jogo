@@ -46,7 +46,11 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 - **Progressão entre partidas** (menu inicial):
   - **Altar das Almas**: quando morres ou desistes ganhas almas (mais em dificuldades altas) e gastas em melhorias permanentes: vida, dano, mana, ouro e poções iniciais, XP, sorte, começar com o Relâmpago e **Segunda Vida** (revives uma vez por partida).
   - **Coleção de itens**: todos os itens do jogo; os que ainda não encontraste aparecem como "???".
-  - **Conquistas**: 31 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
+  - **Pacto de Castigo** (inspirado no Hades): antes de jogar escolhes regras mais difíceis (monstros mais fortes, mais elites, poções mais fracas, bosses furiosos…). Cada regra dá **Calor** e cada ponto de Calor dá +10% almas.
+  - **Missões diárias**: todos os dias há 3 missões novas (matar monstros, abrir baús, chegar a um andar…) que dão almas.
+  - **Estatísticas e histórico**: partidas, mortes, tempo de jogo, monstros mortos… e as últimas 8 partidas, com o que te matou.
+  - **Coleção e Bestiário**: separadores com os itens, todos os monstros e bosses (com as habilidades de Veterano e Campeão) e as relíquias que já encontraste.
+  - **Conquistas**: 36 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
 - **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
 - **Zonas (biomas)**: a cada 5 andares muda a zona. Cada uma tem o seu cenário (cores, decoração no chão e nas paredes, tochas de cor própria, partículas no ar e luz) e os seus monstros:
 
@@ -147,6 +151,9 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Sala do Tesouro**: vários baús e ouro, guardados por um inimigo de elite.
   - **Altar de Sacrifício**: dás 35% da tua vida máxima e recebes um Baú Dourado.
   - **Sala de Desafio**: tocas no cristal, sobrevives a 3 ondas e ganhas um Baú Dourado.
+- **Salas secretas** (inspiradas no Binding of Isaac): em muitos andares há uma parede com **rachas**. Bate-lhe (ou acerta-lhe com uma flecha ou uma bola de fogo) para abrir um esconderijo com ouro e um Baú Dourado ou uma relíquia. Só aparece no mapa depois de a partires.
+- **Sala do Diabo e Sala do Anjo**: aparecem muitas vezes no andar a seguir a um boss. No **Diabo** pagas com vida máxima (15% ou 20%) por relíquias ou por uma arma/armadura lendária ou mítica. No **Anjo** levas um presente de graça, mas os outros desaparecem.
+- **Morte com causa**: o ecrã de morte diz quem te matou.
 - **Armadilhas** a partir do andar 2: espinhos que sobem do chão e paredes que disparam flechas.
 - **Baús com probabilidades**: ao abrir um baú roda uma roleta que pode dar desde o PIOR até ao MELHOR item do jogo.
 
@@ -190,6 +197,7 @@ js/mapa.js          geração das masmorras, colisões, pathfinding e desenho do
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
 js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros e as suas habilidades
 js/conteudo.js      tipos de arma, relíquias, companheiros novos, bosses dos andares 35 e 40, conquistas novas
+js/extras.js        Pacto de Castigo, missões diárias, estatísticas, salas secretas, Diabo e Anjo, bestiário
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)

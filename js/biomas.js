@@ -497,7 +497,7 @@ function atualizarBioma(dt) {
     if (J.dashT > 0 || Math.hypot(p.x - J.x, p.y - J.y) > p.r + J.r * 0.4) continue;
     if (p.tipo === 'gosma') J.lentoT = Math.max(J.lentoT, 0.3);
     else if (p.tipo === 'veneno') aplicarVeneno(Math.max(2, p.dano * 0.3), 2.5);
-    else if (p.tipo === 'fogo' && J.pocaCd <= 0 && !imuneFogoChao()) { J.pocaCd = 0.6; danoJogador(Math.max(1, Math.round(p.dano * 0.6)), null, null); }
+    else if (p.tipo === 'fogo' && J.pocaCd <= 0 && !imuneFogoChao()) { J.pocaCd = 0.6; J.causaProxima = 'o fogo no chão'; danoJogador(Math.max(1, Math.round(p.dano * 0.6)), null, null); }
   }
   pocas = pocas.filter(p => p.t > 0);
   // salpicos ao andar na lama
@@ -568,8 +568,9 @@ const HAB_BASE = { salamandra: ['rasto'], escorpiao: ['veneno'], sombra: ['invis
 
 function sortearNivel() {
   const pos = (andar - 1) % 5, ciclo = Math.floor((andar - 1) / 40), k = dif().elite;
-  let p3 = ([0, 0.05, 0.12, 0.2, 0.3][pos] + ciclo * 0.25 + Math.min(0.1, andar * 0.003)) * k;
-  let p2 = ([0.15, 0.3, 0.4, 0.45, 0.45][pos] + Math.min(0.1, andar * 0.003)) * Math.min(1.3, k);
+  const kc = 1 + 0.5 * nPacto('campeoes');
+  let p3 = ([0, 0.05, 0.12, 0.2, 0.3][pos] + ciclo * 0.25 + Math.min(0.1, andar * 0.003)) * k * kc;
+  let p2 = ([0.15, 0.3, 0.4, 0.45, 0.45][pos] + Math.min(0.1, andar * 0.003)) * Math.min(1.3, k) * kc;
   if (andar <= 1) { p3 = 0; p2 = 0.1; }
   const r = Math.random();
   return r < p3 ? 3 : r < p3 + p2 ? 2 : 1;
@@ -601,13 +602,12 @@ function anunciar(e, hab) {
 
 // Aviso na primeira vez que vês um monstro novo
 function veMonstroNovo(e) {
+  const jaViu = !!(meta.vistos && meta.vistos[e.tipo]);
+  viuMonstro(e.tipo); // conta para o bestiário (todos os monstros)
   const d = INIMIGOS[e.tipo];
-  if (!d || !d.desc) return;
-  if (!meta.vistos) meta.vistos = {};
-  if (meta.vistos[e.tipo]) return;
-  meta.vistos[e.tipo] = true;
-  salvarMeta();
+  if (jaViu || !d || !d.desc) return;
   avisar(`Novo monstro: ${d.nome}`, d.desc, d.cor);
+  if (Object.keys(INIMIGOS).filter(k => INIMIGOS[k].desc && meta.vistos[k]).length >= 12) desbloquear('bestiario');
 }
 
 // ---------------------------------------------------------------------

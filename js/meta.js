@@ -71,7 +71,7 @@ function registrarItem(it) {
 // ---------------------------------------------------------------------
 function calcularAlmas() {
   const base = andar * 3 + Math.floor(J.kills / 4) + (J.bossesMortos || 0) * 15;
-  return Math.max(1, Math.round(base * (dif().almas || 1)));
+  return Math.max(1, Math.round(base * (dif().almas || 1) * (1 + calorAtual() * 0.1)));
 }
 
 function comprarMelhoriaAlma(m) {
@@ -115,6 +115,7 @@ function atualizarMenuMeta(dt) {
       else menuMeta.msg = { txt: 'Já está no nível máximo', cor: '#aaa', t: 2 };
     });
   } else if (estado === 'colecao') {
+    if (atualizarColecaoExtra()) return; // abas Monstros e Relíquias
     ITENS_COLECAO.forEach((it, i) => { if (dentro(retColecao(i)) || clicou(retColecao(i))) menuMeta.sel = i; });
     const n = ITENS_COLECAO.length;
     if (premiu('d', 'arrowright')) menuMeta.sel = (menuMeta.sel + 1) % n;

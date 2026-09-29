@@ -212,6 +212,8 @@ const SALAS_ESPECIAIS = {
   desafio: { nome: 'Sala de Desafio',     desc: 'Sobrevive a 3 ondas e ganha um Baú Dourado', cor: '#b44dff' },
   encantamento: { nome: 'Sala de Encantamentos', desc: 'Reforça e encanta o teu equipamento', cor: '#9b5cff' },
   companheiro: { nome: 'Sala do Companheiro', desc: 'Liberta um amigo para lutar contigo', cor: '#ff9ff3' },
+  diabo:   { nome: 'Sala do Diabo',       desc: 'Troca vida máxima por poder',              cor: '#ff3b3b' },
+  anjo:    { nome: 'Sala do Anjo',        desc: 'Escolhe um presente. Só um!',              cor: '#fff0a0' },
 };
 
 // Ouro que recebes ao vender um item (multiplicado pelo andar)
@@ -447,6 +449,11 @@ const CONQUISTAS = [
   { id: 'nivel30',   nome: 'Herói',              desc: 'Chega ao nível 30',                     almas: 40 },
   { id: 'inferno',   nome: 'Rei do Inferno',     desc: 'Chega ao andar 10 no Inferno',          skin: 'magma' },
   { id: 'racas',     nome: 'Diversidade',        desc: 'Chega ao andar 10 com 5 raças diferentes', almas: 50 },
+  { id: 'calor5',    nome: 'Aquecimento',        desc: 'Começa uma partida com Calor 5',        almas: 30 },
+  { id: 'calor10',   nome: 'Em Chamas',          desc: 'Começa uma partida com Calor 10',       almas: 60 },
+  { id: 'segredos',  nome: 'Caça-Segredos',      desc: 'Encontra 3 salas secretas (no total)',  almas: 30 },
+  { id: 'diabo',     nome: 'Pacto com o Diabo',  desc: 'Faz 3 negócios com o Diabo (no total)', almas: 25 },
+  { id: 'missoes10', nome: 'Trabalhador',        desc: 'Cumpre 10 missões diárias',             almas: 50 },
 ];
 
 // ---------------------------------------------------------------------

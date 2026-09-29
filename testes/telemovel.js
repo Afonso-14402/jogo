@@ -45,7 +45,9 @@ const APARELHOS = [
     const bt = await p.evaluate(() => { const a = botoesToque().find(x => x.id === 'atacar'); return { x: a.x + MARGEM_X, r: a.r, W: TELA_W }; });
     ok(bt.W - bt.x < 130, `botão de ataque junto à borda direita (a ${Math.round(bt.W - bt.x)} px)`);
     // monstro perto: tem de vir atacar mesmo com o tutorial ativo
-    await p.evaluate(() => { J.hpBase = 5000; J.hp = 5000; J.invuln = 0; const q = pontoPerto(J.x, J.y, 130, 170, 16) || { x: J.x + 150, y: J.y }; const e = criarInimigo('orc', q.x, q.y); e.acordado = true; window._parede = colideCirculo(mapa, J.x + 150, J.y, 14); inimigos.push(e); window._m = e; });
+    await p.evaluate(() => { J.hpBase = 5000; J.hp = 5000; J.invuln = 0; let q = null; // um ponto do chão livre, à vista e a que o monstro consegue chegar
+      for (let k = 0; k < 50 && !q; k++) { const c = pontoPerto(J.x, J.y, 110, 170, 16); if (c && distCampo(mapa, c.x, c.y) >= 0) q = c; }
+      q = q || { x: J.x + 150, y: J.y }; const e = criarInimigo('orc', q.x, q.y); e.acordado = true; window._parede = colideCirculo(mapa, J.x + 150, J.y, 14); inimigos.push(e); window._m = e; });
     const d0 = await p.evaluate(() => Math.hypot(_m.x - J.x, _m.y - J.y));
     const hp0 = await p.evaluate(() => J.hp);
     await p.waitForTimeout(2500);

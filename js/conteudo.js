@@ -59,6 +59,9 @@ function ganharReliquia(id) {
   if (!id || temRel(id)) return;
   if (!J.reliquias) J.reliquias = [];
   J.reliquias.push(id);
+  if (!meta.relVistas) meta.relVistas = {};
+  meta.relVistas[id] = true;
+  registar('reliquia');
   const R = RELIQUIAS[id];
   if (id === 'fenix') J.vidasExtra = (J.vidasExtra || 0) + 1;
   S = stats();
