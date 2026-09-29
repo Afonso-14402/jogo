@@ -255,3 +255,16 @@ const FEITICOS = {
   cura:  { nome: 'Cura Divina',   mana: 35, cd: 8,   cor: '#5dff7a', desc: 'Recupera muita vida' },
 };
 const ORDEM_FEITICOS = ['fogo', 'raio', 'gelo', 'cura'];
+
+// ---------------------------------------------------------------------
+//  DIFICULDADE: escolhe-se ao criar a personagem.
+//  hp/dano multiplicam os inimigos (e bosses e armadilhas); xp/ouro o que ganhas;
+//  elite multiplica a chance de aparecer um inimigo de elite; pocoes = poções extra ao começar
+// ---------------------------------------------------------------------
+const DIFICULDADES = {
+  facil:    { nome: 'Fácil',    cor: '#5dff7a', desc: 'Inimigos mais fracos. Bom para aprender.',             hp: 0.65, dano: 0.6,  xp: 1,   ouro: 1,    elite: 0.5, pocoes: 2 },
+  normal:   { nome: 'Normal',   cor: '#ffe14d', desc: 'O jogo como foi pensado.',                             hp: 1,    dano: 1,    xp: 1,   ouro: 1,    elite: 1,   pocoes: 0 },
+  dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0 },
+  pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1 },
+};
+const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo'];

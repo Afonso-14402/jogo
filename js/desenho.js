@@ -90,6 +90,12 @@ function barra(x, y, w, h, frac, cor, fundo = '#2a2030') {
   ctx.fillRect(x, y + h - 2, fw, 2);
 }
 
+function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)') {
+  const sobre = rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
+  painel(r.x, r.y, r.w, r.h, sobre ? 'rgba(50,42,72,0.97)' : fundo, sobre ? '#ffffff' : cor);
+  textoCentro(txt, r.x + r.w / 2, r.y + r.h / 2 + 1, 16, cor);
+}
+
 // Desenha um sprite ampliado num número inteiro de vezes (ecrã)
 function sprEcra(c, x, y, escala, centro = true) {
   const w = c.width * escala, h = c.height * escala;
@@ -764,6 +770,13 @@ function desenharHUD(t) {
   }
 
   textoDir(`[C] Personagem   [M] Som: ${somLigado ? 'ligado' : 'desligado'}`, LARGURA - 16, ALTURA - 14, 12, 'rgba(255,255,255,0.45)', 'normal');
+  if (estado === 'jogo') {
+    const b = BOTAO_PAUSA, sobre = dentro(b);
+    painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(14,11,22,0.85)', sobre ? '#ffffff' : '#5a4d74');
+    ctx.fillStyle = sobre ? '#ffffff' : '#cfc6e0';
+    ctx.fillRect(b.x + 13, b.y + 10, 5, 16);
+    ctx.fillRect(b.x + 22, b.y + 10, 5, 16);
+  }
 }
 
 function desenharMinimapa() {
@@ -1077,6 +1090,7 @@ function desenharPersonagem() {
   sprEcra(framesHeroi(J.raca, J.skin)[0], 62, 112, 4);
   textoEsq(`Nível ${J.nivel}`, 110, 90, 22, '#ffe14d');
   textoEsq(RACAS[J.raca].nome, 210, 90, 16, RACAS[J.raca].cor);
+  textoDir(dif().nome, 308, 118, 12, dif().cor);
   textoEsq(`XP ${J.xp} / ${xpProximo(J.nivel)}`, 110, 118, 13, '#9fc8ff', 'normal');
   sprEcra(SPR.moeda, 116, 140, 3);
   textoEsq(`${J.ouro} ouro`, 130, 140, 14, '#ffd23f');
@@ -1261,11 +1275,19 @@ function desenharCriacao(t) {
     }
     textoCentroAjustado(SKINS[id].nome, r.x + r.w / 2, r.y + r.h - 14, 12, livre ? '#ddd' : '#666', r.w - 8, false);
   });
-  if (criacao.msg) textoCentro(criacao.msg.txt, 480, 562, 14, criacao.msg.cor);
+  if (criacao.msg) textoCentro(criacao.msg.txt, 720, 360, 13, criacao.msg.cor);
+  // dificuldade
+  ORDEM_DIFICULDADES.forEach((id, i) => {
+    const r = retDificuldade(i), D = DIFICULDADES[id], sel = escolhaDificuldade === id;
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? D.cor : dentro(r) ? '#ffffff' : '#3a3150');
+    textoCentro(`${i + 1} ${D.nome}`, r.x + r.w / 2, r.y + r.h / 2 + 1, 14, sel ? D.cor : '#888');
+  });
+  const Dsel = DIFICULDADES[escolhaDificuldade];
+  textoEsq(`Dificuldade: ${Dsel.desc}`, 30, 610, 12, Dsel.cor, 'normal');
   const b = BOTAO_COMECAR;
   painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
   textoCentro('ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
-  textoEsq('W/S: raça   A/D: skin   Esc: voltar', 30, 606, 13, '#888', 'normal');
+  textoEsq('W/S: raça   A/D: skin   1-4: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
 }
 
 // ---------------------------------------------------------------------
@@ -1328,34 +1350,51 @@ function desenharTitulo(t) {
   if (recorde > 0) textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 548, 14, '#7ec8ff', false);
   const piscar = Math.floor(t * 2) % 2 === 0;
   if (saveInfo) {
-    const rs = RACAS[saveInfo.J.raca] ? ` · ${RACAS[saveInfo.J.raca].nome}` : '';
+    const rs = (RACAS[saveInfo.J.raca] ? ` · ${RACAS[saveInfo.J.raca].nome}` : '') + (DIFICULDADES[saveInfo.J.dificuldade] ? ` · ${DIFICULDADES[saveInfo.J.dificuldade].nome}` : '');
     if (piscar) textoCentro(`ENTER: Continuar (Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel}${rs})`, LARGURA / 2, 580, 22, '#ffffff');
     textoCentro('N: Novo jogo (apaga a partida guardada)', LARGURA / 2, 610, 14, '#aaa', false);
   } else if (piscar) textoCentro('Carrega ENTER para começar', LARGURA / 2, 584, 24, '#fff');
 }
 
 function desenharPausa() {
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
-  textoCentro('PAUSA', LARGURA / 2, 110, 48, '#fff');
-  textoCentro('P / Esc para continuar', LARGURA / 2, 155, 18, '#bbb', false);
-  textoCentro('G para guardar e voltar ao menu', LARGURA / 2, 182, 15, '#ffe680', false);
+  textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
+  const B = BOTOES_PAUSA;
+  botao(B.continuar, 'Continuar (P)', '#5dff7a');
+  botao(B.guardar, 'Guardar e sair (G)', '#ffe680');
+  botao(B.desistir, 'Desistir (X)', '#ff6060');
+  const D = dif();
+  textoCentro(`${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
-  textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 232, 18, '#ffe14d');
+  textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 262, 18, '#ffe14d');
   obtidas.forEach((p, i) => {
     const col = i % 2, lin = Math.floor(i / 2);
-    const x = LARGURA / 2 - 330 + col * 340, y = 272 + lin * 36;
+    const x = LARGURA / 2 - 330 + col * 340, y = 300 + lin * 34;
     iconePerk(p, x + 14, y, 12);
     textoEsq(`${p.nome}${p.max > 1 ? ` (${nPerk(p.id)}/${p.max})` : ''}`, x + 36, y - 7, 14, p.cor);
     textoEsq(p.desc, x + 36, y + 9, 12, '#ccc', 'normal');
   });
-  textoCentro('O jogo guarda sozinho ao entrar em cada andar', LARGURA / 2, ALTURA - 30, 13, '#888', false);
+  textoCentro('O jogo guarda sozinho ao entrar em cada andar', LARGURA / 2, ALTURA - 24, 13, '#888', false);
+
+  if (confirmarDesistir) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, LARGURA, ALTURA);
+    painel(250, 230, 460, 196, 'rgba(30,8,12,0.98)', '#ff6060');
+    textoCentro('Desistir desta partida?', LARGURA / 2, 268, 24, '#ff8080');
+    textoCentro('A partida termina e a gravação é apagada.', LARGURA / 2, 304, 14, '#ddd', false);
+    textoCentro('O andar a que chegaste conta para o recorde.', LARGURA / 2, 326, 14, '#aaa', false);
+    botao(BOTOES_CONFIRMAR.sim, 'Sim, desistir (X)', '#ff6060');
+    botao(BOTOES_CONFIRMAR.nao, 'Não (Esc)', '#5dff7a');
+  }
 }
 
 function desenharMorte() {
   ctx.fillStyle = 'rgba(40,0,0,0.75)';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
-  textoCentro('MORRESTE', LARGURA / 2, 140, 60, '#ff4040');
+  textoCentro(J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, 60, J.desistiu ? '#ff9f43' : '#ff4040');
+  const D = dif();
+  textoCentro(`${RACAS[J.raca].nome} · ${D.nome}`, LARGURA / 2, 178, 16, D.cor);
   const linhas = [
     `Andar alcançado: ${andar}`,
     `Nível: ${J.nivel}`,

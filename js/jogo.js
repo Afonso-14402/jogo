@@ -29,7 +29,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade'];
 
 function lerSave() {
   try {
@@ -53,21 +53,23 @@ function apagarSave() {
 }
 
 function guardarSeAJogar() {
-  if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'personagem'].includes(estado)) guardarJogo();
+  if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'encantar', 'personagem'].includes(estado)) guardarJogo();
 }
 addEventListener('pagehide', guardarSeAJogar);
 
 // Raça e skin escolhidas (lembradas entre partidas)
-let escolhaRaca = 'humano', escolhaSkin = 'azul';
+let escolhaRaca = 'humano', escolhaSkin = 'azul', escolhaDificuldade = 'normal';
 try {
   const e = JSON.parse(localStorage.getItem('masmorra_personagem') || 'null');
   if (e && RACAS[e.raca]) escolhaRaca = e.raca;
   if (e && SKINS[e.skin]) escolhaSkin = e.skin;
+  if (e && DIFICULDADES[e.dificuldade]) escolhaDificuldade = e.dificuldade;
 } catch (e) { /* sem storage */ }
+const dif = () => DIFICULDADES[(J && J.dificuldade) || 'normal'] || DIFICULDADES.normal;
 const skinLivre = id => !SKINS[id].recorde || recorde >= SKINS[id].recorde;
 if (!skinLivre(escolhaSkin)) escolhaSkin = 'azul';
 function guardarEscolha() {
-  try { localStorage.setItem('masmorra_personagem', JSON.stringify({ raca: escolhaRaca, skin: escolhaSkin })); } catch (e) { /* sem storage */ }
+  try { localStorage.setItem('masmorra_personagem', JSON.stringify({ raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade })); } catch (e) { /* sem storage */ }
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) guardarSeAJogar(); });
 
@@ -188,12 +190,12 @@ function stats() {
     danoPct: am.danoPct || 0,
     cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0))),
     alcance: a.alcance,
-    xpMult: 1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0),
+    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0)) * dif().xp,
     sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0),
     espinhos: somaAfixos('espinhos'),
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')),
     curaPocao: 0.4 + 0.15 * nPerk('pocoes') + (R.cura || 0),
-    ouroMult: 1 + (R.ouro || 0),
+    ouroMult: (1 + (R.ouro || 0)) * dif().ouro,
     magia,
     poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
     maxMana: 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana'),
@@ -271,7 +273,7 @@ function criarJogador() {
     kbx: 0, kby: 0, dirX: 1, dirY: 0, angArma: 0, golpe: null,
     kills: 0, bausAbertos: 0, melhorItem: null,
     perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0, ouro: 0, lentoT: 0,
-    raca: escolhaRaca, skin: escolhaSkin, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
+    raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
   };
 }
 
@@ -279,7 +281,7 @@ function novoJogo() {
   apagarSave();
   J = criarJogador();
   const R = RACAS[J.raca];
-  J.pocoes += R.pocoes || 0;
+  J.pocoes = Math.max(0, J.pocoes + (R.pocoes || 0) + dif().pocoes);
   J.ouro += R.ouroInicial || 0;
   andar = 0;
   tempoJogo = 0;
@@ -378,7 +380,7 @@ function popularAndar() {
   for (let i = 0; i < n; i++) {
     const p = pontoLivreNaSala(mapa, escolher(salas), 18);
     const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
-    if (andar >= 2 && Math.random() < Math.min(0.22, 0.05 + andar * 0.01)) tornarElite(e);
+    if (andar >= 2 && Math.random() < Math.min(0.4, (0.05 + andar * 0.01) * dif().elite)) tornarElite(e);
     inimigos.push(e);
   }
 
@@ -446,8 +448,8 @@ function soltarOuro(x, y, total, n = 1) {
 }
 
 function criarInimigo(tipo, x, y) {
-  const d = INIMIGOS[tipo];
-  const fh = 1 + (andar - 1) * 0.3, fd = 1 + (andar - 1) * 0.18;
+  const d = INIMIGOS[tipo], D = dif();
+  const fh = (1 + (andar - 1) * 0.3) * D.hp, fd = (1 + (andar - 1) * 0.18) * D.dano;
   const hp = Math.round(d.hp * fh);
   return {
     tipo, nome: d.nome, x, y, r: d.r, hp, maxHp: hp,
@@ -461,7 +463,8 @@ function criarBoss() {
   const n = andar / 5;
   const b = BOSSES[(n - 1) % BOSSES.length];
   const ciclo = Math.floor((n - 1) / BOSSES.length);
-  const fh = 1 + (andar - 1) * 0.3, fd = 1 + (andar - 1) * 0.18;
+  const D = dif();
+  const fh = (1 + (andar - 1) * 0.3) * D.hp, fd = (1 + (andar - 1) * 0.18) * D.dano;
   const hp = Math.round(b.hp * fh);
   return {
     tipo: b.id, nome: ciclo > 0 ? `${b.nome} +${ciclo}` : b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
@@ -665,9 +668,11 @@ function danoJogador(d, fx, fy, fonte = null) {
   if (J.hp <= 0) morrer();
 }
 
-function morrer() {
+function morrer(desistiu = false) {
   J.hp = 0;
+  J.desistiu = desistiu;
   estado = 'morto';
+  confirmarDesistir = false;
   explosao(J.x, J.y, '#3a6ad4', 40, 250, 6);
   fanfarra([392, 330, 262, 196], 0.05);
   apagarSave();
@@ -806,7 +811,7 @@ function atualizar(dt) {
   }
 }
 
-const danoArmadilha = () => Math.round(8 * (1 + (andar - 1) * 0.18));
+const danoArmadilha = () => Math.round(8 * (1 + (andar - 1) * 0.18) * dif().dano);
 
 function atualizarArmadilhas(dt) {
   const jtx = Math.floor(J.x / TILE), jty = Math.floor(J.y / TILE);
@@ -1581,11 +1586,39 @@ function atualizarMesa(dt) {
 }
 
 // ---------------------------------------------------------------------
+//  Pausa (com botões) e desistir
+// ---------------------------------------------------------------------
+let confirmarDesistir = false;
+const BOTAO_PAUSA = { x: LARGURA - 56, y: ALTURA - 76, w: 40, h: 36 };
+const BOTOES_PAUSA = {
+  continuar: { x: 150, y: 150, w: 200, h: 44 },
+  guardar:   { x: 380, y: 150, w: 200, h: 44 },
+  desistir:  { x: 610, y: 150, w: 200, h: 44 },
+};
+const BOTOES_CONFIRMAR = {
+  sim: { x: 290, y: 360, w: 180, h: 44 },
+  nao: { x: 490, y: 360, w: 180, h: 44 },
+};
+const clicou = r => premiu('rato') && dentro(r);
+
+function atualizarPausa() {
+  if (confirmarDesistir) {
+    if (premiu('x', 'enter') || clicou(BOTOES_CONFIRMAR.sim)) morrer(true);
+    else if (premiu('escape', 'n', 'p') || clicou(BOTOES_CONFIRMAR.nao)) confirmarDesistir = false;
+    return;
+  }
+  if (premiu('p', 'escape') || clicou(BOTOES_PAUSA.continuar)) { estado = 'jogo'; rato.baixo = false; }
+  else if (premiu('g') || clicou(BOTOES_PAUSA.guardar)) { guardarJogo(); estado = 'titulo'; }
+  else if (premiu('x') || clicou(BOTOES_PAUSA.desistir)) confirmarDesistir = true;
+}
+
+// ---------------------------------------------------------------------
 //  Criação de personagem
 // ---------------------------------------------------------------------
 function retRaca(i) { return { x: 30, y: 84 + i * 94, w: 450, h: 86 }; }
 function retSkin(i) { return { x: 506 + (i % 4) * 108, y: 372 + Math.floor(i / 4) * 102, w: 98, h: 94 }; }
 const BOTAO_COMECAR = { x: 700, y: 586, w: 240, h: 40 };
+function retDificuldade(i) { return { x: 30 + i * 114, y: 562, w: 106, h: 34 }; }
 
 function abrirCriacao() {
   criacao = { t: 0, msg: null };
@@ -1606,6 +1639,7 @@ function atualizarCriacao(dt) {
   if (premiu('s', 'arrowdown')) ir = (ir + 1) % ORDEM_RACAS.length;
   if (premiu('a', 'arrowleft')) is = proxSkin(-1);
   if (premiu('d', 'arrowright')) is = proxSkin(1);
+  ORDEM_DIFICULDADES.forEach((id, i) => { if (premiu(String(i + 1)) || clicou(retDificuldade(i))) escolhaDificuldade = id; });
   let comecar = premiu('enter', ' ');
   if (premiu('rato')) {
     ORDEM_RACAS.forEach((_, i) => { if (dentro(retRaca(i))) ir = i; });
@@ -1713,7 +1747,7 @@ function loop(agora) {
     atualizarMesa(dt);
     atualizarEfeitos(dt);
   } else if (estado === 'jogo') {
-    if (premiu('p', 'escape')) estado = 'pausa';
+    if (premiu('p', 'escape') || clicou(BOTAO_PAUSA)) { estado = 'pausa'; rato.baixo = false; }
     else if (premiu('c', 'tab')) estado = 'personagem';
     else atualizar(dt);
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
@@ -1721,8 +1755,7 @@ function loop(agora) {
     atualizarEscolha(dt);
     atualizarEfeitos(dt);
   } else if (estado === 'pausa') {
-    if (premiu('p', 'escape')) estado = 'jogo';
-    else if (premiu('g')) { guardarJogo(); estado = 'titulo'; }
+    atualizarPausa();
   } else if (estado === 'personagem') {
     if (premiu('c', 'tab', 'escape')) estado = 'jogo';
   } else if (estado === 'loja') {

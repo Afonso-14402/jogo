@@ -15,7 +15,7 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 | E | Abrir baú, falar com o mercador, usar altar/cristal, descer a escada |
 | Q | Beber poção (cura 40%) |
 | C | Ecrã de personagem (todos os stats, equipamento e melhorias) |
-| P / Esc | Pausa (na pausa, **G** guarda e volta ao menu) |
+| P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
 
 ### Guardar a partida
@@ -24,7 +24,16 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 
 ## O que há no jogo
 
-- **Criação de personagem**: ao começar um jogo novo escolhes a **raça** e a **skin**.
+- **Criação de personagem**: ao começar um jogo novo escolhes a **raça**, a **skin** e a **dificuldade**.
+
+  | Dificuldade | Inimigos (vida / dano) | XP / Ouro | Outros |
+  |---|---|---|---|
+  | Fácil | 65% / 60% | normal | +2 poções, metade das elites |
+  | Normal | 100% / 100% | normal | — |
+  | Difícil | 140% / 135% | +20% / +25% | +50% elites |
+  | Pesadelo | 200% / 180% | +40% / +50% | muito mais elites, -1 poção |
+
+  Os valores estão em `js/dados.js` (`DIFICULDADES`).
 
   | Raça | Bónus | Desvantagem |
   |---|---|---|
