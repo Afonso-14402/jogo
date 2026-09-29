@@ -7,6 +7,11 @@
 const TILE = 32;
 const LARGURA = 960;
 const ALTURA = 640;
+// O interface foi desenhado para 960x640. No telemóvel o canvas fica mais largo
+// (TELA_W) para ocupar o ecrã todo, o interface fica ao centro (MARGEM_X) e o
+// mundo é ampliado (ZOOM) para os bonecos ficarem maiores.
+let TELA_W = LARGURA, MARGEM_X = 0, ZOOM = 1;
+const vistaW = () => TELA_W / ZOOM, vistaH = () => ALTURA / ZOOM;
 
 const RARIDADES = {
   lixo:     { nome: 'Lixo',     cor: '#8d8d8d', ordem: 0, xpReciclar: 2 },

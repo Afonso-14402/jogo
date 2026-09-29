@@ -41,25 +41,28 @@ function botoesToque() {
   return BOTOES_BASE.map(b => {
     const [ax, ay] = b.ancora;
     const n = Object.assign({}, b, { x: ax + (b.x - ax) * k, y: ay + (b.y - ay) * k, r: Math.round(b.r * k) });
-    if (opcoes.canhoto && b.lado) n.x = LARGURA - n.x;
+    const trocado = opcoes.canhoto && b.lado;
+    if (trocado) n.x = LARGURA - n.x;
+    // encosta às bordas verdadeiras do ecrã (no telemóvel o ecrã é mais largo que o interface)
+    if (ax === LARGURA) n.x += trocado ? -MARGEM_X : MARGEM_X;
     return n;
   });
 }
 
 // Onde fica o joystick quando não está a ser usado
-const centroJoystick = () => ({ x: opcoes.canhoto ? LARGURA - 150 : 150, y: 500 });
+const centroJoystick = () => ({ x: opcoes.canhoto ? LARGURA - 150 + MARGEM_X : 150 - MARGEM_X, y: 500 });
 const zonaJoystick = p => opcoes.canhoto ? p.x > LARGURA * 0.45 : p.x < LARGURA * 0.55;
 
 function posToque(t) {
   const b = canvas.getBoundingClientRect();
-  return { x: (t.clientX - b.left) * LARGURA / b.width, y: (t.clientY - b.top) * ALTURA / b.height };
+  return { x: (t.clientX - b.left) * TELA_W / b.width - MARGEM_X, y: (t.clientY - b.top) * ALTURA / b.height };
 }
 
 const botaoEm = p => botoesToque().find(b => Math.hypot(p.x - b.x, p.y - b.y) <= b.r + 10);
 
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  modoToque = true;
+  if (!modoToque) { modoToque = true; ajustarTela(); }
   for (const t of e.changedTouches) {
     const p = posToque(t);
     rato.x = p.x; rato.y = p.y;
@@ -248,9 +251,17 @@ function ajustarTela() {
   const b = document.body, cs = getComputedStyle(b);
   const w = b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const h = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  const k = Math.min(w / LARGURA, h / ALTURA);
-  if (!(k > 0)) return;
-  canvas.style.width = Math.floor(LARGURA * k) + 'px';
+  if (!(w > 0 && h > 0)) return;
+  // No telemóvel deitado o jogo estica para ocupar a largura toda do ecrã
+  // e o mundo aparece ampliado, para os bonecos não ficarem pequenos.
+  const largo = modoToque && w / h > LARGURA / ALTURA;
+  TELA_W = largo ? Math.min(1800, Math.round(ALTURA * w / h / 2) * 2) : LARGURA;
+  MARGEM_X = (TELA_W - LARGURA) / 2;
+  ZOOM = modoToque ? 1.25 : 1;
+  if (canvas.width !== TELA_W) canvas.width = TELA_W;
+  ajustarBuffers();
+  const k = Math.min(w / TELA_W, h / ALTURA);
+  canvas.style.width = Math.floor(TELA_W * k) + 'px';
   canvas.style.height = Math.floor(ALTURA * k) + 'px';
 }
 addEventListener('resize', ajustarTela);
@@ -311,7 +322,7 @@ function atualizarOpcoes(dt) {
 
 function desenharOpcoes(t) {
   ctx.fillStyle = opcoesVoltar === 'pausa' ? 'rgba(0,0,0,0.82)' : 'rgba(0,0,0,0)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
   textoCentro('OPÇÕES', LARGURA / 2, 50, 36, '#ffe14d');
   linhasOpcoes().forEach((l, i) => {
@@ -327,12 +338,13 @@ function desenharOpcoes(t) {
 }
 
 function desenharPreviaControlos() {
-  const k = 0.15, w = LARGURA * k, h = ALTURA * k, x0 = 804, y0 = 110;
+  const k = 144 / TELA_W, w = TELA_W * k, h = ALTURA * k, x0 = 804, y0 = 110;
   textoCentro('Como fica', x0 + w / 2, y0 - 12, 12, '#aaa', false);
   painel(x0 - 3, y0 - 3, w + 6, h + 6, 'rgba(10,8,16,0.95)');
   ctx.save();
   ctx.translate(x0, y0);
   ctx.scale(k, k);
+  ctx.translate(MARGEM_X, 0);
   ctx.globalAlpha = VISIBILIDADES[opcoes.visibilidade];
   const c = centroJoystick();
   circuloEcra(c.x, c.y, RAIO_JOYSTICK, 'rgba(60,50,90,0.6)', '#cfc6e0', 8);
@@ -380,7 +392,8 @@ function atualizarTutorial(dt) {
     const j = toque.joy;
     if (j && Math.hypot(j.x - j.cx, j.y - j.cy) > 20) tutorial.feito += dt;
     if (tutorial.feito > 0.7) avancarTutorial();
-  } else if (P.tempo && tutorial.t > P.tempo) avancarTutorial();
+  }
+  if (tutorial && tutorial.t > (P.tempo || 8)) avancarTutorial(); // não fica preso num passo
 }
 
 function desenharTutorial(t) {
@@ -389,7 +402,8 @@ function desenharTutorial(t) {
   // entre o painel de vida (esquerda) e o minimapa (direita)
   painel(300, 10, 450, 64, 'rgba(24,18,8,0.96)', '#ffe14d');
   textoCentroAjustado(P.txt, 525, 29, 15, '#fff', 426, false);
-  textoEsq(`${tutorial.passo + 1}/${PASSOS_TUTORIAL.length}  ·  Os inimigos esperam por ti`, 314, 56, 11, '#aaa', 'normal');
+  textoEsq(`${tutorial.passo + 1}/${PASSOS_TUTORIAL.length}`, 314, 56, 11, '#aaa', 'normal');
+  barra(350, 52, 280, 6, 1 - tutorial.t / (P.tempo || 8), '#ffe14d', '#3a3020');
   botao(BOTAO_SALTAR_TUTORIAL, 'Saltar', '#ff8080');
   // realça o que é preciso tocar
   const pulso = Math.sin(t * 6) * 5;

@@ -10,13 +10,25 @@ const FONTE = '"Tiny5", "Segoe UI", "Trebuchet MS", Arial, sans-serif';
 const fonte = (tam, peso = 'bold') => `${peso} ${tam}px ${FONTE}`;
 try { if (document.fonts) { document.fonts.load(fonte(16)); document.fonts.load(fonte(16, 'normal')); } } catch (e) { /* ignora */ }
 
-const LB = LARGURA / ESCALA, AB = ALTURA / ESCALA;
+let LB = LARGURA / ESCALA, AB = ALTURA / ESCALA;
 const bufMundo = document.createElement('canvas');
 bufMundo.width = LB; bufMundo.height = AB;
 const ctxMundo = bufMundo.getContext('2d');
 const bufLuz = document.createElement('canvas');
 bufLuz.width = LB; bufLuz.height = AB;
 const ctxLuz = bufLuz.getContext('2d');
+
+// Tamanho dos buffers do mundo (muda quando o ecrã do telemóvel muda)
+function ajustarBuffers() {
+  LB = Math.ceil(vistaW() / ESCALA); AB = Math.ceil(vistaH() / ESCALA);
+  if (bufMundo.width !== LB || bufMundo.height !== AB) {
+    bufMundo.width = bufLuz.width = LB;
+    bufMundo.height = bufLuz.height = AB;
+  }
+}
+// Posição no ecrã (dentro do interface) de um ponto do mundo
+const ecraX = x => (x - vista.x) * ZOOM - MARGEM_X;
+const ecraY = y => (y - vista.y) * ZOOM;
 const vista = { x: 0, y: 0 }; // canto superior esquerdo da câmara (com tremor), em pixels do mundo
 
 const NOME_TIPO = { arma: 'Arma', armadura: 'Armadura', amuleto: 'Amuleto' };
@@ -247,8 +259,9 @@ function barraMundo(x, y, w, frac, cor) {
 function desenhar(t) {
   ctxTela.imageSmoothingEnabled = false;
   ctxTela.fillStyle = '#07060a';
-  ctxTela.fillRect(0, 0, LARGURA, ALTURA);
+  ctxTela.fillRect(0, 0, TELA_W, ALTURA);
   ctx = ctxTela;
+  ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
   if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
@@ -276,9 +289,11 @@ function desenhar(t) {
   desenharLuz(t);
 
   ctx = ctxTela;
-  ctx.drawImage(bufMundo, 0, 0, LARGURA, ALTURA);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
+  ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
-  desenharHUD(t);
+  if (estado !== 'pausa' && estado !== 'opcoes') desenharHUD(t);
 
   if (estado === 'bau') desenharRoleta(t);
   else if (estado === 'nivel') desenharEscolha(t);
@@ -405,7 +420,7 @@ const explorado = (x, y) => !!mapa.explorado[Math.floor(y / TILE) * mapa.W + Mat
 
 function desenharNevoa() {
   const x0 = Math.max(0, Math.floor(vista.x / TILE) - 1), y0 = Math.max(0, Math.floor(vista.y / TILE) - 1);
-  const x1 = Math.min(mapa.W - 1, x0 + Math.ceil(LARGURA / TILE) + 2), y1 = Math.min(mapa.H - 1, y0 + Math.ceil(ALTURA / TILE) + 2);
+  const x1 = Math.min(mapa.W - 1, x0 + Math.ceil(vistaW() / TILE) + 2), y1 = Math.min(mapa.H - 1, y0 + Math.ceil(vistaH() / TILE) + 2);
   ctx.fillStyle = '#07060a';
   for (let y = y0; y <= y1; y++)
     for (let x = x0; x <= x1; x++)
@@ -726,17 +741,17 @@ function desenharProjetil(p, t) {
 function desenharTextosMundo() {
   for (const tx of textos) {
     ctx.globalAlpha = clamp(tx.t * 2, 0, 1);
-    textoCentro(tx.txt, tx.x - vista.x, tx.y - vista.y, tx.tam, tx.cor);
+    textoCentro(tx.txt, ecraX(tx.x), ecraY(tx.y), tx.tam, tx.cor);
   }
   ctx.globalAlpha = 1;
   if (pet && J.pet && estado !== 'morto') {
-    textoCentro(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`, pet.x - vista.x, pet.y - vista.y - 26, 11, PETS[J.pet.tipo].cor);
+    textoCentro(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`, ecraX(pet.x), ecraY(pet.y) - 26, 11, PETS[J.pet.tipo].cor);
   }
   // nomes dos inimigos de elite
   for (const e of inimigos) {
     if (!e.elite || e.morto || !explorado(e.x, e.y) || (e.alfa ?? 1) < 0.5 || e.enterrado > 0) continue;
-    const sx = e.x - vista.x, sy = e.y - vista.y - 44;
-    if (sx < -50 || sy < -20 || sx > LARGURA + 50 || sy > ALTURA + 20) continue;
+    const sx = ecraX(e.x), sy = ecraY(e.y) - 44;
+    if (sx < -50 - MARGEM_X || sy < -20 || sx > LARGURA + MARGEM_X + 50 || sy > ALTURA + 20) continue;
     textoCentro(`Elite ${ELITES[e.elite].nome}`, sx, sy, 12, ELITES[e.elite].cor);
   }
 }
@@ -745,6 +760,8 @@ function desenharTextosMundo() {
 //  HUD
 // ---------------------------------------------------------------------
 function desenharHUD(t) {
+  ctx.save();
+  ctx.translate(-MARGEM_X, 0); // painel da vida no canto esquerdo do ecrã
   painel(10, 10, 280, 112);
   textoEsq(`Nv ${J.nivel}`, 22, 28, 20, '#ffe14d');
   textoEsq(`ATK ${S.dano}  DEF ${S.def}  CRIT ${Math.round(S.crit * 100)}%`, 84, 28, 13, '#cfc6e0');
@@ -764,6 +781,7 @@ function desenharHUD(t) {
     if (nPerk(p.id) > 1) textoCentro(`${nPerk(p.id)}`, x + 10, y + 9, 11, '#fff');
   });
 
+  ctx.restore();
   desenharMinimapa();
 
   if (modoToque) { desenharHUDFinal(t); desenharControlosToque(t); return; }
@@ -872,7 +890,7 @@ function desenharHUDFinal(t) {
     if (J.bauPerto) desenharInfoBau(J.bauPerto);
     else if (J.objPerto) desenharInfoObjeto(J.objPerto);
     else if (J.escadaPerto) {
-      const sx = mapa.escada.x - vista.x, sy = mapa.escada.y - vista.y - 40;
+      const sx = ecraX(mapa.escada.x), sy = ecraY(mapa.escada.y) - 40;
       if (mapa.escada.ativa) textoCentro(modoToque ? 'Usar: Descer' : '[E] Descer', sx, sy, 16, '#ffe680');
       else textoCentro('Derrota o boss para abrir', sx, sy, 14, '#ff8080');
     }
@@ -890,7 +908,7 @@ function desenharHUDFinal(t) {
 function desenharMinimapa() {
   const esc = 3;
   const w = mapa.W * esc, h = mapa.H * esc;
-  const x0 = LARGURA - w - 16, y0 = 40;
+  const x0 = LARGURA + MARGEM_X - w - 16, y0 = 40; // no canto direito do ecrã
   painel(x0 - 6, 10, w + 12, h + 40);
   textoCentro(`ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
   for (let y = 0; y < mapa.H; y++) {
@@ -943,7 +961,7 @@ function tabelaChances(tipoBau, x, y, largura) {
 
 function desenharInfoBau(b) {
   const tb = TIPOS_BAU[b.tipo];
-  let x = b.x - vista.x + 34, y = b.y - vista.y - 90;
+  let x = ecraX(b.x) + 34, y = ecraY(b.y) - 90;
   const w = 190, h = (tb.mimico > 0 ? 184 : 165) + (S.sorte > 0 ? 16 : 0) + (tb.maldito ? 30 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 110, ALTURA - h - 100);
@@ -961,7 +979,7 @@ function desenharInfoBau(b) {
 }
 
 function desenharInfoObjeto(o) {
-  const sx = o.x - vista.x, sy = o.y - vista.y - 58;
+  const sx = ecraX(o.x), sy = ecraY(o.y) - 58;
   if (o.tipo === 'mercador') {
     textoCentro('Mercador', sx, sy - 18, 14, '#3ddc84');
     textoCentro('[E] Ver a loja', sx, sy, 15, '#ffe680');
@@ -1014,7 +1032,7 @@ function desenharCartaItem(it, x, y, cabecalho) {
 function desenharRoleta(t) {
   const R = roleta;
   ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   const tb = TIPOS_BAU[R.tipoBau];
   sprEcra(SPR.bau[R.tipoBau], LARGURA / 2 - 190, 44, 3);
   textoCentro(`A abrir: ${tb.nome}`, LARGURA / 2, 44, 26, tb.aro);
@@ -1106,7 +1124,7 @@ function desenharRoleta(t) {
 // ---------------------------------------------------------------------
 function desenharEscolha(t) {
   ctx.fillStyle = 'rgba(0,0,0,0.78)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   const deLoja = escolha.voltar === 'loja';
   textoCentro(deLoja ? 'PERGAMINHO DE PODER' : 'SUBISTE DE NÍVEL!', LARGURA / 2, 90, 40, '#ffe14d');
   textoCentro(deLoja ? 'Escolhe uma melhoria' : `Nível ${J.nivel} · Escolhe uma melhoria`, LARGURA / 2, 135, 18, '#ddd', false);
@@ -1152,7 +1170,7 @@ function iconeOferta(of, x, y) {
 
 function desenharLoja(t) {
   ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   sprEcra(SPR.mercador, 80, 60, 3);
   textoEsq('Loja do Mercador', 120, 50, 28, '#3ddc84');
   textoEsq('"Tudo tem um preço, aventureiro..."', 120, 80, 14, '#aaa', 'normal');
@@ -1211,7 +1229,7 @@ function desenharLoja(t) {
 // ---------------------------------------------------------------------
 function desenharPersonagem() {
   ctx.fillStyle = 'rgba(0,0,0,0.85)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro('PERSONAGEM', LARGURA / 2, 34, 30, '#ffe14d');
 
   // coluna de stats
@@ -1309,7 +1327,7 @@ function desenharPersonagem() {
 // ---------------------------------------------------------------------
 function desenharMesa(t) {
   ctx.fillStyle = 'rgba(0,0,0,0.82)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   sprEcra(SPR.mesa, 70, 56, 3);
   textoEsq('Mesa de Encantamentos', 118, 46, 28, '#d9a6ff');
   textoEsq('Reforça um item (+1 até +5) ou dá-lhe um encantamento novo', 118, 76, 13, '#aaa', 'normal');
@@ -1512,7 +1530,7 @@ function desenharTitulo(t) {
 
 function desenharPausa() {
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
   if (!confirmarDesistir) { botaoIdioma(); botoesMenuToque(false); }
   const B = BOTOES_PAUSA;
@@ -1534,7 +1552,7 @@ function desenharPausa() {
 
   if (confirmarDesistir) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, 0, LARGURA, ALTURA);
+    ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
     painel(250, 230, 460, 196, 'rgba(30,8,12,0.98)', '#ff6060');
     textoCentro('Desistir desta partida?', LARGURA / 2, 268, 24, '#ff8080');
     textoCentro('A partida termina e a gravação é apagada.', LARGURA / 2, 304, 14, '#ddd', false);
@@ -1546,7 +1564,7 @@ function desenharPausa() {
 
 function desenharMorte() {
   ctx.fillStyle = 'rgba(40,0,0,0.75)';
-  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro(J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, 60, J.desistiu ? '#ff9f43' : '#ff4040');
   const D = dif();
   textoCentro(`${RACAS[J.raca].nome} · ${D.nome}`, LARGURA / 2, 178, 16, D.cor);

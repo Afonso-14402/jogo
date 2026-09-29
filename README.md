@@ -15,8 +15,9 @@ No telemóvel há ainda:
 - **Opções**: tamanho dos botões, transparência, **modo canhoto** (joystick à direita), vibração, **poupança de bateria** (30 FPS), som, ecrã inteiro e rever o tutorial.
 - **Vibração** ao levar dano, subir de nível, tirar um item Lendário ou Mítico, matar um boss e morrer (só Android; o iPhone não deixa).
 - **Pausa automática** quando sais da app, bloqueias o ecrã ou recebes uma chamada.
-- **Tutorial** na primeira partida: mostra o joystick, o ataque, a esquiva e os feitiços (os inimigos esperam por ti). Podes saltá-lo.
+- **Tutorial** na primeira partida: mostra o joystick, o ataque, a esquiva e os feitiços. Cada passo avança sozinho ao fim de uns segundos e podes saltá-lo.
 - O jogo respeita o notch e as bordas curvas do ecrã, e as dicas mostram toques em vez de teclas.
+- Com o telemóvel deitado o jogo **ocupa o ecrã todo**: o mundo estica para a largura toda e aparece ampliado, e a vida, o minimapa e os botões ficam encostados às bordas.
 
 | Tecla | Ação |
 |---|---|
@@ -171,6 +172,16 @@ fontes/Tiny5.woff2  fonte pixel Tiny5 (SIL Open Font License, Google Fonts)
 ```
 
 Para mudar as probabilidades ou criar itens novos, edita `js/dados.js`.
+
+## Testes
+
+`testes/telemovel.js` abre o jogo em vários telemóveis e tablets simulados (com o Playwright) e verifica que o jogo ocupa o ecrã, que os toques funcionam, que os monstros atacam, que o tutorial não fica preso e que a pausa funciona:
+
+```
+npm install playwright
+npx playwright install chromium
+node testes/telemovel.js
+```
 
 ## Jogar online (opcional)
 

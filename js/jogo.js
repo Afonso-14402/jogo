@@ -117,7 +117,7 @@ addEventListener('keyup', e => { teclas[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in teclas) teclas[k] = false; rato.baixo = false; });
 canvas.addEventListener('mousemove', e => {
   const b = canvas.getBoundingClientRect();
-  rato.x = (e.clientX - b.left) * LARGURA / b.width;
+  rato.x = (e.clientX - b.left) * TELA_W / b.width - MARGEM_X;
   rato.y = (e.clientY - b.top) * ALTURA / b.height;
   rato.movido = performance.now();
 });
@@ -382,7 +382,7 @@ function proximoAndar() {
     else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
     if (andar > 1) som(300, 0.3, 'triangle', 0.05, -150);
   }
-  cam.x = J.x - LARGURA / 2; cam.y = J.y - ALTURA / 2;
+  cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
   revelar(mapa, J.x, J.y, 7);
   criarPetEntidade();
   if (andar >= 10) desbloquear('andar10');
@@ -841,7 +841,7 @@ function atualizar(dt) {
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
-  if (!tutorial) for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
+  for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
   separarInimigos();
   atualizarProjeteis(dt);
   atualizarPerigos(dt);
@@ -894,8 +894,8 @@ function atualizar(dt) {
   atualizarEfeitos(dt);
 
   // câmara
-  const alvoX = clamp(J.x - LARGURA / 2, 0, mapa.W * TILE - LARGURA);
-  const alvoY = clamp(J.y - ALTURA / 2, 0, mapa.H * TILE - ALTURA);
+  const alvoX = clamp(J.x - vistaW() / 2, 0, mapa.W * TILE - vistaW());
+  const alvoY = clamp(J.y - vistaH() / 2, 0, mapa.H * TILE - vistaH());
   cam.x += (alvoX - cam.x) * Math.min(1, dt * 8);
   cam.y += (alvoY - cam.y) * Math.min(1, dt * 8);
   revelar(mapa, J.x, J.y, 7);

@@ -510,7 +510,7 @@ const fatorTerreno = () => (J.dashT <= 0 && naLama()) ? 0.6 : 1;
 // Partículas no ar (poeira, neve, brasas, vaga-lumes...)
 function atualizarAmbiente(dt) {
   const tipo = bioma().ar, max = tipo === 'nevoa' ? 14 : 40;
-  const x0 = cam.x - 60, y0 = cam.y - 60, w = LARGURA + 120, h = ALTURA + 120;
+  const x0 = cam.x - 60, y0 = cam.y - 60, w = vistaW() + 120, h = vistaH() + 120;
   while (ambiente.length < max) {
     const a = { x: x0 + Math.random() * w, y: y0 + Math.random() * h, t: rand(3, 7), fase: Math.random() * 6, vx: 0, vy: 0, tam: 2 };
     if (tipo === 'poeira') { a.vx = rand(-6, 6); a.vy = rand(-4, 4); a.cor = 'rgba(200,190,220,0.35)'; }
