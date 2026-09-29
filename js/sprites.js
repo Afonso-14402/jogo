@@ -887,13 +887,57 @@ function gerarIcone(nome, cor) {
   return gradeParaCanvas(g);
 }
 
-// Ladrilhos do chão e paredes para cada zona (4 zonas que se repetem)
+// Ladrilhos do chão e paredes para cada zona (8 zonas que se repetem).
+// det: o detalhe que aparece em algumas paredes.
 const ZONAS = [
-  { chao: '#2d2640', parede: '#4d4163', topo: '#1a1522', musgo: '#3d5a3a' },
-  { chao: '#232e2a', parede: '#3e5a4a', topo: '#121c17', musgo: '#4a7a3a' },
-  { chao: '#3a2622', parede: '#6a3a2e', topo: '#200f0c', musgo: '#7a3a1a' },
-  { chao: '#20283a', parede: '#3a4a70', topo: '#0f1422', musgo: '#3a5a7a' },
+  { chao: '#2d2640', parede: '#4d4163', topo: '#1a1522', musgo: '#3d5a3a', det: 'grade' },    // Masmorra
+  { chao: '#232e2a', parede: '#3e5a4a', topo: '#121c17', musgo: '#4a7a3a', det: 'hera' },     // Cemitério
+  { chao: '#3a2622', parede: '#6a3a2e', topo: '#200f0c', musgo: '#7a3a1a', det: 'lava' },     // Cavernas de Lava
+  { chao: '#20283a', parede: '#3a4a70', topo: '#0f1422', musgo: '#3a5a7a', det: 'gelo' },     // Abismo Gelado
+  { chao: '#26301f', parede: '#3e4a2a', topo: '#11170c', musgo: '#5a7a2a', det: 'musgo' },    // Pântano Venenoso
+  { chao: '#6a5638', parede: '#9a7a48', topo: '#2a1f10', musgo: '#b89a60', det: 'hieroglifo' }, // Templo do Deserto
+  { chao: '#1f2a3a', parede: '#34406a', topo: '#0c1020', musgo: '#4a8aa8', det: 'cristal' },  // Caverna de Cristal
+  { chao: '#1a1026', parede: '#2e1a40', topo: '#07040c', musgo: '#4a2a6a', det: 'runa' },     // Reino do Vazio
 ];
+
+// Detalhe pintado por cima de uma parede
+function detalheParede(g, det, r) {
+  switch (det) {
+    case 'grade':
+      for (let x = 5; x <= 10; x++) for (let y = 4; y <= 9; y++) g[y][x] = (x === 5 || x === 10 || y === 4 || y === 9) ? '#2a2432' : '#0c0a12';
+      for (const x of [7, 8]) for (let y = 5; y <= 8; y++) g[y][x] = '#6a6478';
+      break;
+    case 'hera':
+      for (const x0 of [3, 8, 12]) { let x = x0; for (let y = 0; y < 8 + (x0 % 5); y++) { pixel(g, x, y, y % 3 ? '#3f7a3a' : '#5aa04a'); if (r() < 0.3) x += r() < 0.5 ? -1 : 1; } }
+      break;
+    case 'lava':
+      for (const x of [4, 11]) for (let y = 0; y < 12; y++) pixel(g, x + (y > 6 ? 1 : 0), y, y % 4 === 3 ? '#ffe14d' : '#ff7b25');
+      break;
+    case 'gelo':
+      for (const [x, l] of [[2, 4], [6, 6], [9, 3], [13, 5]]) for (let y = 0; y < l; y++) { pixel(g, x, 13 - y + l, '#e0f6ff'); if (y < l - 2) pixel(g, x + 1, 13 - y + l, '#9fcff0'); }
+      for (let x = 0; x < 16; x++) pixel(g, x, 14, '#cfeaff');
+      break;
+    case 'musgo':
+      for (let x = 0; x < 16; x++) { const h = 2 + Math.floor(r() * 5); for (let y = 0; y < h; y++) pixel(g, x, y, y === h - 1 ? '#7a9a3a' : '#4a6a2a'); }
+      pixel(g, 5, 9, '#7dff5a'); pixel(g, 11, 7, '#7dff5a');
+      break;
+    case 'hieroglifo':
+      for (let x = 3; x <= 12; x++) { pixel(g, x, 3, '#6a5028'); pixel(g, x, 12, '#6a5028'); }
+      pixel(g, 5, 6, '#ffd23f'); pixel(g, 5, 7, '#ffd23f'); pixel(g, 6, 7, '#ffd23f'); pixel(g, 5, 8, '#ffd23f');
+      for (let y = 6; y <= 9; y++) pixel(g, 8, y, '#ffd23f'); pixel(g, 7, 6, '#ffd23f'); pixel(g, 9, 6, '#ffd23f');
+      pixel(g, 11, 6, '#ffd23f'); pixel(g, 10, 7, '#ffd23f'); pixel(g, 11, 8, '#ffd23f'); pixel(g, 10, 9, '#ffd23f');
+      break;
+    case 'cristal':
+      poligono(g, [[4, 14], [6, 5], [8, 14]], x => x < 6 ? '#d8f8ff' : '#7fe0ff');
+      poligono(g, [[8, 14], [10, 8], [12, 14]], x => x < 10 ? '#ffc0f0' : '#ff7fd0');
+      break;
+    case 'runa':
+      for (let a = 0; a < 20; a++) pixel(g, 8 + Math.round(Math.cos(a / 20 * Math.PI * 2) * 4), 8 + Math.round(Math.sin(a / 20 * Math.PI * 2) * 4), '#b44dff');
+      for (let y = 5; y <= 11; y++) pixel(g, 8, y, '#d07fff');
+      pixel(g, 7, 6, '#d07fff'); pixel(g, 9, 6, '#d07fff');
+      break;
+  }
+}
 
 function gerarLadrilhos(z) {
   const r = aleatorio(1234);
@@ -932,7 +976,9 @@ function gerarLadrilhos(z) {
   }
   const topo = novaGrade(16, 16);
   for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) topo[y][x] = r() < 0.06 ? clarear(z.topo, 0.08) : z.topo;
-  return { chaos, face: gradeParaCanvas(face), topo: gradeParaCanvas(topo) };
+  const faceAlt = face.map(l => l.slice());
+  detalheParede(faceAlt, z.det, r);
+  return { chaos, face: gradeParaCanvas(face), faceAlt: gradeParaCanvas(faceAlt), topo: gradeParaCanvas(topo) };
 }
 
 // ---------------------------------------------------------------------

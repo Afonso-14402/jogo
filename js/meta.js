@@ -5,7 +5,7 @@
 // =====================================================================
 
 const CHAVE_META = 'masmorra_meta';
-let meta = { almas: 0, melhorias: {}, colecao: {}, conquistas: {}, contadores: {} };
+let meta = { almas: 0, melhorias: {}, colecao: {}, conquistas: {}, contadores: {}, vistos: {} };
 try {
   const m = JSON.parse(localStorage.getItem(CHAVE_META) || 'null');
   if (m) meta = Object.assign(meta, m);

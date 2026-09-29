@@ -213,12 +213,13 @@ function renderizarMapa(m, andar) {
           if (!solido(m, x + dx, y + dy)) vizinhoChao = true;
       if (!vizinhoChao) continue;
       if (!solido(m, x, y + 1)) {
-        g.drawImage(L.face, px, py);
+        g.drawImage(Math.abs(h) % 7 === 3 ? L.faceAlt : L.face, px, py);
         if (!m.eBoss && Math.abs(h) % 19 === 0) m.tochas.push({ x: (x + 0.5) * TILE, y: y * TILE + 12 });
       } else g.drawImage(L.topo, px, py);
     }
   }
   if (m.eBoss) for (const tx of [6, 12, 23, 29]) m.tochas.push({ x: (tx + 0.5) * TILE, y: TILE + 12 });
+  decorarMapa(m, g, T, andar);
   return c;
 }
 

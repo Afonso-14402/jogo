@@ -297,10 +297,12 @@ function desenharMundo(t) {
   ctx.drawImage(mapaImg, 0, 0, mapa.W * TILE, mapa.H * TILE);
   desenharSalas();
   for (const a of armadilhas) desenharArmadilha(a);
+  desenharPocas(t);
   desenharEscada(t);
   for (const p of perigos) desenharPerigo(p);
   for (const d of drops) desenharDrop(d);
-  for (const tc of mapa.tochas) spr(SPR.tocha[Math.floor(t * 6 + tc.x) % 2], tc.x, tc.y);
+  const tochas = SPR.tochaZona[zonaAtual()];
+  for (const tc of mapa.tochas) spr(tochas[Math.floor(t * 6 + tc.x) % 2], tc.x, tc.y);
 
   // tudo o que tem "altura" é ordenado pela posição vertical
   const lista = [];
@@ -340,6 +342,7 @@ function desenharMundo(t) {
     ctx.fillRect(alinhar(p.x - tam / 2), alinhar(p.y - tam / 2), tam, tam);
   }
   ctx.globalAlpha = 1;
+  desenharAmbiente();
   desenharNevoa();
 }
 
@@ -348,7 +351,7 @@ function desenharLuz(t) {
   const L = ctxLuz;
   L.globalCompositeOperation = 'source-over';
   L.clearRect(0, 0, LB, AB);
-  L.fillStyle = `rgba(3,2,8,${mapa.eBoss ? 0.55 : 0.88})`;
+  L.fillStyle = `rgba(3,2,8,${mapa.eBoss ? 0.55 : bioma().escuro})`;
   L.fillRect(0, 0, LB, AB);
   L.globalCompositeOperation = 'destination-out';
   const luz = (x, y, r, forca) => {
@@ -375,22 +378,30 @@ function desenharLuz(t) {
   for (const o of ondas) luz(o.x, o.y, o.r * 1.4, 0.6 * (o.t / o.dur));
   for (const d of drops) if (d.tipo === 'livro') luz(d.x, d.y, 70, 0.6);
   if (mapa.escada.ativa) luz(mapa.escada.x, mapa.escada.y, 80, 0.5);
+  for (const l of mapa.luzes || []) luz(l.x, l.y, 70 + Math.sin(t * 2 + l.x) * 6, 0.55);
+  for (const p of pocas) if (p.tipo !== 'gosma') luz(p.x, p.y, 60, 0.4);
+  for (const e of inimigos) if (e.laser && e.laser.fase === 'fogo') for (let k = 0; k < e.laser.comp; k += 60) luz(e.x + Math.cos(e.laser.ang) * k, e.y + Math.sin(e.laser.ang) * k, 60, 0.7);
   L.globalCompositeOperation = 'source-over';
   ctxMundo.drawImage(bufLuz, 0, 0);
 
-  // brilho quente das tochas
+  // brilho das tochas (da cor da zona) e da decoração que brilha
   ctxMundo.globalCompositeOperation = 'lighter';
-  for (const tc of mapa.tochas) {
-    const bx = (tc.x - vista.x) / ESCALA, by = (tc.y + 10 - vista.y) / ESCALA;
-    if (bx < -40 || by < -40 || bx > LB + 40 || by > AB + 40) continue;
-    const g = ctxMundo.createRadialGradient(bx, by, 0, bx, by, 34);
-    g.addColorStop(0, 'rgba(255,140,40,0.16)');
-    g.addColorStop(1, 'rgba(255,140,40,0)');
+  const brilho = (x, y, raio, rgb, forca) => {
+    const bx = (x - vista.x) / ESCALA, by = (y - vista.y) / ESCALA;
+    if (bx < -40 || by < -40 || bx > LB + 40 || by > AB + 40) return;
+    const g = ctxMundo.createRadialGradient(bx, by, 0, bx, by, raio);
+    g.addColorStop(0, `rgba(${rgb},${forca})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
     ctxMundo.fillStyle = g;
-    ctxMundo.fillRect(bx - 34, by - 34, 68, 68);
-  }
+    ctxMundo.fillRect(bx - raio, by - raio, raio * 2, raio * 2);
+  };
+  for (const tc of mapa.tochas) if (explorado(tc.x, tc.y + TILE)) brilho(tc.x, tc.y + 10, 34, bioma().brilho, 0.16);
+  for (const l of mapa.luzes || []) if (explorado(l.x, l.y)) brilho(l.x, l.y, 22, hexRgb(l.cor).join(','), 0.22);
   ctxMundo.globalCompositeOperation = 'source-over';
 }
+
+// Já estiveste perto deste sítio? (o que não foi explorado fica às escuras)
+const explorado = (x, y) => !!mapa.explorado[Math.floor(y / TILE) * mapa.W + Math.floor(x / TILE)];
 
 function desenharNevoa() {
   const x0 = Math.max(0, Math.floor(vista.x / TILE) - 1), y0 = Math.max(0, Math.floor(vista.y / TILE) - 1);
@@ -548,6 +559,7 @@ function desenharJogador(t) {
   spr(c, J.x, J.y - 4, olhaEsq);
   if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
   if (J.lentoT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.4);
+  if (J.veneno > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#5dff3a', 0.3 + Math.sin(t * 8) * 0.1);
   ctx.globalAlpha = 1;
   if (J.amuleto) {
     ctx.fillStyle = RARIDADES[J.amuleto.r].cor;
@@ -571,6 +583,8 @@ function desenharArma(ang) {
 }
 
 function spriteInimigo(e, t) {
+  const novo = spriteBioma(e, t);
+  if (novo) return novo;
   switch (e.tipo) {
     case 'slime': {
       const pulo = e.acordado && e.t % 1.1 < 0.45;
@@ -601,11 +615,24 @@ function spriteInimigo(e, t) {
 }
 
 function desenharInimigo(e, t) {
+  if (e.enterrado > 0) { // escorpião debaixo da areia: só se vê o monte a andar
+    circulo(e.x, e.y + 6, 12, '#8a6a3a');
+    circulo(e.x - 2, e.y + 4, 8, '#c8a060');
+    return;
+  }
+  if (e.mini) { // os pequenos que nascem ao dividir
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.scale(0.65, 0.65);
+    ctx.translate(-e.x, -e.y);
+  }
+  desenharAvisosInimigo(e, t);
   const s = spriteInimigo(e, t);
   const h = s.c.height * ESCALA;
   sombra(e.x, e.y + (e.boss ? h * 0.4 : e.r * 0.8), e.boss ? e.r * 0.9 : e.r * (s.voa ? 0.6 : 0.9));
   const x = e.x, y = e.y + s.y;
   const flip = !!s.flip;
+  const alfaBase = e.alfa ?? 1;
 
   // avisos dos bosses
   if (e.tipo === 'reiSlime' && e.salto > 0) {
@@ -617,18 +644,21 @@ function desenharInimigo(e, t) {
     circulo(e.x, e.y, 150, '#ff3c3c');
     ctx.globalAlpha = 1;
   }
-  if (e.tipo === 'orc' && e.preparar > 0) sprCor(s.c, x, y, flip, '#ff3c3c', 0.6);
+  if ((e.tipo === 'orc' && e.preparar > 0) || e.prepInv > 0) sprCor(s.c, x, y, flip, '#ff3c3c', 0.6);
+  if (e.buffT > 0) { ctx.globalAlpha = 0.5 * alfaBase; aro(e.x, e.y + e.r * 0.8, e.r + 4, '#ff6060', 2); ctx.globalAlpha = 1; }
 
   if (e.elite) {
     const cor = ELITES[e.elite].cor;
-    ctx.globalAlpha = 0.55 + Math.sin(t * 6) * 0.25;
+    ctx.globalAlpha = (0.55 + Math.sin(t * 6) * 0.25) * alfaBase;
     const sil = silhueta(s.c, cor);
     for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) spr(sil, x + ox, y + oy, flip);
     ctx.globalAlpha = 1;
   }
-  if (s.alpha) ctx.globalAlpha = s.alpha;
+  ctx.globalAlpha = (s.alpha || 1) * alfaBase;
   spr(s.c, x, y, flip);
   ctx.globalAlpha = 1;
+  if (alfaBase < 0.5) { if (e.mini) ctx.restore(); return; } // invisível: nem barra de vida
+  if (e.enfurecido) sprCor(s.c, x, y, flip, '#ff2020', 0.25 + Math.sin(t * 10) * 0.1);
   if (e.tipo === 'dragao' && e.investida > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.35);
   if (e.tipo === 'demonio' && e.aparecer > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.5);
   if (e.flash > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.85);
@@ -643,9 +673,12 @@ function desenharInimigo(e, t) {
   if (!e.boss && (e.hp < e.maxHp || e.elite)) {
     barraMundo(e.x - 16, y - h / 2 - 10, 32, e.hp / e.maxHp, e.elite ? ELITES[e.elite].cor : '#ff4d4d');
   }
+  if (!e.boss) desenharNivelInimigo(e, y - h / 2 - (e.hp < e.maxHp || e.elite ? 20 : 10));
+  if (e.mini) ctx.restore();
 }
 
 function desenharProjetil(p, t) {
+  if (desenharProjetilBioma(p, t)) return;
   const x = p.x, y = p.y;
   if (p.tipo === 'flecha') {
     const a = Math.atan2(p.vy, p.vx);
@@ -701,7 +734,7 @@ function desenharTextosMundo() {
   }
   // nomes dos inimigos de elite
   for (const e of inimigos) {
-    if (!e.elite || e.morto) continue;
+    if (!e.elite || e.morto || !explorado(e.x, e.y) || (e.alfa ?? 1) < 0.5 || e.enterrado > 0) continue;
     const sx = e.x - vista.x, sy = e.y - vista.y - 44;
     if (sx < -50 || sy < -20 || sx > LARGURA + 50 || sy > ALTURA + 20) continue;
     textoCentro(`Elite ${ELITES[e.elite].nome}`, sx, sy, 12, ELITES[e.elite].cor);
@@ -715,7 +748,7 @@ function desenharHUD(t) {
   painel(10, 10, 280, 112);
   textoEsq(`Nv ${J.nivel}`, 22, 28, 20, '#ffe14d');
   textoEsq(`ATK ${S.dano}  DEF ${S.def}  CRIT ${Math.round(S.crit * 100)}%`, 84, 28, 13, '#cfc6e0');
-  barra(22, 44, 256, 18, J.hp / S.maxHp, J.hp / S.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
+  barra(22, 44, 256, 18, J.hp / S.maxHp, J.veneno > 0 ? '#5dbf3a' : J.hp / S.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
   textoCentro(`${Math.ceil(J.hp)} / ${S.maxHp}`, 150, 53, 13, '#fff');
   barra(22, 70, 256, 12, J.mana / S.maxMana, '#8a4dff', '#1e1438');
   textoCentro(`${Math.floor(J.mana)} / ${S.maxMana}`, 150, 76, 11, '#e8dcff');

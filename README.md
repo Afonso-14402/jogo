@@ -47,12 +47,30 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Coleção de itens**: todos os itens do jogo; os que ainda não encontraste aparecem como "???".
   - **Conquistas**: 14 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal).
 - **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
-- **Zonas**: a cada 5 andares muda a zona, com cores e inimigos próprios:
-  - Masmorra (1–5): slimes, morcegos, esqueletos, orcs.
-  - Cemitério (6–10): **zumbis** (levantam-se uma vez depois de morrer), fantasmas, esqueletos.
-  - Cavernas de Lava (11–15): **diabretes** que atiram bolas de fogo, **slimes de lava** que explodem ao morrer.
-  - Abismo Gelado (16–20): **lobos de gelo** e **elementais de gelo** que te abrandam.
-  - Depois do 20 aparece tudo misturado.
+- **Zonas (biomas)**: a cada 5 andares muda a zona. Cada uma tem o seu cenário (cores, decoração no chão e nas paredes, tochas de cor própria, partículas no ar e luz) e os seus monstros:
+
+  | Andares | Zona | Cenário | Monstros |
+  |---|---|---|---|
+  | 1–5 | Masmorra | ossos, barris, grades, poeira | slimes, morcegos, esqueletos, orcs, **Goblin Ladrão** (rouba ouro e foge) |
+  | 6–10 | Cemitério | lápides, cruzes, hera, nevoeiro, chamas verdes | zumbis, fantasmas, esqueletos, **Necromante** (levanta esqueletos) |
+  | 11–15 | Cavernas de Lava | fendas de lava a brilhar, brasas no ar | diabretes, slimes de lava, orcs, **Salamandra** (rasto de fogo) |
+  | 16–20 | Abismo Gelado | estalagmites de gelo, neve a cair, chamas azuis | lobos e elementais de gelo, **Yeti** (bolas de neve e pisão) |
+  | 21–25 | Pântano Venenoso | cogumelos que brilham, juncos, **lama que te abranda**, vaga-lumes | **Sapo Venenoso**, **Planta Carnívora**, aranhas, zumbis |
+  | 26–30 | Templo do Deserto | vasos, colunas partidas, hieróglifos, areia no vento | **Múmia** (ligaduras que te puxam), **Escorpião** (enterra-se), esqueletos |
+  | 31–35 | Caverna de Cristal | cristais coloridos a brilhar | **Golem de Cristal** (solta estilhaços), **Espírito de Cristal** (teletransporta-se) |
+  | 36–40 | Reino do Vazio | runas roxas, fragmentos a flutuar, muito escuro | **Olho do Vazio** (raio laser: sai da linha vermelha!), **Sombra** (quase invisível) |
+
+  Depois do andar 40 as zonas repetem-se (Profundezas), com monstros cada vez mais fortes. Na primeira vez que vês um monstro novo aparece um aviso a explicar o que ele faz.
+- **Nível dos monstros**: cada monstro pode nascer normal, **Veterano** (uma divisa prateada por cima) ou **Campeão** (duas divisas douradas). Quanto mais fundo estás na zona e na masmorra, mais aparecem. Veteranos e Campeões têm mais vida e dano e ganham **habilidades novas**, por exemplo:
+  - Slime: divide-se em dois ao morrer / deixa gosma que te abranda.
+  - Morcego: suga vida / faz investidas.
+  - Esqueleto: dispara em leque / dispara rajadas.
+  - Orc: fica furioso com pouca vida / grito de guerra que acelera os aliados.
+  - Fantasma: fica invisível / teletransporta-se.
+  - Zumbi: mordida venenosa / nuvem tóxica ao morrer.
+  - Lobo de Gelo: uivo que chama a matilha / investida.
+  - …e cada monstro novo tem as suas (ver `hab` em `INIMIGOS`, em `js/dados.js`).
+- **Veneno**: alguns monstros envenenam-te (a barra de vida fica verde e perdes vida aos poucos). O veneno nunca te mata sozinho.
 - **Maldições**: a partir do andar 3 aparecem **Baús Amaldiçoados**, com itens muito melhores mas que trazem sempre uma maldição (Frágil, Sangrento, Pesado, Avareza, Vazio ou Vulnerável). Podes **purificar** o item na Mesa de Encantamentos.
 - **Companheiros**: na **Sala do Companheiro** (sempre no andar 2 se ainda não tiveres um) libertas um **Lobo** (morde), uma **Fada** (cura-te e dispara magia) ou um **Mini-Dragão** (cospe fogo). O companheiro sobe de nível com as tuas vitórias.
 
@@ -142,6 +160,7 @@ js/idioma.js        tradução para inglês (botão PT | EN)
 js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigos, elites, bosses e preços
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
+js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros e as suas habilidades
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)

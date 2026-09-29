@@ -106,21 +106,63 @@ const ITENS = [
 ];
 
 // Inimigos normais. Os stats escalam com o andar.
+// zonas: em que zonas aparece (ver NOMES_ZONAS). hab: habilidades que ganham
+// quando nascem Veteranos (nível II) ou Campeões (nível III).
 const INIMIGOS = {
-  // zonas: em que zonas aparece (0 Masmorra, 1 Cemitério, 2 Cavernas de Lava, 3 Abismo Gelado).
-  // Depois do andar 20 aparecem todos misturados.
-  slime:     { nome: 'Slime',     hp: 22, dano: 6,  vel: 70,  r: 12, xp: 6,  cor: '#5fd35f', minAndar: 1, peso: 5, zonas: [0] },
-  morcego:   { nome: 'Morcego',   hp: 14, dano: 5,  vel: 135, r: 10, xp: 7,  cor: '#8a64c0', minAndar: 1, peso: 4, zonas: [0, 1, 2] },
-  esqueleto: { nome: 'Esqueleto', hp: 28, dano: 8,  vel: 80,  r: 13, xp: 12, cor: '#e8e2cf', minAndar: 2, peso: 3, zonas: [0, 1, 3] },
-  orc:       { nome: 'Orc',       hp: 60, dano: 13, vel: 75,  r: 14, xp: 20, cor: '#6b8e23', minAndar: 3, peso: 3, zonas: [0, 2] },
-  fantasma:  { nome: 'Fantasma',  hp: 38, dano: 10, vel: 85,  r: 13, xp: 16, cor: '#bfe6ff', minAndar: 5, peso: 2, zonas: [1, 3] },
-  zumbi:     { nome: 'Zumbi',     hp: 50, dano: 11, vel: 48,  r: 13, xp: 13, cor: '#7fa65a', minAndar: 1, peso: 5, zonas: [1] },
-  diabrete:  { nome: 'Diabrete',  hp: 26, dano: 9,  vel: 120, r: 11, xp: 14, cor: '#e0403a', minAndar: 1, peso: 4, zonas: [2] },
-  slimeLava: { nome: 'Slime de Lava', hp: 30, dano: 9, vel: 75, r: 12, xp: 12, cor: '#ff7b25', minAndar: 1, peso: 4, zonas: [2] },
-  loboGelo:  { nome: 'Lobo de Gelo', hp: 34, dano: 10, vel: 165, r: 12, xp: 15, cor: '#cfeaff', minAndar: 1, peso: 4, zonas: [3] },
-  elementalGelo: { nome: 'Elemental de Gelo', hp: 30, dano: 9, vel: 70, r: 12, xp: 16, cor: '#9fdcff', minAndar: 1, peso: 3, zonas: [3] },
-  aranha:    { nome: 'Aranha',    hp: 16, dano: 7,  vel: 150, r: 9,  xp: 5,  cor: '#7a3f96', minAndar: 21, peso: 3, zonas: [] },
+  slime:     { nome: 'Slime',     hp: 22, dano: 6,  vel: 70,  r: 12, xp: 6,  cor: '#5fd35f', minAndar: 1, peso: 5, zonas: [0, 4], hab: { 2: 'dividir', 3: 'gosma' } },
+  morcego:   { nome: 'Morcego',   hp: 14, dano: 5,  vel: 135, r: 10, xp: 7,  cor: '#8a64c0', minAndar: 1, peso: 4, zonas: [0, 1, 2, 4], hab: { 2: 'vampiro', 3: 'investida' } },
+  esqueleto: { nome: 'Esqueleto', hp: 28, dano: 8,  vel: 80,  r: 13, xp: 12, cor: '#e8e2cf', minAndar: 2, peso: 3, zonas: [0, 1, 3, 5], hab: { 2: 'leque', 3: 'rajada' } },
+  orc:       { nome: 'Orc',       hp: 60, dano: 13, vel: 75,  r: 14, xp: 20, cor: '#6b8e23', minAndar: 3, peso: 3, zonas: [0, 2, 5], hab: { 2: 'furia', 3: 'grito' } },
+  fantasma:  { nome: 'Fantasma',  hp: 38, dano: 10, vel: 85,  r: 13, xp: 16, cor: '#bfe6ff', minAndar: 5, peso: 2, zonas: [1, 3, 7], hab: { 2: 'invisivel', 3: 'teleporte' } },
+  zumbi:     { nome: 'Zumbi',     hp: 50, dano: 11, vel: 48,  r: 13, xp: 13, cor: '#7fa65a', minAndar: 1, peso: 5, zonas: [1, 4], hab: { 2: 'veneno', 3: 'nuvem' } },
+  diabrete:  { nome: 'Diabrete',  hp: 26, dano: 9,  vel: 120, r: 11, xp: 14, cor: '#e0403a', minAndar: 1, peso: 4, zonas: [2, 7], hab: { 2: 'leque', 3: 'teleporte' } },
+  slimeLava: { nome: 'Slime de Lava', hp: 30, dano: 9, vel: 75, r: 12, xp: 12, cor: '#ff7b25', minAndar: 1, peso: 4, zonas: [2], hab: { 2: 'rasto', 3: 'dividir' } },
+  loboGelo:  { nome: 'Lobo de Gelo', hp: 34, dano: 10, vel: 165, r: 12, xp: 15, cor: '#cfeaff', minAndar: 1, peso: 4, zonas: [3], hab: { 2: 'uivo', 3: 'investida' } },
+  elementalGelo: { nome: 'Elemental de Gelo', hp: 30, dano: 9, vel: 70, r: 12, xp: 16, cor: '#9fdcff', minAndar: 1, peso: 3, zonas: [3, 6], hab: { 2: 'rajada', 3: 'nova' } },
+  aranha:    { nome: 'Aranha',    hp: 16, dano: 7,  vel: 150, r: 9,  xp: 5,  cor: '#7a3f96', minAndar: 1, peso: 3, zonas: [4, 5], hab: { 2: 'veneno', 3: 'teia' } },
   mimico:    { nome: 'Mímico',    hp: 70, dano: 14, vel: 150, r: 14, xp: 35, cor: '#8b5a2b', minAndar: 999, peso: 0, zonas: [] },
+
+  // --- novos monstros de cada zona ---
+  goblin:    { nome: 'Goblin Ladrão', hp: 18, dano: 5, vel: 150, r: 11, xp: 9, cor: '#8bc34a', minAndar: 2, peso: 3, zonas: [0],
+               hab: { 2: 'bomba', 3: 'invisivel' }, desc: 'Rouba o teu ouro e foge. Apanha-o para o recuperar!' },
+  necromante: { nome: 'Necromante', hp: 34, dano: 8, vel: 70, r: 12, xp: 22, cor: '#6a3fb5', minAndar: 1, peso: 2, zonas: [1],
+               hab: { 2: 'cura', 3: 'teleporte' }, desc: 'Levanta esqueletos e atira magia negra.' },
+  salamandra: { nome: 'Salamandra', hp: 32, dano: 9, vel: 115, r: 12, xp: 15, cor: '#ff9b45', minAndar: 1, peso: 3, zonas: [2],
+               hab: { 2: 'leque', 3: 'investida' }, desc: 'Deixa um rasto de fogo por onde passa.' },
+  yeti:      { nome: 'Yeti', hp: 90, dano: 15, vel: 70, r: 15, xp: 30, cor: '#e8f4ff', minAndar: 1, peso: 2, zonas: [3],
+               hab: { 2: 'furia', 3: 'nova' }, desc: 'Atira bolas de neve e esmaga o chão à sua volta.' },
+  sapo:      { nome: 'Sapo Venenoso', hp: 30, dano: 9, vel: 90, r: 12, xp: 16, cor: '#7ed957', minAndar: 1, peso: 4, zonas: [4],
+               hab: { 2: 'rasto', 3: 'leque' }, desc: 'Salta e cospe veneno.' },
+  planta:    { nome: 'Planta Carnívora', hp: 55, dano: 12, vel: 0, r: 14, xp: 20, cor: '#3fa34d', minAndar: 1, peso: 3, zonas: [4],
+               hab: { 2: 'rajada', 3: 'veneno' }, desc: 'Não se mexe, mas dispara sementes e morde quem chega perto.' },
+  mumia:     { nome: 'Múmia', hp: 70, dano: 12, vel: 55, r: 13, xp: 24, cor: '#d8c9a3', minAndar: 1, peso: 3, zonas: [5],
+               hab: { 2: 'cura', 3: 'nuvem' }, desc: 'Atira ligaduras que te puxam para ela.' },
+  escorpiao: { nome: 'Escorpião', hp: 40, dano: 11, vel: 110, r: 12, xp: 20, cor: '#c8902e', minAndar: 1, peso: 3, zonas: [5],
+               hab: { 2: 'leque', 3: 'furia' }, desc: 'Enterra-se na areia e aparece ao teu lado. O ferrão envenena.' },
+  golemCristal: { nome: 'Golem de Cristal', hp: 100, dano: 14, vel: 60, r: 15, xp: 32, cor: '#7fe0ff', minAndar: 1, peso: 2, zonas: [6],
+               hab: { 2: 'nova', 3: 'dividir' }, desc: 'Quando lhe bates solta estilhaços de cristal.' },
+  espiritoCristal: { nome: 'Espírito de Cristal', hp: 28, dano: 10, vel: 100, r: 11, xp: 20, cor: '#d07fff', minAndar: 1, peso: 3, zonas: [6],
+               hab: { 2: 'leque', 3: 'rajada' }, desc: 'Teletransporta-se à tua volta e dispara cristais.' },
+  olhoVazio: { nome: 'Olho do Vazio', hp: 45, dano: 14, vel: 60, r: 13, xp: 26, cor: '#b44dff', minAndar: 1, peso: 3, zonas: [7],
+               hab: { 2: 'teleporte', 3: 'nova' }, desc: 'Aponta e dispara um raio. Sai da linha vermelha!' },
+  sombra:    { nome: 'Sombra', hp: 40, dano: 13, vel: 140, r: 12, xp: 24, cor: '#5a3a8a', minAndar: 1, peso: 3, zonas: [7],
+               hab: { 2: 'investida', 3: 'teleporte' }, desc: 'Quase invisível até estar perto. Rouba-te vida.' },
+};
+
+// Níveis dos monstros: quanto mais fundo no andar (e na zona), mais Veteranos e Campeões.
+const NIVEIS_INIMIGO = [
+  null,
+  { nome: '', hp: 1, dano: 1, xp: 1 },
+  { nome: 'Veterano', hp: 1.3, dano: 1.1, xp: 1.4, cor: '#cfd8e0' },
+  { nome: 'Campeão', hp: 1.7, dano: 1.25, xp: 2, cor: '#ffd23f' },
+];
+
+// Habilidades que os monstros ganham com o nível (o texto aparece quando a usam pela 1.ª vez)
+const HABILIDADES_INIMIGO = {
+  dividir: 'Divide-se!', gosma: 'Gosma!', vampiro: 'Suga vida!', investida: 'Investida!', leque: 'Leque!',
+  rajada: 'Rajada!', furia: 'Fúria!', grito: 'Grito de guerra!', invisivel: 'Some-se...', teleporte: 'Teletransporte!',
+  veneno: 'Veneno!', nuvem: 'Nuvem tóxica!', rasto: 'Rasto!', uivo: 'Uivo!', nova: 'Explosão!', teia: 'Teia!',
+  bomba: 'Bomba!', cura: 'Cura!',
 };
 
 // Um boss a cada 5 andares (5, 10, 15, 20, 25, 30, depois repete mais forte).
@@ -288,7 +330,7 @@ const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo'];
 // ---------------------------------------------------------------------
 //  ZONAS: cada 5 andares mudam as cores e os inimigos
 // ---------------------------------------------------------------------
-const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado'];
+const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado', 'Pântano Venenoso', 'Templo do Deserto', 'Caverna de Cristal', 'Reino do Vazio'];
 
 // ---------------------------------------------------------------------
 //  MALDIÇÕES: os itens dos Baús Amaldiçoados são fortes mas trazem uma destas.

@@ -365,6 +365,7 @@ function proximoAndar() {
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
   objetos = []; armadilhas = []; ondas = [];
+  reiniciarBioma();
   boss = null;
   reiniciarCampo();
   J.x = mapa.inicio.x; J.y = mapa.inicio.y;
@@ -376,8 +377,8 @@ function proximoAndar() {
     som(80, 1.2, 'sawtooth', 0.06, -30);
   } else {
     popularAndar();
-    const zona = NOMES_ZONAS[Math.floor((andar - 1) / 5) % NOMES_ZONAS.length];
-    if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 20 ? ' (Profundezas)' : ''}`, '#ffe14d');
+    const zona = NOMES_ZONAS[zonaAtual()];
+    if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 40 ? ' (Profundezas)' : ''}`, '#ffe14d');
     else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
     if (andar > 1) som(300, 0.3, 'triangle', 0.05, -150);
   }
@@ -391,11 +392,11 @@ function proximoAndar() {
 
 function pesosInimigos() {
   const pesos = {};
-  const zona = Math.floor((andar - 1) / 5) % NOMES_ZONAS.length;
+  const zona = zonaAtual();
   for (const k in INIMIGOS) {
     const d = INIMIGOS[k];
     if (!d.peso || d.minAndar > andar) continue;
-    if (andar > 20 || (d.zonas && d.zonas.includes(zona))) pesos[k] = d.peso;
+    if (d.zonas && d.zonas.includes(zona)) pesos[k] = d.peso;
   }
   return pesos;
 }
@@ -443,6 +444,7 @@ function popularAndar() {
     }
     const p = pontoLivreNaSala(mapa, salaTesouro, 18);
     const guarda = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    aplicarNivel(guarda, sortearNivel());
     tornarElite(guarda);
     inimigos.push(guarda);
   }
@@ -454,6 +456,7 @@ function popularAndar() {
   for (let i = 0; i < n; i++) {
     const p = pontoLivreNaSala(mapa, escolher(salas), 18);
     const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    aplicarNivel(e, sortearNivel());
     if (andar >= 2 && Math.random() < Math.min(0.4, (0.05 + andar * 0.01) * dif().elite)) tornarElite(e);
     inimigos.push(e);
   }
@@ -531,6 +534,7 @@ function criarInimigo(tipo, x, y) {
     dano: Math.round(d.dano * fd), vel: d.vel, xp: Math.round(d.xp * (1 + (andar - 1) * 0.2)),
     cor: d.cor, t: Math.random() * 10, cd: rand(0.8, 2), acordado: false,
     kbx: 0, kby: 0, flash: 0, boss: false, morto: false, carga: 0, preparar: 0, cx: 0, cy: 0, z: 0,
+    nv: 1, hab: new Set(HAB_BASE[tipo] || []),
   };
 }
 
@@ -639,7 +643,7 @@ function atacar(dx, dy) {
 }
 
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
-  if (e.morto) return;
+  if (e.morto || e.enterrado > 0) return;
   if (e.elite === 'blindado') dano = Math.max(1, Math.ceil(dano * 0.5));
   e.hp -= dano;
   e.flash = 0.1;
@@ -652,6 +656,7 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
   if (af === 'fogo') { e.queima = 3; e.queimaDps = Math.max(1, dano * 0.35); }
   if (af === 'gelo') e.lento = 2;
+  aoSerAtingido(e);
   if (e.hp <= 0 && !e.morto) matarInimigo(e);
   if (af === 'trovao' && Math.random() < 0.25) relampago(e, dano);
 }
@@ -713,6 +718,7 @@ function matarInimigo(e) {
     for (const o of inimigos) if (!o.morto && o !== e) { o.morto = true; explosao(o.x, o.y, o.cor, 10); }
     return;
   }
+  aoMorrerInimigo(e);
   if (nPerk('explosao') > 0) {
     explosao(e.x, e.y, '#ff7b25', 18, 200, 6);
     for (const o of inimigos) {
@@ -865,6 +871,7 @@ function atualizar(dt) {
   drops = drops.filter(d => !d.morto);
   for (const b of baus) b.t += dt;
   atualizarArmadilhas(dt);
+  atualizarBioma(dt);
   atualizarPet(dt);
   if (J.ouro >= 1000) desbloquear('rico');
   inimigos = inimigos.filter(e => !e.morto);
@@ -993,6 +1000,7 @@ function lancarOnda(o) {
     let p = pontoLivreNaSala(mapa, o.sala, 18);
     if (Math.hypot(p.x - J.x, p.y - J.y) < 90) p = pontoLivreNaSala(mapa, o.sala, 18);
     const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    aplicarNivel(e, sortearNivel());
     e.acordado = true;
     e.desafio = o;
     if (o.onda === 3 && k === 0) tornarElite(e);
@@ -1094,7 +1102,7 @@ function atualizarJogador(dt) {
     if (!J.golpe) J.angArma = Math.atan2(my, mx);
   }
   J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt; J.lentoT -= dt;
-  const fLento = J.lentoT > 0 ? 0.5 : 1;
+  const fLento = (J.lentoT > 0 ? 0.5 : 1) * fatorTerreno();
 
   if (premiu('shift') && J.cdDash <= 0) {
     const dx = (mx || my) ? mx : J.dirX, dy = (mx || my) ? my : J.dirY;
@@ -1163,7 +1171,10 @@ function atualizarInimigo(e, dt) {
   let vx = 0, vy = 0;
   const ru = e.acordado && e.tipo !== 'fantasma' ? rumo(mapa, e, J.x, J.y) : { x: ux, y: uy };
   if (e.acordado) {
-    switch (e.tipo) {
+    if (!e.visto) { e.visto = true; veMonstroNovo(e); }
+    const especial = movimentoHabilidade(e, dt, d, ux, uy);
+    if (especial) { vx = especial.vx; vy = especial.vy; }
+    else switch (e.tipo) {
       case 'slime':
         if (e.t % 1.1 < 0.45) { vx = ru.x * e.vel * 1.8; vy = ru.y * e.vel * 1.8; }
         break;
@@ -1179,7 +1190,7 @@ function atualizarInimigo(e, dt) {
         else { const s = Math.sin(e.t * 0.8) > 0 ? 1 : -1; vx = -uy * e.vel * 0.6 * s; vy = ux * e.vel * 0.6 * s; }
         if (e.cd <= 0 && d < 400 && vejo) {
           e.cd = rand(1.6, 2.3);
-          disparar(e.x, e.y, ux, uy, 250, e.dano, '#e8e2cf', 5, 'flecha');
+          tiroInimigo(e, ux, uy, { vel: 250, dano: e.dano, cor: '#e8e2cf', r: 5, tipo: 'flecha' });
           som(700, 0.08, 'triangle', 0.02, -400);
         }
         break;
@@ -1210,26 +1221,34 @@ function atualizarInimigo(e, dt) {
         if (e.cd <= 0 && d < 380 && vejo) {
           if (e.tipo === 'diabrete') {
             e.cd = rand(1.8, 2.6);
-            disparar(e.x, e.y, ux, uy, 230, e.dano, '#ff7b25', 7, 'fogo', 2.5);
+            tiroInimigo(e, ux, uy, { vel: 230, dano: e.dano, cor: '#ff7b25', r: 7, tipo: 'fogo', vida: 2.5 });
             som(250, 0.15, 'sawtooth', 0.03, -100);
           } else {
             e.cd = rand(2.2, 3);
-            const base = Math.atan2(uy, ux);
-            for (const s of [-0.25, 0, 0.25]) disparar(e.x, e.y, Math.cos(base + s), Math.sin(base + s), 220, Math.round(e.dano * 0.7), '#bfe6ff', 6, 'bola', 2.5).efeito = 'gelo';
+            tiroInimigo(e, ux, uy, { angs: [-0.25, 0, 0.25], vel: 220, dano: Math.round(e.dano * 0.7), cor: '#bfe6ff', r: 6, vida: 2.5, efeito: 'gelo' });
             som(1100, 0.12, 'sine', 0.03, -500);
           }
         }
         break;
       }
+      default: // monstros das zonas novas
+        ({ vx, vy } = movimentoBioma(e, dt, d, ux, uy, ru));
     }
+    if (!e.morto) habilidadesPassivas(e, dt, d, ux, uy);
   }
-  const mx = (vx * fLento + e.kbx) * dt, my = (vy * fLento + e.kby) * dt;
+  if (e.morto) return; // o goblin fugiu
+  const fBuff = e.buffT > 0 ? 1.4 : 1;
+  const mx = (vx * fLento * fBuff + e.kbx) * dt, my = (vy * fLento * fBuff + e.kby) * dt;
   if (e.tipo === 'fantasma') { e.x += mx; e.y += my; }
   else if (moverEntidade(mapa, e, mx, my) && e.carga > 0) e.carga = 0;
   e.kbx *= Math.max(0, 1 - dt * 10);
   e.kby *= Math.max(0, 1 - dt * 10);
 
-  if (d < e.r + J.r - 2) danoJogador(e.dano * (e.carga > 0 ? 1.5 : 1), e.x, e.y, e);
+  if (d < e.r + J.r - 2 && !(e.enterrado > 0) && !(e.tipo === 'goblin' && e.roubou)) {
+    const hp0 = J.hp;
+    danoJogador(e.dano * (e.carga > 0 ? 1.5 : e.inv > 0 ? 1.3 : 1), e.x, e.y, e);
+    if (J.hp < hp0) aoAcertarJogador(e, hp0 - J.hp);
+  }
 }
 
 function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
@@ -1493,6 +1512,7 @@ function separarInimigos() {
   }
 }
 function empurrar(e, dx, dy) {
+  if (e.tipo === 'planta') return;
   if (e.tipo === 'fantasma') { e.x += dx; e.y += dy; } else moverEntidade(mapa, e, dx, dy);
 }
 
@@ -1523,7 +1543,15 @@ function atualizarProjeteis(dt) {
         J.lentoT = 2.5;
       }
       if (p.efeito === 'gelo') J.lentoT = Math.max(J.lentoT, 1.5);
+      const hp0 = J.hp;
       danoJogador(p.dano, p.x - p.vx, p.y - p.vy);
+      if (J.hp < hp0 && p.efeito === 'veneno') aplicarVeneno(Math.max(2, p.dano * 0.35), 3);
+      if (J.hp < hp0 && p.efeito === 'puxar' && p.origem && !p.origem.morto) { // a ligadura da múmia puxa-te
+        const ox = p.origem.x - J.x, oy = p.origem.y - J.y, l = Math.hypot(ox, oy) || 1;
+        J.kbx = ox / l * 620; J.kby = oy / l * 620;
+        J.lentoT = Math.max(J.lentoT, 1);
+        texto(J.x, J.y - 30, 'Puxado!', '#d8c9a3', 14);
+      }
       p.morto = true;
     }
   }
@@ -1550,7 +1578,7 @@ function atualizarPerigos(dt) {
 function alvoProximo(raio) {
   let alvo = null, md = raio;
   for (const e of inimigos) {
-    if (e.morto) continue;
+    if (e.morto || e.z > 20) continue;
     const d = Math.hypot(e.x - J.x, e.y - J.y);
     if (d < md) { md = d; alvo = e; }
   }
