@@ -30,6 +30,7 @@ No telemóvel há ainda:
 | C | Ecrã de personagem (todos os stats, equipamento e melhorias) |
 | I | Mochila (guarda até 6 itens, equipa ou vende) |
 | U | Janela de Estado (atributos, poder, rank e habilidades) |
+| F | Habilidade única do teu caçador |
 | 5 6 7 8 | Habilidades de Caçador (desbloqueiam nos níveis 5, 10, 15 e 20) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
@@ -52,7 +53,7 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Missões diárias**: todos os dias há 3 missões novas (matar monstros, abrir baús, chegar a um andar…) que dão almas.
   - **Estatísticas e histórico**: partidas, mortes, tempo de jogo, monstros mortos… e as últimas 8 partidas, com o que te matou.
   - **Coleção e Bestiário**: separadores com os itens, todos os monstros e bosses (com as habilidades de Veterano e Campeão) e as relíquias que já encontraste.
-  - **Conquistas**: 39 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
+  - **Conquistas**: 42 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
 - **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
 - **Zonas (biomas)**: a cada 5 andares muda a zona. Cada uma tem o seu cenário (cores, decoração no chão e nas paredes, tochas de cor própria, partículas no ar e luz) e os seus monstros:
 
@@ -144,6 +145,20 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - Andar 35: **Guardião de Cristal**. Anéis de estilhaços, cristais que nascem do chão à tua volta e espíritos de cristal.
   - Andar 40: **Senhor do Vazio**. Raios que rodam à volta dele, teletransporte com explosão de magia e sombras.
   - Depois disso os bosses repetem-se, cada vez mais fortes. Abaixo de 50% de vida entram em **fase 2 (enfurecidos)**.
+- **Caçadores jogáveis** (no ecrã de criação, separador **Caçador**): cada um tem a sua arma e uma **habilidade única** (tecla **F**, ou o botão ★ no telemóvel). São inspirados nos caçadores de manhwas como Solo Leveling, com nomes próprios:
+  | Caçador | Arma inicial | Habilidade (F) | Passiva |
+  |---|---|---|---|
+  | Aventureiro | Espada de Treino | — | +10% XP |
+  | Caçador das Sombras | Presa Venenosa (paralisa) | **Troca de Sombra**: troca de lugar com a sombra mais longe e o exército fica +50% mais forte | "Ergue-te!" desde o nível 1 e +2 sombras |
+  | Dançarina da Espada | Espada Celeste | **Dança da Espada**: atravessa os monstros num relâmpago (dano x3) | +15% vel. de ataque, +5% crítico |
+  | Imperador das Chamas | Cajado Flamejante | **Chuva de Meteoros** | +40% poder mágico, Bola de Fogo nível 2 |
+  | Tigre Branco | Garras de Tigre | **Forma Bestial**: 8 s com +50% dano, +30% velocidade e roubo de vida | +40 vida |
+  | Colosso | Manoplas do Titã | **Punho do Titã**: atordoa tudo à volta e levas -50% dano 4 s | +60 vida, +6 defesa |
+  | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 45%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +3 vida/s, poções +20% |
+  | Mestre das Lâminas | Espadas Gémeas do Vento | **Corte do Vento**: leque de lâminas que atravessam | +15% velocidade |
+
+  Também há armas lendárias de caçador para encontrar: **Mata-Cavaleiros**, **Fúria do Dragão**, **Adagas do Rei Demónio** (mítico) e o amuleto **Orbe da Ganância**.
+- **Portais (Gates) dentro das masmorras**: em muitos andares aparece um portal com rank **E, D, C, B, A, S, SS ou SSS** (o rank aparece por cima e, ao chegares perto, vês o perigo e o boss). Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Vermelho** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
 - **Caçador** (inspirado em manhwas como Solo Leveling):
   - **Atributos**: em cada nível ganhas 2 pontos para pôr em Força, Agilidade, Vitalidade, Inteligência ou Perceção, na **Janela de Estado** (tecla **U**, ou no ecrã de personagem → Estado).
   - **Habilidades de Caçador** (teclas **5 a 8**; no telemóvel aparece uma segunda fila de botões):
@@ -213,6 +228,8 @@ js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros 
 js/conteudo.js      tipos de arma, relíquias, companheiros novos, bosses dos andares 35 e 40, conquistas novas
 js/extras.js        Pacto de Castigo, missões diárias, estatísticas, salas secretas, Diabo e Anjo, bestiário
 js/cacador.js       atributos, habilidades de caçador, exército das sombras, poder, rank e equilíbrio dinâmico
+js/classes.js       caçadores jogáveis (arma e habilidade única de cada um)
+js/portais.js       portais E a SSS dentro das masmorras (ondas, boss e prémios), Portais Vermelhos
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)

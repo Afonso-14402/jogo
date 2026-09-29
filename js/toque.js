@@ -40,6 +40,7 @@ function botoesToque() {
   const k = TAMANHOS_BOTAO[opcoes.tamanho] || 1;
   // as habilidades de caçador só aparecem quando já as tens
   const habs = J && estado !== 'titulo' ? botoesHabilidadeToque().filter(b => temHabilidade(HABILIDADES_CACADOR[b.hab])) : [];
+  if (J && estado !== 'titulo' && classeJ().hab) habs.push(botaoClasseToque()); // habilidade única do caçador
   return BOTOES_BASE.concat(habs).map(b => {
     const [ax, ay] = b.ancora;
     const n = Object.assign({}, b, { x: ax + (b.x - ax) * k, y: ay + (b.y - ay) * k, r: Math.round(b.r * k) });

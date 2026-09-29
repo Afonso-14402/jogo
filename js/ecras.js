@@ -71,6 +71,7 @@ function desenharControlosToque(t) {
     let borda = '#cfc6e0';
     if (b.feitico) borda = FEITICOS[b.feitico].cor;
     if (b.hab != null) borda = HABILIDADES_CACADOR[b.hab].cor;
+    if (b.id === 'classe') borda = classeJ().cor;
     if (b.id === 'atacar') borda = RARIDADES[J.arma.r].cor;
     if (b.id === 'usar' && podeUsar) borda = '#ffe14d';
     alfa(on ? 0.95 : 0.7);
@@ -99,6 +100,19 @@ function desenharControlosToque(t) {
         ctx.fill();
       }
       textoCentro(`${custoMana(b.feitico)}`, b.x + 14, b.y + 18, 10, '#c9b0ff');
+    } else if (b.id === 'classe') { // habilidade única do caçador
+      const CL = classeJ(), cd = J.cdClasse || 0;
+      alfa(J.mana < CL.mana ? 0.4 : 1);
+      textoCentro('★', b.x, b.y, 20, CL.cor);
+      alfa(1);
+      if (cd > 0) {
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y);
+        ctx.arc(b.x, b.y, b.r - 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(cd / CL.cd, 0, 1));
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fill();
+      }
+      textoCentro(`${CL.mana}`, b.x + 16, b.y + 19, 10, '#ffe680');
     } else if (b.hab != null) { // habilidade de caçador
       const h = HABILIDADES_CACADOR[b.hab], cd = (J.cdHab || {})[h.id] || 0;
       alfa(J.mana < h.mana ? 0.4 : 1);
@@ -238,7 +252,7 @@ function desenharMenuMeta(t) {
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
     textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
     CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
-      const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * 41, w = 304, h = 38;
+      const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * 38, w = 304, h = 35;
       const tem = meta.conquistas[c.id];
       painel(x, y, w, h, tem ? 'rgba(40,34,14,0.95)' : 'rgba(18,14,28,0.95)', tem ? '#ffe14d' : '#3a3150');
       iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 20, y + h / 2, 13);
@@ -247,7 +261,7 @@ function desenharMenuMeta(t) {
       textoEsq(c.nome, x + 40, y + 11, 12, tem ? '#ffe14d' : '#bbb');
       ctx.font = fonte(11, 'normal');
       const larg = ctx.measureText(traduzir(c.desc)).width;
-      textoEsq(c.desc, x + 40, y + 27, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
+      textoEsq(c.desc, x + 40, y + 25, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
     });
   }
 }

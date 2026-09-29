@@ -56,7 +56,7 @@ const HABILIDADES_CACADOR = [
   { id: 'mao',     nome: 'Mão Invisível',   nivel: 15, mana: 15, cd: 8,  cor: '#9fdcff', desc: 'Uma força invisível esmaga e empurra os monstros à tua frente' },
   { id: 'furtivo', nome: 'Furtividade',     nivel: 20, mana: 25, cd: 20, cor: '#b0a8c8', desc: 'Ficas invisível 5 s e o golpe seguinte faz dano x3' },
 ];
-const temHabilidade = h => J && J.nivel >= h.nivel;
+const temHabilidade = h => J && J.nivel >= (h.id === 'ergue' ? nivelErgue() : h.nivel);
 
 function usarHabilidade(i) {
   const h = HABILIDADES_CACADOR[i];
@@ -157,10 +157,10 @@ function aoSubirNivelCacador() {
 //  Exército das Sombras
 // ---------------------------------------------------------------------
 let cadaveres = [], sombras = [];
-const maxSombras = () => Math.min(10, 2 + Math.floor(J.nivel / 8));
+const maxSombras = () => Math.min(10, 2 + Math.floor(J.nivel / 8)) + extraSombras();
 
 function deixarCadaver(e) {
-  if (!J || J.nivel < HABILIDADES_CACADOR[0].nivel || e.mini) return;
+  if (!J || J.nivel < nivelErgue() || e.mini) return;
   if (!SPR[e.tipo]) return;
   cadaveres.push({ tipo: e.tipo, boss: !!e.boss, x: e.x, y: e.y, t: e.boss ? 20 : 8 });
   if (cadaveres.length > 30) cadaveres.shift();
@@ -182,7 +182,7 @@ function levantarExercito() {
   });
 }
 
-const danoSombra = s => Math.max(1, Math.round(S.dano * (s.boss ? 0.6 : 0.15) * (1 + 0.01 * J.nivel)));
+const danoSombra = s => Math.max(1, Math.round(S.dano * (s.boss ? 0.6 : 0.15) * (1 + 0.01 * J.nivel) * bonusSombras()));
 
 function atualizarSombras(dt) {
   sombras.forEach((s, i) => {

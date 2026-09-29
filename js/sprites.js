@@ -748,7 +748,9 @@ function iconeDoItem(it) {
     if (/Colher/.test(n)) return 'colher';
     if (/Galho/.test(n)) return 'galho';
     if (/Peixe/.test(n)) return 'peixe';
-    if (/Adaga/.test(n)) return 'adaga';
+    if (/Adaga|Garra|Presa|Mata-Cavaleiros|Fúria do Dragão/.test(n)) return 'adaga';
+    if (/Bastão/.test(n)) return 'cajado';
+    if (/Manopla/.test(n)) return 'martelo';
     if (/Machad/.test(n)) return 'machado';
     if (/Lança|Tridente/.test(n)) return 'lanca';
     if (/Martelo/.test(n)) return 'martelo';

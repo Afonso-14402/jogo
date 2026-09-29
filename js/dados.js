@@ -87,6 +87,18 @@ const ITENS = [
   { tipo: 'arma', r: 'lendario', nome: 'Tridente do Mar', dano: 34, vel: 1.0, alcance: 88, crit: 0.12, desc: 'Roubado a um deus do oceano.' },
   { tipo: 'arma', r: 'lendario', nome: 'Adagas da Sombra', dano: 26, vel: 1.8, alcance: 40, crit: 0.3, desc: 'Nunca as vês chegar.' },
   { tipo: 'arma', r: 'mitico', nome: 'Arco do Fim do Mundo', dano: 60, vel: 1.5, alcance: 560, crit: 0.3, desc: 'Cada flecha é uma estrela cadente.' },
+  // armas dos Caçadores (a primeira arma de cada um) e armas de caçadores lendários
+  { tipo: 'arma', r: 'comum', nome: 'Presa Venenosa', dano: 5, vel: 1.4, alcance: 36, crit: 0.08, paralisa: 0.12, desc: 'Paralisa às vezes os monstros.' },
+  { tipo: 'arma', r: 'comum', nome: 'Espada Celeste', dano: 6, vel: 1.2, alcance: 46, crit: 0.07, desc: 'Leve como uma pena.' },
+  { tipo: 'arma', r: 'comum', nome: 'Cajado Flamejante', dano: 5, vel: 1.0, alcance: 42, crit: 0.03, magia: 0.3, desc: 'Nunca arrefece.' },
+  { tipo: 'arma', r: 'comum', nome: 'Garras de Tigre', dano: 5, vel: 1.6, alcance: 32, crit: 0.1, desc: 'Rasgam como as de um tigre branco.' },
+  { tipo: 'arma', r: 'comum', nome: 'Manoplas do Titã', dano: 8, vel: 0.8, alcance: 40, crit: 0.05, desc: 'Cada murro abana o chão.' },
+  { tipo: 'arma', r: 'comum', nome: 'Bastão Sagrado', dano: 4, vel: 1.0, alcance: 42, crit: 0.03, magia: 0.25, desc: 'Brilha perto dos mortos-vivos.' },
+  { tipo: 'arma', r: 'comum', nome: 'Espadas Gémeas do Vento', dano: 5, vel: 1.35, alcance: 44, crit: 0.08, desc: 'Cortam o ar a assobiar.' },
+  { tipo: 'arma', r: 'epico', nome: 'Mata-Cavaleiros', dano: 20, vel: 1.5, alcance: 40, crit: 0.18, desc: 'Comprada numa loja que ninguém mais vê.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Fúria do Dragão', dano: 34, vel: 1.7, alcance: 42, crit: 0.28, paralisa: 0.1, desc: 'Feitas com os dentes de um dragão rei.' },
+  { tipo: 'arma', r: 'mitico', nome: 'Adagas do Rei Demónio', dano: 58, vel: 1.9, alcance: 44, crit: 0.35, paralisa: 0.15, desc: 'O rei dos demónios ainda as quer de volta.' },
+  { tipo: 'amuleto', r: 'lendario', nome: 'Orbe da Ganância', magia: 1.0, danoPct: 0.1, desc: 'Duplica o poder dos teus feitiços.' },
 
   // --------------------------- ARMADURAS ---------------------------
   { tipo: 'armadura', r: 'lixo', nome: 'Saco de Batatas', def: 0, hp: 0, desc: 'Pelo menos tapa.' },
@@ -332,7 +344,7 @@ const SKINS = {
   draconica: { nome: 'Dracónica',     pal: { s: '#c0392b', m: '#8a2219', d: '#5a1410', b: '#e8c080', B: '#c8a060', l: '#f5d8a0', r: '#ffd23f', w: '#ffe14d' }, conquista: 'pesadelo' },
   infernal:  { nome: 'Infernal',      pal: { s: '#3a2a2a', m: '#241818', d: '#140c0c', b: '#ff7b25', B: '#b03a10', l: '#ffe14d', r: '#ff3b3b', w: '#ff7b25' }, conquista: 'demonio' },
   cristal:   { nome: 'Cristal',       pal: { s: '#d8f8ff', m: '#7fe0ff', d: '#3a8ab0', b: '#bff4ff', B: '#5ac0e0', l: '#ffffff', r: '#ff7fd0', w: '#ffffff' }, conquista: 'guardiao' },
-  vazio:     { nome: 'Vazio',         pal: { s: '#2e1a40', m: '#1a1026', d: '#07040c', b: '#5a2a8a', B: '#2e1a40', l: '#b44dff', r: '#d07fff', w: '#ff4dff' }, conquista: 'vazio' },
+  vazio:     { nome: 'Do Vazio',      pal: { s: '#2e1a40', m: '#1a1026', d: '#07040c', b: '#5a2a8a', B: '#2e1a40', l: '#b44dff', r: '#d07fff', w: '#ff4dff' }, conquista: 'vazio' },
   lendaria:  { nome: 'Lendária',      pal: { s: '#fff6c8', m: '#ffd23f', d: '#a07800', b: '#8a3fc0', B: '#5a2a80', l: '#d07fff', r: '#ffd23f', w: '#ffe14d' }, conquista: 'andar50' },
   magma:     { nome: 'Magma',         pal: { s: '#1a1010', m: '#0c0606', d: '#000000', b: '#ff5a1a', B: '#a02a08', l: '#ffe14d', r: '#ffe14d', w: '#ff5a1a' }, conquista: 'inferno' },
 };
@@ -457,6 +469,9 @@ const CONQUISTAS = [
   { id: 'exercito',  nome: 'Rei das Sombras',    desc: 'Tem 10 sombras no teu exército',        almas: 50 },
   { id: 'rankS',     nome: 'Caçador de Rank S',  desc: 'Chega ao Rank S',                       almas: 60 },
   { id: 'nacional',  nome: 'Nível Nacional',     desc: 'Chega ao Rank Nacional',                almas: 100 },
+  { id: 'portalS',   nome: 'Portal S',           desc: 'Conquista um Portal de Rank S ou maior', almas: 50 },
+  { id: 'portalSSS', nome: 'Além do Limite',     desc: 'Conquista um Portal de Rank SSS',       almas: 150 },
+  { id: 'portalVermelho', nome: 'Portal Vermelho', desc: 'Sobrevive a um Portal Vermelho',      almas: 40 },
 ];
 
 // ---------------------------------------------------------------------

@@ -398,6 +398,7 @@ function desenharLuz(t) {
   for (const b of baus) if (b.tipo === 'ouro') luz(b.x, b.y, 90, 0.7);
   for (const p of projeteis) if (p.tipo === 'fogo' || p.dono === 'jogador') luz(p.x, p.y, p.explode ? 110 : 50, p.explode ? 0.8 : 0.5);
   for (const o of ondas) luz(o.x, o.y, o.r * 1.4, 0.6 * (o.t / o.dur));
+  for (const o of objetos) if (o.tipo === 'portal' || o.tipo === 'saidaPortal') luz(o.x, o.y, 120, 0.8);
   for (const d of drops) if (d.tipo === 'livro' || d.tipo === 'reliquia') luz(d.x, d.y, 70, 0.6);
   for (const e of inimigos) if (e.lasersB && e.lasersB.fase === 'fogo') for (const a0 of e.lasersB.angs) for (let k = 0; k < 500; k += 80) luz(e.x + Math.cos(e.lasersB.base + a0) * k, e.y + Math.sin(e.lasersB.base + a0) * k, 60, 0.6);
   if (mapa.escada.ativa) luz(mapa.escada.x, mapa.escada.y, 80, 0.5);
@@ -537,6 +538,7 @@ function desenharBau(b) {
 }
 
 function desenharObjeto(o, t) {
+  if (o.tipo === 'portal' || o.tipo === 'saidaPortal') { desenharPortal(o, t); return; }
   if (desenharObjetoExtra(o, t)) return;
   if (o.tipo === 'mercador') {
     sombra(o.x, o.y + 16, 12);
@@ -610,6 +612,8 @@ function desenharJogador(t) {
   if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
   if (J.lentoT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.4);
   if (J.veneno > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#5dff3a', 0.3 + Math.sin(t * 8) * 0.1);
+  if (J.formaBestial > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.45 + Math.sin(t * 10) * 0.15);
+  if (J.escudoTitan > 0) { ctx.globalAlpha = 0.5; aro(J.x, J.y - 2, 24, '#c0a060', 3); ctx.globalAlpha = 1; }
   ctx.globalAlpha = 1;
   if (J.amuleto) {
     ctx.fillStyle = RARIDADES[J.amuleto.r].cor;
@@ -728,6 +732,15 @@ function desenharInimigo(e, t) {
 }
 
 function desenharProjetil(p, t) {
+  if (p.caindo) { // alvo no chão e a coisa a cair do céu
+    ctx.globalAlpha = 0.6;
+    aro(p.x, p.y, p.explode * 0.6, p.cor, 2);
+    ctx.globalAlpha = 1;
+    const y = p.y - Math.min(1, p.vida) * 260;
+    if (p.tipo === 'fogo') { circulo(p.x, y, 9, '#ff5a1a'); circulo(p.x, y, 5, '#ffe14d'); }
+    else { ctx.strokeStyle = p.cor; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(alinhar(p.x), alinhar(y - 16)); ctx.lineTo(alinhar(p.x), alinhar(y)); ctx.stroke(); }
+    return;
+  }
   if (desenharProjetilBioma(p, t)) return;
   const x = p.x, y = p.y;
   if (p.tipo === 'flecha') {
@@ -782,6 +795,7 @@ function desenharTextosMundo() {
   if (pet && J.pet && estado !== 'morto') {
     textoCentro(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`, ecraX(pet.x), ecraY(pet.y) - 26, 11, PETS[J.pet.tipo].cor);
   }
+  for (const o of objetos) desenharLetraPortal(o);
   // nomes dos inimigos de elite
   for (const e of inimigos) {
     if (!e.elite || e.morto || !explorado(e.x, e.y) || (e.alfa ?? 1) < 0.5 || e.enterrado > 0) continue;
@@ -893,21 +907,41 @@ function desenharHUD(t) {
 
   // habilidades de caçador (teclas 5 a 8)
   const hx0 = fx0 + ORDEM_FEITICOS.length * 66 + 16;
-  painel(hx0 - 10, by - 10, HABILIDADES_CACADOR.length * 50 + 12, 86);
-  HABILIDADES_CACADOR.forEach((h, i) => {
-    const x = hx0 + i * 50, tem = temHabilidade(h), cd = (J.cdHab || {})[h.id] || 0;
-    ctx.fillStyle = 'rgba(77,195,255,0.08)';
-    ctx.fillRect(x, by + 6, 44, 44);
-    ctx.globalAlpha = tem ? (J.mana < h.mana ? 0.45 : 1) : 0.25;
-    circuloEcra(x + 22, by + 28, 16, 'rgba(6,20,40,0.9)', h.cor, 3);
-    textoCentro(h.nome[0], x + 22, by + 29, 14, h.cor);
+  const CL = classeJ();
+  painel(hx0 - 10, by - 10, (HABILIDADES_CACADOR.length + 1) * 46 + 12, 86);
+  { // habilidade única do caçador (tecla F)
+    const x = hx0, cd = J.cdClasse || 0;
+    ctx.fillStyle = 'rgba(255,230,128,0.08)';
+    ctx.fillRect(x, by + 6, 42, 44);
+    ctx.globalAlpha = CL.hab ? (J.mana < CL.mana ? 0.45 : 1) : 0.25;
+    circuloEcra(x + 21, by + 28, 16, 'rgba(30,24,10,0.9)', CL.cor, 3);
+    textoCentro('★', x + 21, by + 29, 14, CL.cor);
     ctx.globalAlpha = 1;
-    if (cd > 0) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; const fr = clamp(cd / h.cd, 0, 1); ctx.fillRect(x, by + 6 + Math.round(44 * (1 - fr)), 44, Math.round(44 * fr)); }
+    if (cd > 0 && CL.hab) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; const fr = clamp(cd / CL.cd, 0, 1); ctx.fillRect(x, by + 6 + Math.round(44 * (1 - fr)), 42, Math.round(44 * fr)); }
+    textoCentro('F', x + 6, by + 12, 11, '#fff');
+    textoCentro(CL.hab ? `${CL.mana}` : '—', x + 21, by + 60, 10, '#ffe680', false);
+  }
+  HABILIDADES_CACADOR.forEach((h, i) => {
+    const x = hx0 + (i + 1) * 46, tem = temHabilidade(h), cd = (J.cdHab || {})[h.id] || 0;
+    ctx.fillStyle = 'rgba(77,195,255,0.08)';
+    ctx.fillRect(x, by + 6, 42, 44);
+    ctx.globalAlpha = tem ? (J.mana < h.mana ? 0.45 : 1) : 0.25;
+    circuloEcra(x + 21, by + 28, 16, 'rgba(6,20,40,0.9)', h.cor, 3);
+    textoCentro(h.nome[0], x + 21, by + 29, 14, h.cor);
+    ctx.globalAlpha = 1;
+    if (cd > 0) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; const fr = clamp(cd / h.cd, 0, 1); ctx.fillRect(x, by + 6 + Math.round(44 * (1 - fr)), 42, Math.round(44 * fr)); }
     textoCentro(`${5 + i}`, x + 6, by + 12, 11, '#fff');
     textoCentro(tem ? `${h.mana}` : `Nv${h.nivel}`, x + 22, by + 60, 10, tem ? '#9fdcff' : '#667', false);
   });
+  if (estado === 'jogo' && CL.hab && rato.x > hx0 && rato.x < hx0 + 42 && rato.y > by && rato.y < by + 58) {
+    const px = clamp(hx0 - 110, 10, LARGURA - 250);
+    painel(px, by - 104, 240, 90, 'rgba(24,18,8,0.96)', CL.cor);
+    textoCentro(`${CL.habNome} (F)`, px + 120, by - 86, 14, CL.cor);
+    textoCentroAjustado(CL.habDesc, px + 120, by - 64, 11, '#ddd', 224, false);
+    textoCentro(`Mana ${CL.mana} · Recarga ${CL.cd}s`, px + 120, by - 42, 12, '#ffe680', false);
+  }
   if (estado === 'jogo') HABILIDADES_CACADOR.forEach((h, i) => {
-    const x = hx0 + i * 50;
+    const x = hx0 + (i + 1) * 46;
     if (!(rato.x > x && rato.x < x + 44 && rato.y > by && rato.y < by + 58)) return;
     const px = clamp(x - 110, 10, LARGURA - 250);
     painel(px, by - 104, 240, 90, 'rgba(6,20,40,0.96)', h.cor);
@@ -995,7 +1029,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', pedestal: '#fff0a0', estatua: '#ff8080' };
+  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', pedestal: '#fff0a0', estatua: '#ff8080' };
   for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
@@ -1046,6 +1080,7 @@ function desenharInfoBau(b) {
 
 function desenharInfoObjeto(o) {
   const sx = ecraX(o.x), sy = ecraY(o.y) - 58;
+  if (o.tipo === 'portal' || o.tipo === 'saidaPortal') { desenharInfoPortal(o, sx, sy); return; }
   if (desenharInfoExtra(o, sx, sy)) return;
   const E = modoToque ? 'Usar:' : '[E]';
   if (o.tipo === 'mercador') {
@@ -1464,10 +1499,17 @@ function desenharMesa(t) {
 //  Criação de personagem
 // ---------------------------------------------------------------------
 function desenharCriacao(t) {
-  textoCentro('CRIA A TUA PERSONAGEM', LARGURA / 2, 40, 30, '#ffae00');
+  textoCentro('CRIA A TUA PERSONAGEM', LARGURA / 2 + 60, 30, 26, '#ffae00');
   botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
+  // separadores Caçador / Raça
+  ABAS_CRIACAO.forEach((a, i) => {
+    const r = retAbaCriacao(i), sel = criacao.aba === a;
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffe14d' : dentro(r) ? '#ffffff' : '#3a3150');
+    textoCentro(a === 'classe' ? 'Caçador' : 'Raça', r.x + r.w / 2, r.y + r.h / 2 + 1, 14, sel ? '#ffe14d' : '#aaa');
+  });
+  if (criacao.aba === 'classe') ORDEM_CLASSES.forEach((id, i) => desenharCartaoClasse(retRaca(i), id, escolhaClasse === id));
   // raças
-  ORDEM_RACAS.forEach((id, i) => {
+  if (criacao.aba === 'raca') ORDEM_RACAS.forEach((id, i) => {
     const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;
     painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? R.cor : dentro(r) ? '#ffffff' : '#3a3150');
     sprEcra(framesHeroi(id, escolhaSkin)[0], r.x + 36, r.y + r.h / 2, 3);
@@ -1489,7 +1531,10 @@ function desenharCriacao(t) {
   textoEsq(SKINS[escolhaSkin].nome, 690, 140, 14, '#ccc', 'normal');
   R.bonus.forEach((b, i) => textoEsq(`+ ${traduzir(b).replace(/^\+/, '')}`, 690, 172 + i * 22, 14, '#7dff9a'));
   R.contra.forEach((c, i) => textoEsq(`- ${traduzir(c).replace(/^-/, '')}`, 690, 172 + (R.bonus.length + i) * 22, 14, '#ff8080'));
-  textoEsq('Todas começam com a Bola de Fogo', 690, 318, 11, '#8a7fa8', 'normal');
+  const CL = CLASSES[escolhaClasse];
+  textoEsq(`Caçador: ${CL.nome}`, 690, 292, 13, CL.cor);
+  textoEsq(CL.hab ? `F: ${CL.habNome}` : 'Todas começam com a Bola de Fogo', 690, 314, 11, CL.hab ? '#ffe680' : '#8a7fa8', 'normal');
+  if (CL.hab) textoCentroAjustado(CL.habDesc, 720, 334, 11, '#ddd', 424, false);
   // skins
   textoEsq('Skin', 506, 360, 16, '#ffe14d');
   ORDEM_SKINS.forEach((id, i) => {
@@ -1515,7 +1560,7 @@ function desenharCriacao(t) {
   const b = BOTAO_COMECAR;
   painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
   textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
-  textoEsq(modoToque ? 'Toca numa raça, numa skin e numa dificuldade' : 'W/S: raça   A/D: skin   1-5: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
+  textoEsq(modoToque ? 'Escolhe um caçador, uma raça, uma skin e a dificuldade' : 'Tab: caçador/raça   W/S: escolher   A/D: skin   1-5: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
 }
 
 // ---------------------------------------------------------------------
@@ -1606,7 +1651,7 @@ function desenharPausa() {
   botao(B.guardar, modoToque ? 'Guardar e sair' : 'Guardar e sair (G)', '#ffe680');
   botao(B.desistir, modoToque ? 'Desistir' : 'Desistir (X)', '#ff6060');
   const D = dif();
-  textoCentro(`${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 218, 14, '#aaa', false);
+  textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
   textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 262, 18, '#ffe14d');
   obtidas.forEach((p, i) => {
@@ -1644,7 +1689,7 @@ function desenharMorte() {
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro(J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, 60, J.desistiu ? '#ff9f43' : '#ff4040');
   const D = dif();
-  textoCentro(`${RACAS[J.raca].nome} · ${D.nome}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 178, 16, D.cor);
+  textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · ${D.nome}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 178, 16, D.cor);
   if (!J.desistiu && J.causa) textoCentro(`Morto por: ${J.causa}`, LARGURA / 2, 200, 14, '#ff8080', false);
   const linhas = [
     `Andar alcançado: ${andar}`,
