@@ -73,6 +73,20 @@ const ITENS = [
   { tipo: 'arma', r: 'lendario', nome: 'Foice do Ceifador', dano: 29, vel: 1.0, alcance: 76, crit: 0.25, desc: 'Colhe almas.' },
 
   { tipo: 'arma', r: 'mitico', nome: 'Espada do Infinito', dano: 70, vel: 1.6, alcance: 84, crit: 0.35, desc: 'O MELHOR item do jogo. Corta a própria realidade.' },
+  // arcos, adagas gémeas, katanas... (o tipo de arma muda a forma de atacar)
+  { tipo: 'arma', r: 'lixo', nome: 'Fisga de Borracha', dano: 2, vel: 0.9, alcance: 300, crit: 0, desc: 'Um brinquedo. Quase inútil.' },
+  { tipo: 'arma', r: 'comum', nome: 'Arco Curto', dano: 5, vel: 1.1, alcance: 360, crit: 0.05, desc: 'Dispara flechas de longe.' },
+  { tipo: 'arma', r: 'comum', nome: 'Adagas Gémeas', dano: 4, vel: 1.7, alcance: 34, crit: 0.12, desc: 'Duas lâminas, o dobro da pressa.' },
+  { tipo: 'arma', r: 'raro', nome: 'Arco Longo', dano: 11, vel: 0.9, alcance: 460, crit: 0.08, desc: 'Alcança o outro lado da sala.' },
+  { tipo: 'arma', r: 'raro', nome: 'Katana', dano: 13, vel: 1.25, alcance: 52, crit: 0.12, desc: 'Corta o vento.' },
+  { tipo: 'arma', r: 'raro', nome: 'Foice de Camponês', dano: 12, vel: 0.9, alcance: 60, crit: 0.06, desc: 'Ceifa trigo e esqueletos.' },
+  { tipo: 'arma', r: 'epico', nome: 'Arco Élfico', dano: 17, vel: 1.2, alcance: 480, crit: 0.15, desc: 'Feito de madeira de árvore da lua.' },
+  { tipo: 'arma', r: 'epico', nome: 'Martelo do Trovão', dano: 30, vel: 0.7, alcance: 56, crit: 0.08, desc: 'Cada pancada ecoa como trovão.' },
+  { tipo: 'arma', r: 'epico', nome: 'Lança do Dragão', dano: 22, vel: 0.95, alcance: 82, crit: 0.1, desc: 'Forjada com uma escama de dragão.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Arco das Estrelas', dano: 30, vel: 1.25, alcance: 520, crit: 0.2, desc: 'As flechas brilham como cometas.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Tridente do Mar', dano: 34, vel: 1.0, alcance: 88, crit: 0.12, desc: 'Roubado a um deus do oceano.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Adagas da Sombra', dano: 26, vel: 1.8, alcance: 40, crit: 0.3, desc: 'Nunca as vês chegar.' },
+  { tipo: 'arma', r: 'mitico', nome: 'Arco do Fim do Mundo', dano: 60, vel: 1.5, alcance: 560, crit: 0.3, desc: 'Cada flecha é uma estrela cadente.' },
 
   // --------------------------- ARMADURAS ---------------------------
   { tipo: 'armadura', r: 'lixo', nome: 'Saco de Batatas', def: 0, hp: 0, desc: 'Pelo menos tapa.' },
@@ -178,6 +192,8 @@ const BOSSES = [
   { id: 'golem',    nome: 'Golem de Pedra',  hp: 900, dano: 24, vel: 45, r: 46, xp: 420, cor: '#8a8176' },
   { id: 'rainha',   nome: 'Rainha Aranha',   hp: 700, dano: 18, vel: 120, r: 32, xp: 520, cor: '#5b2a6e' },
   { id: 'demonio',  nome: 'Rei Demónio',     hp: 1000, dano: 24, vel: 95, r: 34, xp: 650, cor: '#b3122e' },
+  { id: 'guardiao', nome: 'Guardião de Cristal', hp: 1150, dano: 26, vel: 50, r: 40, xp: 800, cor: '#7fe0ff' },
+  { id: 'senhorVazio', nome: 'Senhor do Vazio', hp: 1100, dano: 28, vel: 80, r: 34, xp: 950, cor: '#b44dff' },
 ];
 
 // Inimigos de elite: mais fortes, com um modificador, e largam mais ouro e às vezes um baú
@@ -285,8 +301,17 @@ const RACAS = {
   vampiro: { nome: 'Vampiro', cor: '#ff4d6d', desc: 'Vive do sangue dos inimigos.',
              bonus: ['+6% roubo de vida', '+10% crítico', '+1 sorte nos baús'], contra: ['-20 vida', 'Poções curam -15%'],
              roubo: 0.06, crit: 0.1, sorte: 1, hp: -20, cura: -0.15 },
+  gnomo:   { nome: 'Gnomo',   cor: '#ff6b6b', desc: 'Pequeno, esperto e cheio de sorte.',
+             bonus: ['+2 sorte nos baús', '+25% ouro', 'Começa com um Arco Curto'], contra: ['-20 vida'],
+             sorte: 2, ouro: 0.25, hp: -20, armaInicial: 'Arco Curto' },
+  draconato: { nome: 'Draconato', cor: '#ff9b2a', desc: 'Sangue de dragão nas veias.',
+             bonus: ['+30 vida', '+25% poder mágico', 'Imune ao fogo no chão'], contra: ['-10% velocidade de ataque'],
+             hp: 30, magia: 0.25, imuneFogo: true, velAtaque: -0.1 },
+  mortoVivo: { nome: 'Morto-Vivo', cor: '#9fd8c0', desc: 'Já morreu uma vez. Não tem medo de nada.',
+             bonus: ['Imune a veneno', '+2 vida por segundo', '+10% crítico'], contra: ['Poções curam -30%', '-10% XP'],
+             imuneVeneno: true, regen: 2, crit: 0.1, cura: -0.3, xp: -0.1 },
 };
-const ORDEM_RACAS = ['humano', 'elfo', 'anao', 'orc', 'vampiro'];
+const ORDEM_RACAS = ['humano', 'elfo', 'anao', 'orc', 'vampiro', 'gnomo', 'draconato', 'mortoVivo'];
 
 // ---------------------------------------------------------------------
 //  SKINS: cores da armadura do herói. 'recorde' = andar que tens de alcançar para desbloquear.
@@ -304,8 +329,12 @@ const SKINS = {
   celestial: { nome: 'Celestial',     pal: { s: '#ffffff', m: '#d0f4ff', d: '#8ab8d0', b: '#f5f0ff', B: '#c8bff0', l: '#ffffff', r: '#ffd23f', y: '#4dffea', w: '#4dffea' }, conquista: 'mitico' },
   draconica: { nome: 'Dracónica',     pal: { s: '#c0392b', m: '#8a2219', d: '#5a1410', b: '#e8c080', B: '#c8a060', l: '#f5d8a0', r: '#ffd23f', w: '#ffe14d' }, conquista: 'pesadelo' },
   infernal:  { nome: 'Infernal',      pal: { s: '#3a2a2a', m: '#241818', d: '#140c0c', b: '#ff7b25', B: '#b03a10', l: '#ffe14d', r: '#ff3b3b', w: '#ff7b25' }, conquista: 'demonio' },
+  cristal:   { nome: 'Cristal',       pal: { s: '#d8f8ff', m: '#7fe0ff', d: '#3a8ab0', b: '#bff4ff', B: '#5ac0e0', l: '#ffffff', r: '#ff7fd0', w: '#ffffff' }, conquista: 'guardiao' },
+  vazio:     { nome: 'Vazio',         pal: { s: '#2e1a40', m: '#1a1026', d: '#07040c', b: '#5a2a8a', B: '#2e1a40', l: '#b44dff', r: '#d07fff', w: '#ff4dff' }, conquista: 'vazio' },
+  lendaria:  { nome: 'Lendária',      pal: { s: '#fff6c8', m: '#ffd23f', d: '#a07800', b: '#8a3fc0', B: '#5a2a80', l: '#d07fff', r: '#ffd23f', w: '#ffe14d' }, conquista: 'andar50' },
+  magma:     { nome: 'Magma',         pal: { s: '#1a1010', m: '#0c0606', d: '#000000', b: '#ff5a1a', B: '#a02a08', l: '#ffe14d', r: '#ffe14d', w: '#ff5a1a' }, conquista: 'inferno' },
 };
-const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito', 'celestial', 'draconica', 'infernal'];
+const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito', 'celestial', 'draconica', 'infernal', 'cristal', 'vazio', 'lendaria', 'magma'];
 
 // ---------------------------------------------------------------------
 //  FEITIÇOS (teclas 1-4). Aprendem-se e sobem de nível (máx. 3) com Livros de Feitiço.
@@ -330,7 +359,9 @@ const DIFICULDADES = {
   dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0, almas: 1.5 },
   pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1, almas: 2 },
 };
-const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo'];
+DIFICULDADES.inferno = { nome: 'Inferno', cor: '#ff5a1a', desc: 'Desbloqueia ao chegar ao andar 30. O desafio final.',
+  hp: 2.8, dano: 2.4, xp: 1.7, ouro: 1.8, elite: 3, pocoes: -2, almas: 3, conquista: 'andar30' };
+const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo', 'inferno'];
 
 // ---------------------------------------------------------------------
 //  ZONAS: cada 5 andares mudam as cores e os inimigos
@@ -356,9 +387,14 @@ const MALDICOES = [
 const PETS = {
   lobo:   { nome: 'Lobo',        desc: 'Corre até aos inimigos e morde-os', cor: '#b8c0d0' },
   fada:   { nome: 'Fada',        desc: 'Cura-te e dispara magia',           cor: '#ff9ff3' },
-  dragao: { nome: 'Mini-Dragão', desc: 'Cospe bolas de fogo que explodem',  cor: '#ff7b25' },
+  dragao: { nome: 'Mini-Dragão', desc: 'Cospe bolas de fogo que explodem',  cor: '#ff7b25', voa: true },
+  gato:   { nome: 'Gato',        desc: 'Arranha e apanha o ouro por ti',    cor: '#ffb86b' },
+  coruja: { nome: 'Coruja',      desc: 'Atira penas e mostra-te o mapa',    cor: '#c8a0ff', voa: true },
+  rochinha: { nome: 'Rochinha',  desc: 'Bloqueia tiros e esmaga à volta',   cor: '#a8a090' },
+  fenix:  { nome: 'Fénix',       desc: 'Fogo e cura-te quando estás quase a morrer', cor: '#ffcf3a', voa: true },
 };
-const ORDEM_PETS = ['lobo', 'fada', 'dragao'];
+PETS.fada.voa = true;
+const ORDEM_PETS = ['lobo', 'fada', 'dragao', 'gato', 'coruja', 'rochinha', 'fenix'];
 
 // ---------------------------------------------------------------------
 //  ALTAR DAS ALMAS: melhorias permanentes compradas com as almas que ganhas
@@ -394,4 +430,62 @@ const CONQUISTAS = [
   { id: 'maldito',   nome: 'Amaldiçoado',        desc: 'Equipa um item amaldiçoado',            almas: 10 },
   { id: 'amigo',     nome: 'Melhor Amigo',       desc: 'Sobe o teu companheiro ao nível 5',     almas: 20 },
   { id: 'colecao',   nome: 'Colecionador',       desc: 'Encontra 25 itens diferentes',          almas: 40 },
+  { id: 'andar30',   nome: 'Profundezas',        desc: 'Chega ao andar 30 (desbloqueia o Inferno)', almas: 75 },
+  { id: 'andar40',   nome: 'Senhor das Zonas',   desc: 'Chega ao andar 40',                     almas: 100 },
+  { id: 'andar50',   nome: 'Lenda Viva',         desc: 'Chega ao andar 50',                     skin: 'lendaria' },
+  { id: 'guardiao',  nome: 'Quebra-Cristais',    desc: 'Derrota o Guardião de Cristal',         skin: 'cristal' },
+  { id: 'vazio',     nome: 'Luz no Vazio',       desc: 'Derrota o Senhor do Vazio',             skin: 'vazio' },
+  { id: 'matar500',  nome: 'Exterminador',       desc: 'Mata 500 monstros (no total)',          almas: 40 },
+  { id: 'matar2000', nome: 'Lenda da Matança',   desc: 'Mata 2000 monstros (no total)',         almas: 100 },
+  { id: 'campeoes',  nome: 'Caça-Campeões',      desc: 'Mata 25 Campeões (no total)',           almas: 30 },
+  { id: 'reliquias', nome: 'Arqueólogo',         desc: 'Junta 5 relíquias na mesma partida',    almas: 40 },
+  { id: 'tratador',  nome: 'Tratador',           desc: 'Liberta 4 companheiros diferentes',     almas: 30 },
+  { id: 'arqueiro',  nome: 'Olho de Falcão',     desc: 'Mata 100 monstros com arcos (no total)', almas: 25 },
+  { id: 'ladrao',    nome: 'Apanha-Ladrões',     desc: 'Mata um goblin que te roubou',          almas: 15 },
+  { id: 'bestiario', nome: 'Bestiário',          desc: 'Descobre os 12 monstros novos',         almas: 30 },
+  { id: 'intocavel', nome: 'Intocável',          desc: 'Derrota um boss sem levar dano',        almas: 50 },
+  { id: 'nivel30',   nome: 'Herói',              desc: 'Chega ao nível 30',                     almas: 40 },
+  { id: 'inferno',   nome: 'Rei do Inferno',     desc: 'Chega ao andar 10 no Inferno',          skin: 'magma' },
+  { id: 'racas',     nome: 'Diversidade',        desc: 'Chega ao andar 10 com 5 raças diferentes', almas: 50 },
 ];
+
+// ---------------------------------------------------------------------
+//  TIPOS DE ARMA: cada um ataca de maneira diferente
+// ---------------------------------------------------------------------
+const CLASSES_ARMA = {
+  espada:  { nome: 'Espada',  desc: 'Golpe em arco à tua frente' },
+  adaga:   { nome: 'Adaga',   desc: 'Muito rápida; os críticos fazem dano x2.5' },
+  machado: { nome: 'Machado', desc: 'Golpe largo que empurra os inimigos para longe' },
+  lanca:   { nome: 'Lança',   desc: 'Estocada comprida que atravessa todos em linha' },
+  martelo: { nome: 'Martelo', desc: 'Esmaga tudo à tua volta e abranda os inimigos' },
+  foice:   { nome: 'Foice',   desc: 'Varre quase tudo à tua volta e rouba vida' },
+  cajado:  { nome: 'Cajado',  desc: 'Golpe e também dispara uma bola de magia' },
+  arco:    { nome: 'Arco',    desc: 'Dispara flechas de longe que atravessam um inimigo' },
+};
+
+// ---------------------------------------------------------------------
+//  RELÍQUIAS: objetos passivos que ficam contigo até ao fim da partida.
+//  Aparecem nos bosses, nos Baús Dourados, na loja e na Sala de Desafio.
+// ---------------------------------------------------------------------
+const RELIQUIAS = {
+  trevo:     { nome: 'Trevo de 4 Folhas',   desc: '+1 sorte nos baús',                          cor: '#5dff7a', forma: 'trevo' },
+  coracao:   { nome: 'Coração de Ouro',     desc: '+15% vida máxima',                           cor: '#ff4d6d', forma: 'coracao' },
+  luva:      { nome: 'Luva de Ferro',       desc: '+12% dano',                                  cor: '#c0c0d0', forma: 'punho' },
+  botas:     { nome: 'Botas do Vento',      desc: '+12% velocidade e esquiva mais rápida',      cor: '#9fdcff', forma: 'bota' },
+  relogio:   { nome: 'Ampulheta',           desc: 'Feitiços recarregam 30% mais depressa',      cor: '#ffd23f', forma: 'ampulheta' },
+  dente:     { nome: 'Dente de Vampiro',    desc: 'Cada monstro morto cura-te 2% da vida',      cor: '#b3122e', forma: 'dente' },
+  espinhos:  { nome: 'Escudo de Espinhos',  desc: 'Devolve 40% do dano que levas',              cor: '#8a8176', forma: 'escudo' },
+  bolsa:     { nome: 'Bolsa Sem Fundo',     desc: '+35% ouro',                                  cor: '#ffb84d', forma: 'bolsa' },
+  aguia:     { nome: 'Olho de Águia',       desc: '+10% crítico',                               cor: '#ffe14d', forma: 'olho' },
+  fenix:     { nome: 'Pena de Fénix',       desc: 'Revives uma vez com metade da vida',         cor: '#ff7b25', forma: 'pena' },
+  mana:      { nome: 'Cristal de Mana',     desc: '+40 mana e +2 mana por segundo',             cor: '#8a4dff', forma: 'gema' },
+  grimorio:  { nome: 'Grimório Antigo',     desc: '+35% poder mágico',                          cor: '#b44dff', forma: 'livro' },
+  frasco:    { nome: 'Frasco Eterno',       desc: 'Ganhas 1 poção em cada andar novo',          cor: '#ff6b8a', forma: 'frasco' },
+  floco:     { nome: 'Floco Eterno',        desc: 'Os teus golpes abrandam os inimigos',        cor: '#bfe6ff', forma: 'floco' },
+  brasa:     { nome: 'Brasa Viva',          desc: 'Os teus golpes queimam os inimigos',         cor: '#ff5a1a', forma: 'chama' },
+  antidoto:  { nome: 'Antídoto',            desc: 'Ficas imune a veneno',                       cor: '#7dff5a', forma: 'frasco' },
+  coroa:     { nome: 'Coroa do Rei',        desc: '+25% XP e +15% ouro',                        cor: '#ffd23f', forma: 'coroa' },
+  dado:      { nome: 'Dado da Sorte',       desc: '12% de chance de fazer dano x3',             cor: '#ffffff', forma: 'dado' },
+  runas:     { nome: 'Escudo Rúnico',       desc: '+25% defesa',                                cor: '#7fe0ff', forma: 'escudo' },
+  coleira:   { nome: 'Coleira Dourada',     desc: 'O teu companheiro faz o dobro do dano',      cor: '#ffcf3a', forma: 'coleira' },
+};

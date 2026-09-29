@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias'];
 
 function lerSave() {
   try {
@@ -65,7 +65,7 @@ try {
   const e = JSON.parse(localStorage.getItem('masmorra_personagem') || 'null');
   if (e && RACAS[e.raca]) escolhaRaca = e.raca;
   if (e && SKINS[e.skin]) escolhaSkin = e.skin;
-  if (e && DIFICULDADES[e.dificuldade]) escolhaDificuldade = e.dificuldade;
+  if (e && DIFICULDADES[e.dificuldade] && !DIFICULDADES[e.dificuldade].conquista) escolhaDificuldade = e.dificuldade;
 } catch (e) { /* sem storage */ }
 const dif = () => DIFICULDADES[(J && J.dificuldade) || 'normal'] || DIFICULDADES.normal;
 const skinLivre = id => (!SKINS[id].recorde || recorde >= SKINS[id].recorde) && (!SKINS[id].conquista || !!meta.conquistas[SKINS[id].conquista]);
@@ -212,29 +212,30 @@ const nPerk = id => J.perks[id] || 0;
 function stats() {
   const a = J.arma, ar = J.armadura, am = J.amuleto || {};
   const R = RACAS[J.raca] || RACAS.humano;
-  const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0);
+  const X = bonusExtra(); // relíquias e bónus das raças novas
+  const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0) + X.magia;
   return {
-    maxHp: Math.max(10, Math.round((J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct')))),
-    def: J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0),
-    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano'))),
-    crit: 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0),
-    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov')),
-    roubo: (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0),
-    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen'),
+    maxHp: Math.max(10, Math.round((J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct') + X.hpPct))),
+    def: Math.round((J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0)) * (1 + X.defPct)),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct)),
+    crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel),
+    roubo: Math.min(0.15, (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0)),
+    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen') + X.regen,
     danoPct: am.danoPct || 0,
     cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0))),
     alcance: a.alcance,
-    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp')) * dif().xp,
-    sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte'),
-    espinhos: somaAfixos('espinhos'),
-    cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')),
+    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp') + X.xp) * dif().xp,
+    sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte') + X.sorte,
+    espinhos: somaAfixos('espinhos') + X.espinhos,
+    cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')) * X.dash,
     curaPocao: 0.4 + 0.15 * nPerk('pocoes') + (R.cura || 0),
-    ouroMult: Math.max(0.1, (1 + (R.ouro || 0)) * dif().ouro * (1 + somaMaldicoes('ouroPct'))),
+    ouroMult: Math.max(0.1, (1 + (R.ouro || 0)) * dif().ouro * (1 + somaMaldicoes('ouroPct')) * X.ouro),
     danoRecebido: somaMaldicoes('danoRecebido'),
     magia,
     poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
-    maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax')),
-    manaRegen: 3 + 2 * nPerk('canal'),
+    maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax') + X.mana),
+    manaRegen: 3 + 2 * nPerk('canal') + X.manaRegen,
   };
 }
 
@@ -323,7 +324,7 @@ function criarJogador() {
     kills: 0, bausAbertos: 0, melhorItem: null,
     perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0, ouro: 0, lentoT: 0,
     raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
-    mochila: [], pet: null, vidasExtra: 0, bossesMortos: 0,
+    mochila: [], pet: null, vidasExtra: 0, bossesMortos: 0, reliquias: [],
   };
 }
 
@@ -336,6 +337,7 @@ function novoJogo() {
   if (nMeta('feitico')) J.feiticos.raio = 1;
   J.vidasExtra = nMeta('reviver');
   J.ouro += R.ouroInicial || 0;
+  if (R.armaInicial) J.arma = criarItem(ITENS.find(i => i.nome === R.armaInicial), 1, true);
   andar = 0;
   tempoJogo = 0;
   S = stats();
@@ -387,6 +389,7 @@ function proximoAndar() {
   criarPetEntidade();
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
+  conquistasAoDescer();
   guardarJogo();
 }
 
@@ -422,7 +425,7 @@ function popularAndar() {
   const salaPet = (!J.pet && (andar === 2 || (andar > 2 && Math.random() < 0.3))) ? marcar('companheiro') : null;
   if (salaPet) {
     const c = centroPx(salaPet);
-    ORDEM_PETS.forEach((id, i) => {
+    escolherPets(3).forEach((id, i) => {
       let x = c.x + (i - 1) * 76, y = c.y;
       if (colideCirculo(mapa, x, y, 16)) ({ x, y } = pontoLivreNaSala(mapa, salaPet, 16, 1));
       objetos.push({ tipo: 'gaiola', pet: id, sala: salaPet, x, y });
@@ -525,9 +528,26 @@ function soltarOuro(x, y, total, n = 1) {
   }
 }
 
+// Quanto os monstros crescem com o andar: devagar no início e cada vez mais
+// depressa a partir do andar 20, para o herói nunca ficar imortal.
+function escalaAndar(a) {
+  const extra = Math.max(0, a - 20);
+  return {
+    hp: (1 + (a - 1) * 0.3) * Math.pow(1.035, extra),
+    dano: (1 + (a - 1) * 0.18) * Math.pow(1.03, extra),
+  };
+}
+
+// Parte do dano que a defesa tira. Nos andares fundos a mesma defesa vale menos
+// (no andar 1 é igual à fórmula antiga) e nunca passa de 80%.
+function reducaoDefesa() {
+  const K = 12 * (1 + (andar - 1) * 0.15);
+  return Math.min(0.8, S.def / (S.def + K));
+}
+
 function criarInimigo(tipo, x, y) {
   const d = INIMIGOS[tipo], D = dif();
-  const fh = (1 + (andar - 1) * 0.3) * D.hp, fd = (1 + (andar - 1) * 0.18) * D.dano;
+  const E = escalaAndar(andar), fh = E.hp * D.hp, fd = E.dano * D.dano;
   const hp = Math.round(d.hp * fh);
   return {
     tipo, nome: d.nome, x, y, r: d.r, hp, maxHp: hp,
@@ -543,7 +563,7 @@ function criarBoss() {
   const b = BOSSES[(n - 1) % BOSSES.length];
   const ciclo = Math.floor((n - 1) / BOSSES.length);
   const D = dif();
-  const fh = (1 + (andar - 1) * 0.3) * D.hp, fd = (1 + (andar - 1) * 0.18) * D.dano;
+  const E = escalaAndar(andar), fh = E.hp * D.hp, fd = E.dano * D.dano;
   const hp = Math.round(b.hp * fh);
   return {
     tipo: b.id, nome: ciclo > 0 ? `${b.nome} +${ciclo}` : b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
@@ -601,6 +621,7 @@ function ganharXp(q) {
     J.hpBase += 10; J.atkBase += 2; J.defBase += 1;
     J.escolhasPendentes++;
     vibrar(50);
+    if (J.nivel >= 30) desbloquear('nivel30');
     S = stats();
     J.hp = S.maxHp;
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
@@ -616,29 +637,37 @@ function atacar(dx, dy) {
   J.cdAtaque = S.cdAtaque;
   J.angArma = ang;
   J.contaGolpes++;
+  const classe = classeArma(J.arma);
   const giro = nPerk('remoinho') > 0 && J.contaGolpes % 4 === 0;
-  const arco = giro ? Math.PI + 0.1 : 1.15;
-  J.golpe = { ang, t: giro ? 0.25 : 0.15, dur: giro ? 0.25 : 0.15, alcance: S.alcance + J.r, giro };
+  const arco = giro ? Math.PI + 0.1 : ARCO_ARMA[classe];
+  // o martelo esmaga à volta (um pouco mais curto); o arco não tem golpe corpo a corpo
+  const alcance = classe === 'martelo' && !giro ? S.alcance * 0.9 : S.alcance;
+  J.golpe = classe === 'arco' && !giro ? null : { ang, t: giro ? 0.25 : 0.15, dur: giro ? 0.25 : 0.15, alcance: alcance + J.r, giro, estilo: classe };
   som(giro ? 180 : 260, giro ? 0.15 : 0.07, 'square', 0.025, -150);
   if (nPerk('laminas') > 0) {
     projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * 430, vy: dy * 430, r: 7, vida: 0.55,
       cor: '#d9a6ff', tipo: 'lamina', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.5)) });
   }
+  if (classe === 'arco' && !giro) { dispararFlecha(dx, dy); return; }
+  if (classe === 'cajado') dispararBolaCajado(dx, dy);
+  const empurrao = classe === 'machado' ? 1.8 : classe === 'martelo' ? 1.3 : 1;
   let acertou = false;
   for (const e of inimigos) {
     if (e.morto || e.z > 20) continue;
     const ex = e.x - J.x, ey = e.y - J.y;
     const d = Math.hypot(ex, ey);
-    if (d - e.r > S.alcance + J.r) continue;
+    if (d - e.r > alcance + J.r) continue;
     let diff = Math.atan2(ey, ex) - ang;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     if (Math.abs(diff) > arco && d > e.r + J.r + 4) continue;
-    let dano = S.dano * rand(0.85, 1.15) * (1 + S.danoPct);
-    const crit = Math.random() < S.crit;
-    if (crit) dano *= 2;
-    danoInimigo(e, Math.max(1, Math.round(dano)), crit, dx, dy, true);
+    const { dano, crit } = rolarDano();
+    const l2 = d || 1;
+    danoInimigo(e, dano, crit, (classe === 'martelo' ? ex / l2 : dx) * empurrao, (classe === 'martelo' ? ey / l2 : dy) * empurrao, true);
+    if (classe === 'martelo') e.lento = Math.max(e.lento || 0, 1.2);
+    if (classe === 'foice') J.hp = Math.min(S.maxHp, J.hp + dano * 0.04);
     acertou = true;
   }
+  if (classe === 'martelo' && !giro) { ondas.push({ x: J.x, y: J.y, r: alcance + J.r, t: 0.25, dur: 0.25, cor: '#ffe680' }); tremor = Math.max(tremor, 4); }
   if (acertou) tremor = Math.max(tremor, 2);
 }
 
@@ -656,6 +685,7 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
   if (af === 'fogo') { e.queima = 3; e.queimaDps = Math.max(1, dano * 0.35); }
   if (af === 'gelo') e.lento = 2;
+  if (efeitos) golpeReliquias(e);
   aoSerAtingido(e);
   if (e.hp <= 0 && !e.morto) matarInimigo(e);
   if (af === 'trovao' && Math.random() < 0.25) relampago(e, dano);
@@ -701,6 +731,9 @@ function matarInimigo(e) {
     if (e.tipo === 'reiSlime') desbloquear('rei');
     if (e.tipo === 'dragao' && J.dificuldade === 'pesadelo') desbloquear('pesadelo');
     if (e.tipo === 'demonio') desbloquear('demonio');
+    if (e.tipo === 'guardiao') desbloquear('guardiao');
+    if (e.tipo === 'senhorVazio') desbloquear('vazio');
+    if (!J.levouDanoBoss) desbloquear('intocavel');
     if (J.pet) petGanharXp(10);
     mapa.escada.ativa = true;
     tremor = 20;
@@ -711,6 +744,7 @@ function matarInimigo(e) {
     soltarOuro(e.x, e.y, Math.round(40 * (1 + (andar - 1) * 0.25)), 8);
     const livro = sortearLivro();
     if (livro) drops.push({ tipo: 'livro', feitico: livro, x: ex, y: ey + 64, t: 0 });
+    soltarReliquia(ex, ey - 64);
     mostrarBanner('BOSS DERROTADO!', 'Abre os baús e desce a escada', '#ffae00');
     fanfarra([392, 523, 659, 784, 1046, 1318], 0.05);
     projeteis = []; perigos = [];
@@ -719,6 +753,7 @@ function matarInimigo(e) {
     return;
   }
   aoMorrerInimigo(e);
+  conquistasAoMatar(e);
   if (nPerk('explosao') > 0) {
     explosao(e.x, e.y, '#ff7b25', 18, 200, 6);
     for (const o of inimigos) {
@@ -751,9 +786,10 @@ function danoJogador(d, fx, fy, fonte = null) {
     return;
   }
   if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
-  const final = Math.max(1, Math.round(d * 60 / (60 + S.def * 5) * (1 + S.danoRecebido)));
+  const final = Math.max(1, Math.round(d * (1 - reducaoDefesa()) * (1 + S.danoRecebido)));
   if (fonte && fonte.tipo === 'loboGelo') J.lentoT = Math.max(J.lentoT, 1.2);
   J.hp -= final;
+  if (boss) J.levouDanoBoss = true;
   if (fonte && fonte.elite === 'vampirico' && !fonte.morto) {
     fonte.hp = Math.min(fonte.maxHp, fonte.hp + final * 3);
     texto(fonte.x, fonte.y - fonte.r - 6, `+${final * 3}`, '#ff4d6d', 14);
@@ -861,6 +897,8 @@ function atualizar(dt) {
         som(1300, 0.05, 'square', 0.02, 300);
       } else if (d.tipo === 'livro') {
         aprenderFeitico(d.feitico);
+      } else if (d.tipo === 'reliquia') {
+        ganharReliquia(d.id);
       } else {
         J.pocoes++;
         texto(d.x, d.y - 10, '+1 Poção', '#ff6b8a', 15);
@@ -884,6 +922,7 @@ function atualizar(dt) {
       soltarOuro(o.x, o.y, Math.round(20 * (1 + (andar - 1) * 0.25)), 4);
       const livro = Math.random() < 0.6 ? sortearLivro() : null;
       if (livro) drops.push({ tipo: 'livro', feitico: livro, x: o.x + 50, y: o.y + 44, t: 0 });
+      if (Math.random() < 0.5) soltarReliquia(o.x - 50, o.y + 44);
       mostrarBanner('DESAFIO CONCLUÍDO!', 'Ganhaste um Baú Dourado', '#b44dff');
       fanfarra([392, 523, 659, 784, 1046], 0.05);
     } else {
@@ -930,7 +969,7 @@ function atualizar(dt) {
   }
 }
 
-const danoArmadilha = () => Math.round(8 * (1 + (andar - 1) * 0.18) * dif().dano);
+const danoArmadilha = () => Math.round(8 * escalaAndar(andar).dano * dif().dano);
 
 function atualizarArmadilhas(dt) {
   const jtx = Math.floor(J.x / TILE), jty = Math.floor(J.y / TILE);
@@ -961,6 +1000,7 @@ function usarObjeto(o) {
   if (o.tipo === 'mesa') { abrirMesa(o); return; }
   if (o.tipo === 'gaiola') {
     J.pet = { tipo: o.pet, nivel: 1, xp: 0 };
+    conquistaPetLivre(o.pet);
     objetos = objetos.filter(x => x.tipo !== 'gaiola');
     criarPetEntidade();
     pet.x = o.x; pet.y = o.y;
@@ -1025,6 +1065,8 @@ function gerarStock() {
     { id: 'item', nome: item.nome, desc: `${RARIDADES[item.r].nome} · equipa logo`, item, preco: Math.round(PRECO_ITEM_LOJA[item.r] * (1 + andar * 0.1)), qtd: 1 },
     { id: 'perk', nome: 'Pergaminho de Poder', desc: 'Escolhe 1 de 3 melhorias', preco: 100 + andar * 14, qtd: 1 },
   ];
+  const rel = Math.random() < 0.45 ? sortearReliquia() : null;
+  if (rel) stock.push({ id: 'reliquia', rel, nome: `Relíquia: ${RELIQUIAS[rel].nome}`, desc: RELIQUIAS[rel].desc, preco: 160 + andar * 20, qtd: 1 });
   const livro = sortearLivro();
   if (livro) {
     const nv = J.feiticos[livro] || 0;
@@ -1040,7 +1082,10 @@ function abrirLoja(o) {
   som(880, 0.1, 'triangle', 0.04, 200);
 }
 
-function retLinhaLoja(i) { return { x: 40, y: 108 + i * 66, w: 500, h: 58 }; }
+function retLinhaLoja(i) { // com muitos artigos as linhas ficam mais juntas
+  const n = loja && loja.obj && loja.obj.stock ? loja.obj.stock.length : 6;
+  return n > 7 ? { x: 40, y: 104 + i * 58, w: 500, h: 52 } : { x: 40, y: 108 + i * 66, w: 500, h: 58 };
+}
 
 function atualizarLoja(dt) {
   loja.t += dt;
@@ -1081,6 +1126,7 @@ function comprar(i) {
   else if (of.id === 'item') { const m = trocarEquipamento(of.item); loja.msg = { txt: `Equipaste ${of.item.nome}. ${m}`, cor: RARIDADES[of.item.r].cor, t: 2.5 }; }
   else if (of.id === 'madeira' || of.id === 'ouro') { J.bausAbertos++; iniciarRoleta(of.id, 'loja'); }
   else if (of.id === 'perk') { J.escolhasPendentes++; abrirEscolha(); if (escolha) escolha.voltar = 'loja'; }
+  else if (of.id === 'reliquia') { ganharReliquia(of.rel); loja.msg = { txt: RELIQUIAS[of.rel].nome, cor: RELIQUIAS[of.rel].cor, t: 2 }; }
   else if (of.id === 'livro') { aprenderFeitico(of.feitico); loja.msg = { txt: `${FEITICOS[of.feitico].nome}: nível ${J.feiticos[of.feitico]}`, cor: FEITICOS[of.feitico].cor, t: 2 }; }
 }
 
@@ -1490,6 +1536,8 @@ function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
     }
   }
 
+  if (e.tipo === 'guardiao' || e.tipo === 'senhorVazio') ({ vx, vy } = atualizarBossNovo(e, dt, d, ux, uy, ru, fase2));
+
   const bateu = moverEntidade(mapa, e, vx * dt * fLento, vy * dt * fLento);
   if (bateu && e.investida > 0) { e.investida = 0; tremor = 10; som(60, 0.3, 'square', 0.05); }
   if (e.z < 20 && d < e.r + J.r - 4) danoJogador(e.dano * (e.investida > 0 ? 1.5 : 1), e.x, e.y, e);
@@ -1529,9 +1577,11 @@ function atualizarProjeteis(dt) {
     if (p.dono === 'jogador') {
       for (const e of inimigos) {
         if (e.morto || e.z > 20 || Math.hypot(p.x - e.x, p.y - e.y) > p.r + e.r) continue;
+        if (p.atingidos && p.atingidos.includes(e)) continue;
         const l = Math.hypot(p.vx, p.vy) || 1;
         if (p.explode) explodirFogo(p);
-        else danoInimigo(e, p.dano, false, p.vx / l, p.vy / l, true);
+        else danoInimigo(e, p.dano, !!p.crit, p.vx / l, p.vy / l, true);
+        if (p.perfura > 0) { p.perfura--; p.atingidos.push(e); break; } // a flecha atravessa um monstro
         p.morto = true;
         break;
       }
@@ -1646,7 +1696,7 @@ function lancarFeitico(id) {
     fanfarra([659, 784, 1046], 0.03);
   }
   J.mana -= custo;
-  J.cdFeitico[id] = f.cd;
+  J.cdFeitico[id] = f.cd * (temRel('relogio') ? 0.7 : 1);
   explosao(J.x, J.y, f.cor, 10, 120, 3);
 }
 
@@ -1811,7 +1861,7 @@ function petGanharXp(q) {
   }
 }
 
-const danoPet = () => Math.round((4 + J.pet.nivel * 3) * (1 + (andar - 1) * 0.12));
+const danoPet = () => Math.round((4 + J.pet.nivel * 3) * (1 + (andar - 1) * 0.12) * (temRel('coleira') ? 2 : 1));
 
 function atualizarPet(dt) {
   if (!J.pet || !pet) return;
@@ -1826,6 +1876,7 @@ function atualizarPet(dt) {
     return a;
   })();
   const tipo = J.pet.tipo, dano = danoPet();
+  if (atualizarPetNovo(tipo, alvo, dano, dt)) return;
   if (tipo === 'lobo') {
     const tx = alvo ? alvo.x : J.x - J.dirX * 32, ty = alvo ? alvo.y : J.y - J.dirY * 32 + 8;
     const dx = tx - pet.x, dy = ty - pet.y, d = Math.hypot(dx, dy) || 1;
@@ -1951,10 +2002,11 @@ function atualizarPausa() {
 // ---------------------------------------------------------------------
 //  Criação de personagem
 // ---------------------------------------------------------------------
-function retRaca(i) { return { x: 30, y: 84 + i * 94, w: 450, h: 86 }; }
-function retSkin(i) { return { x: 506 + (i % 6) * 72, y: 372 + Math.floor(i / 6) * 100, w: 66, h: 92 }; }
+function retRaca(i) { return { x: 30 + (i % 2) * 228, y: 80 + Math.floor(i / 2) * 118, w: 220, h: 110 }; }
+function retSkin(i) { return { x: 506 + (i % 8) * 54, y: 372 + Math.floor(i / 8) * 100, w: 50, h: 92 }; }
 const BOTAO_COMECAR = { x: 700, y: 586, w: 240, h: 40 };
-function retDificuldade(i) { return { x: 30 + i * 114, y: 562, w: 106, h: 34 }; }
+function retDificuldade(i) { return { x: 30 + i * 92, y: 562, w: 86, h: 34 }; }
+const difLivre = id => !DIFICULDADES[id].conquista || !!meta.conquistas[DIFICULDADES[id].conquista];
 
 function abrirCriacao() {
   criacao = { t: 0, msg: null };
@@ -1975,7 +2027,11 @@ function atualizarCriacao(dt) {
   if (premiu('s', 'arrowdown')) ir = (ir + 1) % ORDEM_RACAS.length;
   if (premiu('a', 'arrowleft')) is = proxSkin(-1);
   if (premiu('d', 'arrowright')) is = proxSkin(1);
-  ORDEM_DIFICULDADES.forEach((id, i) => { if (premiu(String(i + 1)) || clicou(retDificuldade(i))) escolhaDificuldade = id; });
+  ORDEM_DIFICULDADES.forEach((id, i) => {
+    if (!(premiu(String(i + 1)) || clicou(retDificuldade(i)))) return;
+    if (difLivre(id)) escolhaDificuldade = id;
+    else criacao.msg = { txt: DIFICULDADES[id].desc, cor: '#ff8080', t: 2.5 };
+  });
   let comecar = premiu('enter', ' ');
   if (premiu('rato')) {
     ORDEM_RACAS.forEach((_, i) => { if (dentro(retRaca(i))) ir = i; });
@@ -2009,6 +2065,7 @@ function abrirBau(b) {
     return;
   }
   J.bausAbertos++;
+  if (b.tipo === 'ouro' && Math.random() < 0.2) soltarReliquia(b.x, b.y + 30);
   iniciarRoleta(b.tipo, 'jogo');
 }
 

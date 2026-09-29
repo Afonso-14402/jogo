@@ -470,6 +470,7 @@ function criarPoca(x, y, tipo, r, dur, dano = 0) {
 }
 
 function aplicarVeneno(dps, dur = 3) {
+  if (imuneVeneno()) return;
   if (!(J.veneno > 0)) texto(J.x, J.y - 30, 'Envenenado!', '#7dff5a', 15);
   J.veneno = Math.max(J.veneno || 0, dur);
   J.venenoDps = Math.max(J.venenoDps || 0, dps);
@@ -496,7 +497,7 @@ function atualizarBioma(dt) {
     if (J.dashT > 0 || Math.hypot(p.x - J.x, p.y - J.y) > p.r + J.r * 0.4) continue;
     if (p.tipo === 'gosma') J.lentoT = Math.max(J.lentoT, 0.3);
     else if (p.tipo === 'veneno') aplicarVeneno(Math.max(2, p.dano * 0.3), 2.5);
-    else if (p.tipo === 'fogo' && J.pocaCd <= 0) { J.pocaCd = 0.6; danoJogador(Math.max(1, Math.round(p.dano * 0.6)), null, null); }
+    else if (p.tipo === 'fogo' && J.pocaCd <= 0 && !imuneFogoChao()) { J.pocaCd = 0.6; danoJogador(Math.max(1, Math.round(p.dano * 0.6)), null, null); }
   }
   pocas = pocas.filter(p => p.t > 0);
   // salpicos ao andar na lama
@@ -1015,6 +1016,7 @@ function spriteBioma(e, t) {
 
 // Coisas por baixo do monstro (avisos no chão)
 function desenharAvisosInimigo(e, t) {
+  if (e.lasersB) desenharAvisosBoss(e, t);
   if (e.tipo === 'yeti' && e.esmagar > 0) {
     ctx.globalAlpha = 0.2 + (1 - e.esmagar / 0.6) * 0.35;
     circulo(e.x, e.y, 100, '#ff3c3c');

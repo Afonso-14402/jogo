@@ -182,6 +182,7 @@ function linhasItem(it) {
   const pct = v => `${Math.round(v * 100)}%`;
   const l = [];
   if (it.tipo === 'arma') {
+    l.push(`Tipo: ${CLASSES_ARMA[classeArma(it)].nome}`);
     l.push(`Dano: ${it.dano}`, `Velocidade: ${it.vel}x`, `Alcance: ${it.alcance}`, `Crítico: +${pct(it.crit)}`);
     if (it.magia) l.push(`Poder mágico: +${pct(it.magia)}`);
   } else if (it.tipo === 'armadura') {
@@ -391,7 +392,8 @@ function desenharLuz(t) {
   for (const b of baus) if (b.tipo === 'ouro') luz(b.x, b.y, 90, 0.7);
   for (const p of projeteis) if (p.tipo === 'fogo' || p.dono === 'jogador') luz(p.x, p.y, p.explode ? 110 : 50, p.explode ? 0.8 : 0.5);
   for (const o of ondas) luz(o.x, o.y, o.r * 1.4, 0.6 * (o.t / o.dur));
-  for (const d of drops) if (d.tipo === 'livro') luz(d.x, d.y, 70, 0.6);
+  for (const d of drops) if (d.tipo === 'livro' || d.tipo === 'reliquia') luz(d.x, d.y, 70, 0.6);
+  for (const e of inimigos) if (e.lasersB && e.lasersB.fase === 'fogo') for (const a0 of e.lasersB.angs) for (let k = 0; k < 500; k += 80) luz(e.x + Math.cos(e.lasersB.base + a0) * k, e.y + Math.sin(e.lasersB.base + a0) * k, 60, 0.6);
   if (mapa.escada.ativa) luz(mapa.escada.x, mapa.escada.y, 80, 0.5);
   for (const l of mapa.luzes || []) luz(l.x, l.y, 70 + Math.sin(t * 2 + l.x) * 6, 0.55);
   for (const p of pocas) if (p.tipo !== 'gosma') luz(p.x, p.y, 60, 0.4);
@@ -504,6 +506,15 @@ function desenharDrop(d) {
     if (Math.floor(d.t * 4) % 2) { ctx.fillStyle = FEITICOS[d.feitico].cor; ctx.fillRect(alinhar(d.x + 12), alinhar(d.y - 18 + bob), 4, 4); }
     return;
   }
+  if (d.tipo === 'reliquia') {
+    const R = RELIQUIAS[d.id];
+    sombra(d.x, d.y + 14, 9);
+    ctx.globalAlpha = 0.35 + 0.2 * Math.sin(d.t * 5);
+    circulo(d.x, d.y + bob - 4, 20, R.cor);
+    ctx.globalAlpha = 1;
+    spr(iconeReliquia(d.id), d.x, d.y + bob * 1.5 - 4);
+    return;
+  }
   const n = d.valor >= 10 ? 3 : d.valor >= 4 ? 2 : 1;
   for (let i = 0; i < n; i++) spr(SPR.moeda, d.x + (i - (n - 1) / 2) * 8, d.y - i * 4 + bob);
 }
@@ -552,10 +563,26 @@ function desenharJogador(t) {
   const piscar = J.invuln > 0 && Math.floor(J.invuln * 20) % 2 === 0;
   sombra(J.x, J.y + 12, 10);
   let ang = J.angArma;
-  if (J.golpe) {
+  if (J.golpe && !J.golpe.giro && (J.golpe.estilo === 'lanca' || J.golpe.estilo === 'martelo')) {
+    // lança: estocada em linha; martelo: pancada à volta (desenhada com uma onda)
     const p = 1 - J.golpe.t / J.golpe.dur;
-    const volta = J.golpe.giro ? Math.PI * 2 : 2.4;
-    const inicio = J.golpe.giro ? J.golpe.ang : J.golpe.ang - 1.2;
+    if (J.golpe.estilo === 'lanca') {
+      const a = J.golpe.ang, alc = J.golpe.alcance * (0.4 + 0.6 * Math.sin(p * Math.PI));
+      ctx.strokeStyle = RARIDADES[J.arma.r].cor;
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(alinhar(J.x), alinhar(J.y));
+      ctx.lineTo(alinhar(J.x + Math.cos(a) * alc), alinhar(J.y + Math.sin(a) * alc));
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ang = J.golpe.ang;
+  } else if (J.golpe) {
+    const p = 1 - J.golpe.t / J.golpe.dur;
+    const largo = { adaga: 1.8, machado: 3.2, foice: 4.8 }[J.golpe.estilo] || 2.4;
+    const volta = J.golpe.giro ? Math.PI * 2 : largo;
+    const inicio = J.golpe.giro ? J.golpe.ang : J.golpe.ang - largo / 2;
     ang = inicio + p * volta;
     ctx.strokeStyle = J.golpe.giro ? '#ffae00' : RARIDADES[J.arma.r].cor;
     ctx.globalAlpha = 0.5 * (1 - p) + 0.15;
@@ -598,7 +625,7 @@ function desenharArma(ang) {
 }
 
 function spriteInimigo(e, t) {
-  const novo = spriteBioma(e, t);
+  const novo = spriteBioma(e, t) || spriteConteudo(e, t);
   if (novo) return novo;
   switch (e.tipo) {
     case 'slime': {
@@ -780,6 +807,8 @@ function desenharHUD(t) {
     iconePerk(p, x, y, 12);
     if (nPerk(p.id) > 1) textoCentro(`${nPerk(p.id)}`, x + 10, y + 9, 11, '#fff');
   });
+  const yRel = 142 + Math.ceil(obtidas.length / 10) * 28;
+  (J.reliquias || []).forEach((id, i) => sprEcra(iconeReliquia(id), 26 + (i % 10) * 28, yRel + Math.floor(i / 10) * 28, 2));
 
   ctx.restore();
   desenharMinimapa();
@@ -1165,6 +1194,7 @@ function iconeOferta(of, x, y) {
   } else if (of.id === 'madeira' || of.id === 'ouro') sprEcra(SPR.bau[of.id], x, y, 3);
   else if (of.id === 'item') desenharIcone(of.item, x, y, 48);
   else if (of.id === 'livro') sprEcra(SPR.livro[of.feitico], x, y, 3);
+  else if (of.id === 'reliquia') sprEcra(iconeReliquia(of.rel), x, y, 3);
   else iconePerk({ cor: '#ffae00', letra: '?', unica: false }, x, y, 18);
 }
 
@@ -1242,7 +1272,7 @@ function desenharPersonagem() {
   sprEcra(SPR.moeda, 116, 140, 3);
   textoEsq(`${J.ouro} ouro`, 130, 140, 14, '#ffd23f');
   const pct = v => `${Math.round(v * 100)}%`;
-  const reducao = 1 - 60 / (60 + S.def * 5);
+  const reducao = reducaoDefesa();
   const linhas = [
     ['Vida', `${Math.ceil(J.hp)} / ${S.maxHp}`],
     ['Mana', `${Math.floor(J.mana)} / ${S.maxMana} (+${S.manaRegen}/s)`],
@@ -1399,14 +1429,12 @@ function desenharCriacao(t) {
   // raças
   ORDEM_RACAS.forEach((id, i) => {
     const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;
-    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? R.cor : '#3a3150');
-    sprEcra(framesHeroi(id, escolhaSkin)[0], r.x + 40, r.y + r.h / 2, 3);
-    textoEsq(R.nome, r.x + 80, r.y + 20, 20, R.cor);
-    textoEsq(R.desc, r.x + 170, r.y + 21, 12, '#999', 'normal');
-    ctx.font = fonte(12);
-    const bonus = R.bonus.join('  ·  ');
-    textoEsq(bonus, r.x + 80, r.y + 46, ctx.measureText(bonus).width > 350 ? 11 : 12, '#7dff9a');
-    if (R.contra.length) textoEsq(R.contra.join('  ·  '), r.x + 80, r.y + 66, 12, '#ff8080');
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? R.cor : dentro(r) ? '#ffffff' : '#3a3150');
+    sprEcra(framesHeroi(id, escolhaSkin)[0], r.x + 36, r.y + r.h / 2, 3);
+    textoEsq(R.nome, r.x + 70, r.y + 22, 16, R.cor);
+    textoEsq(R.bonus[0], r.x + 70, r.y + 48, 11, '#7dff9a', 'normal');
+    if (R.bonus[1]) textoEsq(R.bonus[1], r.x + 70, r.y + 66, 11, '#7dff9a', 'normal');
+    if (R.contra.length) textoEsq(R.contra[0], r.x + 70, r.y + 88, 11, '#ff8080', 'normal');
   });
   // pré-visualização
   const R = RACAS[escolhaRaca];
@@ -1438,16 +1466,16 @@ function desenharCriacao(t) {
   if (criacao.msg) textoCentro(criacao.msg.txt, 720, 360, 13, criacao.msg.cor);
   // dificuldade
   ORDEM_DIFICULDADES.forEach((id, i) => {
-    const r = retDificuldade(i), D = DIFICULDADES[id], sel = escolhaDificuldade === id;
+    const r = retDificuldade(i), D = DIFICULDADES[id], sel = escolhaDificuldade === id, livre = difLivre(id);
     painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? D.cor : dentro(r) ? '#ffffff' : '#3a3150');
-    textoCentro(`${i + 1} ${D.nome}`, r.x + r.w / 2, r.y + r.h / 2 + 1, 14, sel ? D.cor : '#888');
+    textoCentroAjustado(livre ? D.nome : `${D.nome} (bloq.)`, r.x + r.w / 2, r.y + r.h / 2 + 1, 13, sel ? D.cor : livre ? '#888' : '#553', r.w - 8);
   });
   const Dsel = DIFICULDADES[escolhaDificuldade];
   textoEsq(`Dificuldade: ${Dsel.desc}`, 30, 610, 12, Dsel.cor, 'normal');
   const b = BOTAO_COMECAR;
   painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
   textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
-  textoEsq(modoToque ? 'Toca numa raça, numa skin e numa dificuldade' : 'W/S: raça   A/D: skin   1-4: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
+  textoEsq(modoToque ? 'Toca numa raça, numa skin e numa dificuldade' : 'W/S: raça   A/D: skin   1-5: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
 }
 
 // ---------------------------------------------------------------------
@@ -1548,6 +1576,15 @@ function desenharPausa() {
     textoEsq(`${p.nome}${p.max > 1 ? ` (${nPerk(p.id)}/${p.max})` : ''}`, x + 36, y - 7, 14, p.cor);
     textoEsq(p.desc, x + 36, y + 9, 12, '#ccc', 'normal');
   });
+  const rels = J.reliquias || [];
+  if (rels.length) { // relíquias que já tens nesta partida
+    textoEsq('Relíquias:', 60, ALTURA - 62, 13, '#ffe14d');
+    rels.forEach((id, i) => {
+      const x = 170 + (i % 10) * 76, y = ALTURA - 62 + Math.floor(i / 10) * 30;
+      sprEcra(iconeReliquia(id), x, y, 2);
+      textoEsq(traduzir(RELIQUIAS[id].nome).split(' ')[0], x + 18, y, 10, RELIQUIAS[id].cor, 'normal');
+    });
+  }
   textoCentro('O jogo guarda sozinho ao entrar em cada andar', LARGURA / 2, ALTURA - 24, 13, '#888', false);
 
   if (confirmarDesistir) {

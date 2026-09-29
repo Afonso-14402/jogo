@@ -205,6 +205,18 @@ function aplicarRaca(g, raca) {
     pixel(g, 2, 5, '#8fb33a'); pixel(g, 13, 5, '#8fb33a');
     pixel(g, 5, 6, '#fffbe6'); pixel(g, 10, 6, '#fffbe6');
     pixel(g, 6, 5, '#ffe14d'); pixel(g, 9, 5, '#ffe14d');
+  } else if (raca === 'gnomo') { // chapéu vermelho pontiagudo e barba branca
+    for (let y = 0; y <= 3; y++) for (let x = 7 - y; x <= 8 + y; x++) pixel(g, x, y, y === 3 ? '#a02020' : '#e04040');
+    for (let x = 5; x <= 10; x++) pixel(g, x, 7, '#f0f0f0');
+    pixel(g, 6, 8, '#f0f0f0'); pixel(g, 9, 8, '#f0f0f0');
+  } else if (raca === 'draconato') { // chifres e escamas cor de laranja
+    for (const [x, y] of [[4, 1], [4, 2], [3, 0], [11, 1], [11, 2], [12, 0]]) pixel(g, x, y, '#f0e0c0');
+    for (const [x, y] of [[4, 6], [11, 6], [5, 4], [10, 4]]) pixel(g, x, y, '#ff9b2a');
+    pixel(g, 6, 5, '#ffe14d'); pixel(g, 9, 5, '#ffe14d');
+  } else if (raca === 'mortoVivo') { // pele pálida, olhos a brilhar e ossos
+    for (const [x, y] of [[4, 4], [11, 4], [4, 6], [11, 6], [5, 7], [10, 7]]) pixel(g, x, y, '#9fd8c0');
+    pixel(g, 6, 5, '#5dffea'); pixel(g, 9, 5, '#5dffea');
+    pixel(g, 7, 7, '#e8e2cf'); pixel(g, 8, 7, '#e8e2cf');
   } else if (raca === 'vampiro') { // olhos vermelhos e capa
     pixel(g, 6, 5, '#ff2040'); pixel(g, 9, 5, '#ff2040');
     for (let y = 8; y <= 13; y++) { pixel(g, 0, y, '#6a0f1f'); pixel(g, 15, y, '#6a0f1f'); }
@@ -731,13 +743,14 @@ function gerarEspinhos(estado) {
 function iconeDoItem(it) {
   const n = it.nomeBase || it.nome;
   if (it.tipo === 'arma') {
+    if (/^Arco|Fisga/.test(n)) return 'arco';
     if (/Cajado|Cetro/.test(n)) return 'cajado';
     if (/Colher/.test(n)) return 'colher';
     if (/Galho/.test(n)) return 'galho';
     if (/Peixe/.test(n)) return 'peixe';
     if (/Adaga/.test(n)) return 'adaga';
     if (/Machad/.test(n)) return 'machado';
-    if (/Lança/.test(n)) return 'lanca';
+    if (/Lança|Tridente/.test(n)) return 'lanca';
     if (/Martelo/.test(n)) return 'martelo';
     if (/Foice/.test(n)) return 'foice';
     return 'espada';
@@ -788,6 +801,14 @@ function gerarIcone(nome, cor) {
       linha(g, 11, 4, 14, 1, c);
       pixel(g, 10, 6, b); pixel(g, 11, 7, b);
       break;
+    case 'arco': { // arco curvo com a corda e uma flecha
+      for (let k = 0; k <= 12; k++) { const t = k / 12, x = 3 + Math.sin(t * Math.PI) * 6, y = 2 + t * 12; pixel(g, x, y, cabo); pixel(g, x + 1, y, caboE); }
+      linha(g, 3, 2, 3, 14, '#e8e2cf');
+      linha(g, 2, 8, 14, 8, '#c8b088');
+      poligono(g, [[12, 6], [15, 8], [12, 10]], a);
+      pixel(g, 1, 7, c); pixel(g, 1, 9, c);
+      break;
+    }
     case 'martelo':
       linha(g, 2, 14, 9, 7, cabo); linha(g, 3, 14, 10, 7, caboE);
       poligono(g, [[6, 4], [10, 0], [15, 5], [11, 9]], a);

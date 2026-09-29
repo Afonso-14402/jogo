@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------
 function desenharPet(t) {
   const tipo = J.pet.tipo, frames = SPR.pet[tipo];
-  const voa = tipo !== 'lobo';
+  const voa = !!PETS[tipo].voa;
   const c = frames[voa ? Math.floor(t * 8) % frames.length : 0];
   sombra(pet.x, pet.y + (voa ? 28 : 10), voa ? 6 : 9);
   const y = pet.y + (voa ? 0 : (pet.andando ? -Math.abs(Math.sin(t * 14)) * 3 : 0));
@@ -223,15 +223,17 @@ function desenharMenuMeta(t) {
     const n = Object.keys(meta.conquistas).length;
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
     textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
-    CONQUISTAS.forEach((c, i) => {
-      const x = 40 + (i % 2) * 450, y = 94 + Math.floor(i / 2) * 72, w = 430, h = 62;
+    CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
+      const x = 16 + (i % 3) * 312, y = 88 + Math.floor(i / 3) * 49, w = 304, h = 44;
       const tem = meta.conquistas[c.id];
       painel(x, y, w, h, tem ? 'rgba(40,34,14,0.95)' : 'rgba(18,14,28,0.95)', tem ? '#ffe14d' : '#3a3150');
-      iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 30, y + h / 2, 18);
-      textoEsq(c.nome, x + 58, y + 20, 15, tem ? '#ffe14d' : '#bbb');
-      textoEsq(c.desc, x + 58, y + 42, 12, tem ? '#ddd' : '#888', 'normal');
+      iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 20, y + h / 2, 13);
       const premio = c.almas ? `+${c.almas} almas` : `Skin ${SKINS[c.skin].nome}`;
-      textoDir(premio, x + w - 12, y + 20, 12, tem ? '#b48cff' : '#666');
+      textoDir(premio, x + w - 8, y + 13, 10, tem ? '#b48cff' : '#666');
+      textoEsq(c.nome, x + 40, y + 13, 12, tem ? '#ffe14d' : '#bbb');
+      ctx.font = fonte(11, 'normal');
+      const larg = ctx.measureText(traduzir(c.desc)).width;
+      textoEsq(c.desc, x + 40, y + 32, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
     });
   }
 }

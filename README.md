@@ -46,7 +46,7 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 - **Progressão entre partidas** (menu inicial):
   - **Altar das Almas**: quando morres ou desistes ganhas almas (mais em dificuldades altas) e gastas em melhorias permanentes: vida, dano, mana, ouro e poções iniciais, XP, sorte, começar com o Relâmpago e **Segunda Vida** (revives uma vez por partida).
   - **Coleção de itens**: todos os itens do jogo; os que ainda não encontraste aparecem como "???".
-  - **Conquistas**: 14 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal).
+  - **Conquistas**: 31 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
 - **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
 - **Zonas (biomas)**: a cada 5 andares muda a zona. Cada uma tem o seu cenário (cores, decoração no chão e nas paredes, tochas de cor própria, partículas no ar e luz) e os seus monstros:
 
@@ -73,7 +73,24 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - …e cada monstro novo tem as suas (ver `hab` em `INIMIGOS`, em `js/dados.js`).
 - **Veneno**: alguns monstros envenenam-te (a barra de vida fica verde e perdes vida aos poucos). O veneno nunca te mata sozinho.
 - **Maldições**: a partir do andar 3 aparecem **Baús Amaldiçoados**, com itens muito melhores mas que trazem sempre uma maldição (Frágil, Sangrento, Pesado, Avareza, Vazio ou Vulnerável). Podes **purificar** o item na Mesa de Encantamentos.
-- **Companheiros**: na **Sala do Companheiro** (sempre no andar 2 se ainda não tiveres um) libertas um **Lobo** (morde), uma **Fada** (cura-te e dispara magia) ou um **Mini-Dragão** (cospe fogo). O companheiro sobe de nível com as tuas vitórias.
+- **Companheiros**: na **Sala do Companheiro** (sempre no andar 2 se ainda não tiveres um) aparecem 3 de 7 companheiros e escolhes um. O companheiro sobe de nível com as tuas vitórias.
+  - **Lobo** (morde), **Fada** (cura-te e dispara magia), **Mini-Dragão** (cospe fogo)
+  - **Gato** (arranha e vai buscar o ouro do chão), **Coruja** (penas que atravessam e mostra o mapa à tua volta)
+  - **Rochinha** (fica entre ti e os monstros, bloqueia tiros e esmaga à volta), **Fénix** (fogo e, uma vez por andar, cura-te quando estás quase a morrer)
+- **Tipos de arma**: cada tipo ataca de maneira diferente (aparece na carta do item):
+  | Tipo | Como ataca |
+  |---|---|
+  | Espada | golpe em arco à tua frente |
+  | Adaga | muito rápida; os críticos fazem dano x2.5 |
+  | Machado | golpe largo que empurra os monstros para longe |
+  | Lança | estocada comprida que atravessa todos em linha |
+  | Martelo | esmaga tudo à tua volta e abranda |
+  | Foice | varre quase tudo à tua volta e rouba vida |
+  | Cajado | golpe e também dispara uma bola de magia |
+  | Arco | dispara flechas de longe que atravessam um monstro |
+
+  Há 51 itens: arcos (Fisga, Arco Curto, Arco Longo, Arco Élfico, Arco das Estrelas e o mítico **Arco do Fim do Mundo**), Katana, Adagas Gémeas, Adagas da Sombra, Martelo do Trovão, Lança do Dragão, Tridente do Mar…
+- **Relíquias** (inspiradas em jogos como Isaac e Risk of Rain): objetos passivos que ficam contigo até ao fim da partida. Há 20, por exemplo Trevo de 4 Folhas, Coração de Ouro, Ampulheta (feitiços mais rápidos), Dente de Vampiro, Pena de Fénix (revives uma vez), Dado da Sorte (dano x3), Coleira Dourada (companheiro com o dobro do dano)… Aparecem nos bosses, nos Baús Dourados, na Sala de Desafio e à venda na loja. Vês as tuas relíquias no ecrã de jogo (por baixo das melhorias) e na pausa.
 
 - **Criação de personagem**: ao começar um jogo novo escolhes a **raça**, a **skin** e a **dificuldade**.
 
@@ -83,6 +100,7 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   | Normal | 100% / 100% | normal | — |
   | Difícil | 140% / 135% | +20% / +25% | +50% elites |
   | Pesadelo | 200% / 180% | +40% / +50% | muito mais elites, -1 poção |
+  | Inferno (desbloqueia no andar 30) | 280% / 240% | +70% / +80% | elites por todo o lado, -2 poções, almas x3 |
 
   Os valores estão em `js/dados.js` (`DIFICULDADES`).
 
@@ -93,8 +111,11 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   | Anão | +40 vida, +4 defesa, +30% ouro | -10% velocidade |
   | Orc | +25% dano, +20 vida | -30% poder mágico |
   | Vampiro | +6% roubo de vida, +10% crítico, +1 sorte nos baús | -20 vida, poções curam -15% |
+  | Gnomo | +2 sorte nos baús, +25% ouro, começa com um Arco Curto | -20 vida |
+  | Draconato | +30 vida, +25% poder mágico, imune ao fogo no chão | -10% velocidade de ataque |
+  | Morto-Vivo | imune a veneno, +2 vida por segundo, +10% crítico | poções curam -30%, -10% XP |
 
-  Cada raça muda também o aspeto (orelhas de elfo, barba de anão, dentes de orc, capa de vampiro). Há 8 skins; **Dourado** desbloqueia ao chegar ao andar 10 e **Infinito** ao andar 20. Os bónus e as cores estão em `js/dados.js` (`RACAS` e `SKINS`).
+  Cada raça muda também o aspeto (orelhas de elfo, barba de anão, dentes de orc, capa de vampiro, chapéu de gnomo, chifres de draconato, olhos brilhantes de morto-vivo). Há 15 skins; **Dourado** desbloqueia ao chegar ao andar 10, **Infinito** ao andar 20 e as outras com conquistas. Os bónus e as cores estão em `js/dados.js` (`RACAS` e `SKINS`).
 - **Magia**: tens uma barra de mana (roxa) que se regenera sozinha; as poções também recuperam 40% da mana. Todos começam com a **Bola de Fogo**. Os outros feitiços aprendem-se com **Livros de Feitiço** (largados pelos bosses, na Sala de Desafio e à venda na loja); um livro repetido sobe o feitiço de nível (até 3).
   - **Bola de Fogo**: explode e queima os inimigos à volta.
   - **Relâmpago**: atinge o inimigo mais próximo e salta para outros.
@@ -114,6 +135,8 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - Andar 20: **Golem de Pedra**. Pisão com onda de choque, atira pedregulhos e faz cair rochas do teto.
   - Andar 25: **Rainha Aranha**. Teias que te prendem, saltos e ninhadas de aranhas.
   - Andar 30: **Rei Demónio**. Pilares de fogo, espirais de balas, teletransporte com investida e fantasmas.
+  - Andar 35: **Guardião de Cristal**. Anéis de estilhaços, cristais que nascem do chão à tua volta e espíritos de cristal.
+  - Andar 40: **Senhor do Vazio**. Raios que rodam à volta dele, teletransporte com explosão de magia e sombras.
   - Depois disso os bosses repetem-se, cada vez mais fortes. Abaixo de 50% de vida entram em **fase 2 (enfurecidos)**.
 - **Níveis e melhorias**: ganhas XP ao matar inimigos. Cada nível dá +vida, +ataque e +defesa, cura-te por completo e deixa-te **escolher 1 de 3 melhorias** (teclas 1, 2, 3 ou clique). Há 16 melhorias, por exemplo:
   - Força Bruta, Fúria, Vitalidade, Olho Certeiro, Trevo da Sorte (baús dão itens melhores)…
@@ -153,6 +176,10 @@ Os itens podem sair com um atributo extra: *Excalibur **do Trovão***, *Armadura
 
 Existem 3 tipos de equipamento: **arma**, **armadura** e **amuleto**. Quando sai um item podes **equipá-lo** (E) ou **reciclá-lo** para ganhar XP (X).
 
+### Equilíbrio nos andares altos
+
+A partir do andar 20 os monstros ficam mais fortes cada vez mais depressa, e a defesa vale menos contra monstros de andares fundos (tira no máximo 80% do dano). O roubo de vida tem um limite de 15% e o crítico de 60%. Assim o herói já não fica imortal nem mata tudo com um golpe nos andares 50+. Quanto mais fundo chegares, maior o desafio.
+
 ## Estrutura
 
 ```
@@ -162,6 +189,7 @@ js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigo
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
 js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros e as suas habilidades
+js/conteudo.js      tipos de arma, relíquias, companheiros novos, bosses dos andares 35 e 40, conquistas novas
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)
