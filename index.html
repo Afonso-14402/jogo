@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masmorra do Destino</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #07060a;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      width: min(100vw, 150vh);
+      height: min(66.667vw, 100vh);
+      cursor: crosshair;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="tela"></canvas>
+  <script src="js/dados.js"></script>
+  <script src="js/mapa.js"></script>
+  <script src="js/desenho.js"></script>
+  <script src="js/jogo.js"></script>
+</body>
+</html>

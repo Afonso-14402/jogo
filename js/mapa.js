@@ -1,0 +1,243 @@
+'use strict';
+// =====================================================================
+//  GERAÇÃO DA MASMORRA + COLISÕES
+// =====================================================================
+
+const rand = (a, b) => a + Math.random() * (b - a);
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const escolher = arr => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const distancia = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Escolhe uma chave de um objeto {chave: peso}
+function escolherPeso(pesos) {
+  let total = 0;
+  for (const k in pesos) total += pesos[k];
+  let r = Math.random() * total;
+  let ultima = null;
+  for (const k in pesos) {
+    ultima = k;
+    r -= pesos[k];
+    if (r < 0) return k;
+  }
+  return ultima;
+}
+
+function centroSala(s) {
+  return { x: Math.floor(s.x + s.w / 2), y: Math.floor(s.y + s.h / 2) };
+}
+
+function gerarMapa(andar) {
+  const eBoss = andar % 5 === 0;
+  return eBoss ? gerarArenaBoss() : gerarMasmorra();
+}
+
+function criarBaseMapa(W, H) {
+  return {
+    W, H,
+    tiles: new Uint8Array(W * H), // 0 = parede, 1 = chão
+    explorado: new Uint8Array(W * H),
+    salas: [],
+  };
+}
+
+function cavar(m, x, y) {
+  if (x > 0 && y > 0 && x < m.W - 1 && y < m.H - 1) m.tiles[y * m.W + x] = 1;
+}
+
+function gerarMasmorra() {
+  const m = criarBaseMapa(60, 44);
+  m.eBoss = false;
+
+  for (let t = 0; t < 300 && m.salas.length < 14; t++) {
+    const w = randInt(6, 12), h = randInt(5, 9);
+    const x = randInt(2, m.W - w - 3), y = randInt(2, m.H - h - 3);
+    const sobrepoe = m.salas.some(o =>
+      x < o.x + o.w + 2 && x + w + 2 > o.x && y < o.y + o.h + 2 && y + h + 2 > o.y);
+    if (sobrepoe) continue;
+    m.salas.push({ x, y, w, h });
+  }
+
+  for (const s of m.salas)
+    for (let y = s.y; y < s.y + s.h; y++)
+      for (let x = s.x; x < s.x + s.w; x++) cavar(m, x, y);
+
+  // Liga cada sala à sala anterior mais próxima (árvore) + alguns atalhos
+  for (let i = 1; i < m.salas.length; i++) {
+    let melhor = 0, md = Infinity;
+    const ci = centroSala(m.salas[i]);
+    for (let j = 0; j < i; j++) {
+      const cj = centroSala(m.salas[j]);
+      const d = Math.abs(ci.x - cj.x) + Math.abs(ci.y - cj.y);
+      if (d < md) { md = d; melhor = j; }
+    }
+    corredor(m, ci, centroSala(m.salas[melhor]));
+  }
+  for (let k = 0; k < 2 && m.salas.length > 3; k++) {
+    corredor(m, centroSala(escolher(m.salas)), centroSala(escolher(m.salas)));
+  }
+
+  // Início na primeira sala, escada na sala mais longe
+  const c0 = centroSala(m.salas[0]);
+  let longe = m.salas[0], ld = -1;
+  for (const s of m.salas) {
+    const c = centroSala(s);
+    const d = Math.hypot(c.x - c0.x, c.y - c0.y);
+    if (d > ld) { ld = d; longe = s; }
+  }
+  const ce = centroSala(longe);
+  m.salaInicio = m.salas[0];
+  m.salaEscada = longe;
+  m.inicio = { x: (c0.x + 0.5) * TILE, y: (c0.y + 0.5) * TILE };
+  m.escada = { x: (ce.x + 0.5) * TILE, y: (ce.y + 0.5) * TILE, ativa: true };
+  return m;
+}
+
+function corredor(m, a, b) {
+  const cavarH = (x1, x2, y) => {
+    for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) { cavar(m, x, y); cavar(m, x, y + 1); }
+  };
+  const cavarV = (y1, y2, x) => {
+    for (let y = Math.min(y1, y2); y <= Math.max(y1, y2) + 1; y++) { cavar(m, x, y); cavar(m, x + 1, y); }
+  };
+  if (Math.random() < 0.5) { cavarH(a.x, b.x, a.y); cavarV(a.y, b.y, b.x); }
+  else { cavarV(a.y, b.y, a.x); cavarH(a.x, b.x, b.y); }
+}
+
+function gerarArenaBoss() {
+  const m = criarBaseMapa(36, 26);
+  m.eBoss = true;
+  const sala = { x: 2, y: 2, w: 32, h: 22 };
+  m.salas.push(sala);
+  for (let y = sala.y; y < sala.y + sala.h; y++)
+    for (let x = sala.x; x < sala.x + sala.w; x++) cavar(m, x, y);
+  // Pilares para te esconderes
+  const pilares = [[8, 7], [26, 7], [8, 17], [26, 17]];
+  for (const [px, py] of pilares)
+    for (let y = py; y < py + 2; y++)
+      for (let x = px; x < px + 2; x++) m.tiles[y * m.W + x] = 0;
+  m.salaInicio = sala;
+  m.salaEscada = sala;
+  m.inicio = { x: 18 * TILE, y: 21 * TILE };
+  m.posBoss = { x: 18 * TILE, y: 8 * TILE };
+  m.escada = { x: 18 * TILE, y: 13 * TILE, ativa: false };
+  m.explorado.fill(1);
+  return m;
+}
+
+// ---------------------------------------------------------------------
+//  Colisões
+// ---------------------------------------------------------------------
+function solido(m, tx, ty) {
+  if (tx < 0 || ty < 0 || tx >= m.W || ty >= m.H) return true;
+  return m.tiles[ty * m.W + tx] === 0;
+}
+
+function colideCirculo(m, x, y, r) {
+  const x0 = Math.floor((x - r) / TILE), x1 = Math.floor((x + r) / TILE);
+  const y0 = Math.floor((y - r) / TILE), y1 = Math.floor((y + r) / TILE);
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      if (!solido(m, tx, ty)) continue;
+      const cx = clamp(x, tx * TILE, tx * TILE + TILE);
+      const cy = clamp(y, ty * TILE, ty * TILE + TILE);
+      if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) return true;
+    }
+  }
+  return false;
+}
+
+// Move uma entidade respeitando paredes. Devolve true se bateu.
+function moverEntidade(m, e, dx, dy) {
+  let bateu = false;
+  if (dx) {
+    if (!colideCirculo(m, e.x + dx, e.y, e.r)) e.x += dx; else bateu = true;
+  }
+  if (dy) {
+    if (!colideCirculo(m, e.x, e.y + dy, e.r)) e.y += dy; else bateu = true;
+  }
+  return bateu;
+}
+
+function pontoLivreNaSala(m, s, r, margem = 1) {
+  for (let t = 0; t < 40; t++) {
+    const x = (randInt(s.x + margem, s.x + s.w - 1 - margem) + 0.5) * TILE;
+    const y = (randInt(s.y + margem, s.y + s.h - 1 - margem) + 0.5) * TILE;
+    if (!colideCirculo(m, x, y, r)) return { x, y };
+  }
+  const c = centroSala(s);
+  return { x: (c.x + 0.5) * TILE, y: (c.y + 0.5) * TILE };
+}
+
+function revelar(m, px, py, raio) {
+  const cx = Math.floor(px / TILE), cy = Math.floor(py / TILE);
+  for (let y = cy - raio; y <= cy + raio; y++) {
+    for (let x = cx - raio; x <= cx + raio; x++) {
+      if (x < 0 || y < 0 || x >= m.W || y >= m.H) continue;
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= raio * raio) m.explorado[y * m.W + x] = 1;
+    }
+  }
+}
+
+// Pré-desenha o mapa num canvas escondido (muito mais rápido)
+function renderizarMapa(m, andar) {
+  const c = document.createElement('canvas');
+  c.width = m.W * TILE; c.height = m.H * TILE;
+  const g = c.getContext('2d');
+  // Paleta muda a cada bioma (5 andares)
+  const paletas = [
+    { chao: [43, 36, 56], parede: '#4a3f5e', topo: '#1a1522' },
+    { chao: [34, 44, 40], parede: '#3e5a4a', topo: '#121c17' },
+    { chao: [52, 34, 30], parede: '#6a3a2e', topo: '#200f0c' },
+    { chao: [30, 38, 56], parede: '#3a4a70', topo: '#0f1422' },
+  ];
+  const p = paletas[Math.floor((andar - 1) / 5) % paletas.length];
+  g.fillStyle = '#07060a';
+  g.fillRect(0, 0, c.width, c.height);
+
+  for (let y = 0; y < m.H; y++) {
+    for (let x = 0; x < m.W; x++) {
+      const px = x * TILE, py = y * TILE;
+      if (!solido(m, x, y)) {
+        const v = ((x * 7 + y * 13) % 5) * 3;
+        g.fillStyle = `rgb(${p.chao[0] + v},${p.chao[1] + v},${p.chao[2] + v})`;
+        g.fillRect(px, py, TILE, TILE);
+        g.strokeStyle = 'rgba(0,0,0,0.18)';
+        g.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+        if ((x * 31 + y * 17) % 11 === 0) { // rachas
+          g.strokeStyle = 'rgba(0,0,0,0.3)';
+          g.beginPath();
+          g.moveTo(px + 6, py + 8); g.lineTo(px + 14, py + 16); g.lineTo(px + 12, py + 24);
+          g.stroke();
+        }
+      } else {
+        const chaoAbaixo = !solido(m, x, y + 1);
+        let vizinhoChao = false;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++)
+            if (!solido(m, x + dx, y + dy)) vizinhoChao = true;
+        if (!vizinhoChao) continue;
+        if (chaoAbaixo) {
+          // Face da parede com tijolos
+          g.fillStyle = p.parede;
+          g.fillRect(px, py, TILE, TILE);
+          g.strokeStyle = 'rgba(0,0,0,0.35)';
+          for (let row = 0; row < 4; row++) {
+            const ry = py + row * 8;
+            g.beginPath(); g.moveTo(px, ry + 0.5); g.lineTo(px + TILE, ry + 0.5); g.stroke();
+            const off = row % 2 ? 8 : 0;
+            for (let bx = off; bx < TILE; bx += 16) {
+              g.beginPath(); g.moveTo(px + bx + 0.5, ry); g.lineTo(px + bx + 0.5, ry + 8); g.stroke();
+            }
+          }
+          g.fillStyle = 'rgba(0,0,0,0.35)';
+          g.fillRect(px, py + TILE - 4, TILE, 4);
+        } else {
+          g.fillStyle = p.topo;
+          g.fillRect(px, py, TILE, TILE);
+        }
+      }
+    }
+  }
+  return c;
+}
