@@ -20,6 +20,11 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 | I | Mochila (guarda até 6 itens, equipa ou vende) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
+| I (no menu inicial) | Mudar o idioma entre Português e Inglês |
+
+### Idioma (PT / EN)
+
+No canto superior direito do menu inicial e da pausa há um botão **PT | EN** para jogar em português ou em inglês. A escolha fica guardada. As traduções estão em `js/idioma.js`.
 
 ### Guardar a partida
 
@@ -123,6 +128,7 @@ Existem 3 tipos de equipamento: **arma**, **armadura** e **amuleto**. Quando sai
 
 ```
 index.html          página do jogo
+js/idioma.js        tradução para inglês (botão PT | EN)
 js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigos, elites, bosses e preços
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)

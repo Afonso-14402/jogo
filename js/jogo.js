@@ -1905,7 +1905,8 @@ function atualizarPausa() {
     else if (premiu('escape', 'n', 'p') || clicou(BOTOES_CONFIRMAR.nao)) confirmarDesistir = false;
     return;
   }
-  if (premiu('p', 'escape') || clicou(BOTOES_PAUSA.continuar)) { estado = 'jogo'; rato.baixo = false; }
+  if (clicou(BOTAO_IDIOMA)) mudarIdioma();
+  else if (premiu('p', 'escape') || clicou(BOTOES_PAUSA.continuar)) { estado = 'jogo'; rato.baixo = false; }
   else if (premiu('g') || clicou(BOTOES_PAUSA.guardar)) { guardarJogo(); estado = 'titulo'; }
   else if (premiu('x') || clicou(BOTOES_PAUSA.desistir)) confirmarDesistir = true;
 }
@@ -2057,6 +2058,7 @@ function loop(agora) {
     if (premiu('a')) acao = 'almas';
     if (premiu('l')) acao = 'colecao';
     if (premiu('t')) acao = 'conquistas';
+    if (premiu('i') || clicou(BOTAO_IDIOMA)) { mudarIdioma(); acao = null; }
     if (acao === 'continuar') continuarJogo();
     else if (acao === 'novo') abrirCriacao();
     else if (acao) abrirMenuMeta(acao);

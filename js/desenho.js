@@ -25,6 +25,7 @@ const NOME_TIPO = { arma: 'Arma', armadura: 'Armadura', amuleto: 'Amuleto' };
 //  Texto e painéis (ecrã)
 // ---------------------------------------------------------------------
 function textoCentro(txt, x, y, tam, cor, contorno = true) {
+  txt = traduzir(txt);
   ctx.font = fonte(tam);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -39,6 +40,7 @@ function textoCentro(txt, x, y, tam, cor, contorno = true) {
 }
 
 function textoCentroAjustado(txt, x, y, tamMax, cor, larguraMax, contorno = true) {
+  txt = traduzir(txt);
   let tam = tamMax;
   ctx.font = fonte(tam);
   while (tam > 9 && ctx.measureText(txt).width > larguraMax) { tam--; ctx.font = fonte(tam); }
@@ -46,6 +48,7 @@ function textoCentroAjustado(txt, x, y, tamMax, cor, larguraMax, contorno = true
 }
 
 function textoEsq(txt, x, y, tam, cor, peso = 'bold') {
+  txt = traduzir(txt);
   ctx.font = fonte(tam, peso);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
@@ -54,6 +57,7 @@ function textoEsq(txt, x, y, tam, cor, peso = 'bold') {
 }
 
 function textoDir(txt, x, y, tam, cor, peso = 'bold') {
+  txt = traduzir(txt);
   ctx.font = fonte(tam, peso);
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
@@ -88,6 +92,23 @@ function barra(x, y, w, h, frac, cor, fundo = '#2a2030') {
   ctx.fillRect(x, y, fw, Math.max(2, Math.floor(h / 4)));
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.fillRect(x, y + h - 2, fw, 2);
+}
+
+function botaoIdioma() {
+  const b = BOTAO_IDIOMA, sobre = dentro(b);
+  painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sobre ? '#ffffff' : '#5a4d74');
+  const meio = b.x + b.w / 2;
+  ctx.fillStyle = idioma === 'pt' ? '#ffe14d' : 'rgba(255,255,255,0.08)';
+  ctx.fillRect(b.x + 4, b.y + 4, b.w / 2 - 6, b.h - 8);
+  ctx.fillStyle = idioma === 'en' ? '#ffe14d' : 'rgba(255,255,255,0.08)';
+  ctx.fillRect(meio + 2, b.y + 4, b.w / 2 - 6, b.h - 8);
+  ctx.font = fonte(16);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = idioma === 'pt' ? '#15101e' : '#aaa';
+  ctx.fillText('PT', b.x + b.w / 4 + 1, b.y + b.h / 2 + 1);
+  ctx.fillStyle = idioma === 'en' ? '#15101e' : '#aaa';
+  ctx.fillText('EN', meio + b.w / 4 - 1, b.y + b.h / 2 + 1);
 }
 
 function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)') {
@@ -1050,7 +1071,7 @@ function desenharEscolha(t) {
     ctx.font = fonte(14, 'normal');
     const linhas = [];
     let linha = '';
-    for (const w of p.desc.split(' ')) {
+    for (const w of traduzir(p.desc).split(' ')) {
       const tentativa = linha ? linha + ' ' + w : w;
       if (ctx.measureText(tentativa).width > r.w - 30 && linha) { linhas.push(linha); linha = w; } else linha = tentativa;
     }
@@ -1326,8 +1347,8 @@ function desenharCriacao(t) {
   ctx.fillRect(555, 270, 80, 8);
   textoEsq(R.nome, 690, 112, 26, R.cor);
   textoEsq(SKINS[escolhaSkin].nome, 690, 140, 14, '#ccc', 'normal');
-  R.bonus.forEach((b, i) => textoEsq(`+ ${b.replace(/^\+/, '')}`, 690, 172 + i * 22, 14, '#7dff9a'));
-  R.contra.forEach((c, i) => textoEsq(`- ${c.replace(/^-/, '')}`, 690, 172 + (R.bonus.length + i) * 22, 14, '#ff8080'));
+  R.bonus.forEach((b, i) => textoEsq(`+ ${traduzir(b).replace(/^\+/, '')}`, 690, 172 + i * 22, 14, '#7dff9a'));
+  R.contra.forEach((c, i) => textoEsq(`- ${traduzir(c).replace(/^-/, '')}`, 690, 172 + (R.bonus.length + i) * 22, 14, '#ff8080'));
   textoEsq('Todas começam com a Bola de Fogo', 690, 318, 11, '#8a7fa8', 'normal');
   // skins
   textoEsq('Skin', 506, 360, 16, '#ffe14d');
@@ -1429,13 +1450,15 @@ function desenharTitulo(t) {
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item do jogo!', LARGURA / 2, 548, 16, '#fff', false);
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 584, 13, '#7ec8ff', false);
-  if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas', LARGURA / 2, 612, 11, '#777', false);
+  if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas · I: idioma', LARGURA / 2, 612, 11, '#777', false);
+  botaoIdioma();
 }
 
 function desenharPausa() {
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
   textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
+  if (!confirmarDesistir) botaoIdioma();
   const B = BOTOES_PAUSA;
   botao(B.continuar, 'Continuar (P)', '#5dff7a');
   botao(B.guardar, 'Guardar e sair (G)', '#ffe680');
