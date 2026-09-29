@@ -297,7 +297,7 @@ function desenhar(t) {
   ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
-  if (estado !== 'pausa' && estado !== 'opcoes') desenharHUD(t);
+  if (estado !== 'pausa' && estado !== 'opcoes' && estado !== 'status') desenharHUD(t);
 
   if (estado === 'bau') desenharRoleta(t);
   else if (estado === 'nivel') desenharEscolha(t);
@@ -307,6 +307,7 @@ function desenhar(t) {
   else if (estado === 'mochila') desenharMochila();
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'opcoes') desenharOpcoes(t);
+  else if (estado === 'status') desenharStatus(t);
   else if (estado === 'morto') desenharMorte();
   desenharAvisos();
   desenharAvisoRodar();
@@ -317,6 +318,7 @@ function desenharMundo(t) {
   desenharSalas();
   for (const a of armadilhas) desenharArmadilha(a);
   desenharPocas(t);
+  desenharCadaveres(t);
   desenharEscada(t);
   for (const p of perigos) desenharPerigo(p);
   for (const d of drops) desenharDrop(d);
@@ -328,6 +330,7 @@ function desenharMundo(t) {
   for (const b of baus) lista.push({ y: b.y, f: () => desenharBau(b) });
   for (const o of objetos) lista.push({ y: o.y, f: () => desenharObjeto(o, t) });
   if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
+  for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
   for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
   if (estado !== 'morto') lista.push({ y: J.y, f: () => desenharJogador(t) });
   lista.sort((a, b) => a.y - b.y);
@@ -601,6 +604,7 @@ function desenharJogador(t) {
   const armaAtras = Math.sin(ang) < -0.3;
   if (armaAtras) desenharArma(ang);
   if (piscar) ctx.globalAlpha = 0.4;
+  if (J.furtivo > 0) ctx.globalAlpha = 0.3 + 0.1 * Math.sin(t * 8);
   const c = framesHeroi(J.raca, J.skin)[frame];
   spr(c, J.x, J.y - 4, olhaEsq);
   if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
@@ -795,7 +799,10 @@ function desenharHUD(t) {
   ctx.translate(-MARGEM_X, 0); // painel da vida no canto esquerdo do ecrã
   painel(10, 10, 280, 112);
   textoEsq(`Nv ${J.nivel}`, 22, 28, 20, '#ffe14d');
-  textoEsq(`ATK ${S.dano}  DEF ${S.def}  CRIT ${Math.round(S.crit * 100)}%`, 84, 28, 13, '#cfc6e0');
+  const rk = rankJogador();
+  textoEsq(`PODER ${formatarPoder(poderJogador())}`, 84, 28, 13, corPoder());
+  textoEsq(rk.letra === 'Nacional' ? 'NAC' : rk.letra, 196, 28, 15, rk.cor);
+  if (J.pontos > 0 && Math.floor(t * 3) % 2) textoEsq(`+${J.pontos}`, 240, 28, 13, '#ffe14d');
   barra(22, 44, 256, 18, J.hp / S.maxHp, J.veneno > 0 ? '#5dbf3a' : J.hp / S.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
   textoCentro(`${Math.ceil(J.hp)} / ${S.maxHp}`, 150, 53, 13, '#fff');
   barra(22, 70, 256, 12, J.mana / S.maxMana, '#8a4dff', '#1e1438');
@@ -884,6 +891,31 @@ function desenharHUD(t) {
     textoCentro(f.nome, x + 29, by + 68, 10, nv ? '#aaa' : '#555', false);
   });
 
+  // habilidades de caçador (teclas 5 a 8)
+  const hx0 = fx0 + ORDEM_FEITICOS.length * 66 + 16;
+  painel(hx0 - 10, by - 10, HABILIDADES_CACADOR.length * 50 + 12, 86);
+  HABILIDADES_CACADOR.forEach((h, i) => {
+    const x = hx0 + i * 50, tem = temHabilidade(h), cd = (J.cdHab || {})[h.id] || 0;
+    ctx.fillStyle = 'rgba(77,195,255,0.08)';
+    ctx.fillRect(x, by + 6, 44, 44);
+    ctx.globalAlpha = tem ? (J.mana < h.mana ? 0.45 : 1) : 0.25;
+    circuloEcra(x + 22, by + 28, 16, 'rgba(6,20,40,0.9)', h.cor, 3);
+    textoCentro(h.nome[0], x + 22, by + 29, 14, h.cor);
+    ctx.globalAlpha = 1;
+    if (cd > 0) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; const fr = clamp(cd / h.cd, 0, 1); ctx.fillRect(x, by + 6 + Math.round(44 * (1 - fr)), 44, Math.round(44 * fr)); }
+    textoCentro(`${5 + i}`, x + 6, by + 12, 11, '#fff');
+    textoCentro(tem ? `${h.mana}` : `Nv${h.nivel}`, x + 22, by + 60, 10, tem ? '#9fdcff' : '#667', false);
+  });
+  if (estado === 'jogo') HABILIDADES_CACADOR.forEach((h, i) => {
+    const x = hx0 + i * 50;
+    if (!(rato.x > x && rato.x < x + 44 && rato.y > by && rato.y < by + 58)) return;
+    const px = clamp(x - 110, 10, LARGURA - 250);
+    painel(px, by - 104, 240, 90, 'rgba(6,20,40,0.96)', h.cor);
+    textoCentro(`${h.nome}${temHabilidade(h) ? '' : ` (nível ${h.nivel})`}`, px + 120, by - 86, 14, h.cor);
+    textoCentroAjustado(h.desc, px + 120, by - 64, 11, '#ddd', 224, false);
+    textoCentro(`Mana ${h.mana} · Recarga ${h.cd}s · tecla ${5 + i}`, px + 120, by - 42, 12, '#9fdcff', false);
+  });
+
   if (estado === 'jogo') slots.forEach(([k], i) => {
     const x = 20 + i * 66;
     if (J[k] && rato.x > x && rato.x < x + 58 && rato.y > by && rato.y < by + 58) desenharCartaItem(J[k], x, by - 200, 'Equipado');
@@ -900,7 +932,7 @@ function desenharHUD(t) {
   });
 
   desenharHUDFinal(t);
-  textoDir(`[C] Personagem   [I] Mochila   [M] Som: ${somLigado ? 'ligado' : 'desligado'}`, LARGURA - 16, ALTURA - 14, 12, 'rgba(255,255,255,0.45)', 'normal');
+  textoDir(`[C] Personagem   [U] Estado   [I] Mochila   [M] Som: ${somLigado ? 'ligado' : 'desligado'}`, LARGURA - 70, ALTURA - 96, 12, 'rgba(255,255,255,0.45)', 'normal');
   if (estado === 'jogo') {
     const b = BOTAO_PAUSA, sobre = dentro(b);
     painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(14,11,22,0.85)', sobre ? '#ffffff' : '#5a4d74');
@@ -934,6 +966,7 @@ function desenharHUDFinal(t) {
     ctx.globalAlpha = a;
     textoCentro(banner.titulo, LARGURA / 2, 170, 40, banner.cor);
     if (banner.sub) textoCentro(banner.sub, LARGURA / 2, 210, 18, '#ddd');
+    if (banner.extra) textoCentro(banner.extra, LARGURA / 2, 238, 14, banner.corExtra || '#9fdcff');
     ctx.globalAlpha = 1;
   }
 }
@@ -1267,6 +1300,7 @@ function desenharPersonagem() {
   ctx.fillStyle = 'rgba(0,0,0,0.85)';
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro('PERSONAGEM', LARGURA / 2, 34, 30, '#ffe14d');
+  botao(BOTAO_STATUS, J.pontos > 0 ? `Estado (+${J.pontos})` : 'Estado (U)', J.pontos > 0 ? '#ffe14d' : '#4dc3ff');
 
   // coluna de stats
   painel(20, 64, 300, 540);

@@ -29,6 +29,7 @@ function rolarDano(fator = 1) {
   const crit = Math.random() < S.crit;
   if (crit) dano *= classeArma(J.arma) === 'adaga' ? 2.5 : 2;
   if (temRel('dado') && Math.random() < 0.12) { dano *= 3; texto(J.x, J.y - 40, 'x3!', '#ffffff', 18); }
+  if (J.golpeFurtivo) { dano *= 3; J.golpeFurtivo = false; J.furtivo = 0; texto(J.x, J.y - 40, 'EMBOSCADA!', '#b0a8c8', 18); }
   return { dano: Math.max(1, Math.round(dano)), crit };
 }
 

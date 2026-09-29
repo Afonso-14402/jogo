@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras'];
 
 function lerSave() {
   try {
@@ -213,17 +213,18 @@ function stats() {
   const a = J.arma, ar = J.armadura, am = J.amuleto || {};
   const R = RACAS[J.raca] || RACAS.humano;
   const X = bonusExtra(); // relíquias e bónus das raças novas
-  const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0) + X.magia;
+  const C = bonusCacador(); // atributos do caçador
+  const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0) + X.magia + C.magia;
   return {
-    maxHp: Math.max(10, Math.round((J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct') + X.hpPct) * (1 - (J.vidaVendida || 0)))),
+    maxHp: Math.max(10, Math.round((J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct') + X.hpPct + C.hpPct) * (1 - (J.vidaVendida || 0)))),
     def: Math.round((J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0)) * (1 + X.defPct)),
-    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct)),
-    crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit),
-    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct) * (1 + C.danoPct)),
+    crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit + C.crit),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel + C.velMov),
     roubo: Math.min(0.15, (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0)),
     regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen') + X.regen,
     danoPct: am.danoPct || 0,
-    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0))),
+    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0) + C.velAtaque)),
     alcance: a.alcance,
     xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp') + X.xp) * dif().xp,
     sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte') + X.sorte,
@@ -234,7 +235,7 @@ function stats() {
     danoRecebido: somaMaldicoes('danoRecebido'),
     magia,
     poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
-    maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax') + X.mana),
+    maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax') + X.mana + C.mana),
     manaRegen: 3 + 2 * nPerk('canal') + X.manaRegen,
   };
 }
@@ -326,6 +327,7 @@ function criarJogador() {
     raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
     mochila: [], pet: null, vidasExtra: 0, bossesMortos: 0, reliquias: [],
     pacto: Object.assign({}, meta.pacto || {}), vidaVendida: 0,
+    atributos: {}, pontos: 0, sombras: [], cdHab: {},
   };
 }
 
@@ -366,6 +368,8 @@ function continuarJogo() {
 
 function proximoAndar() {
   andar++;
+  if (J) atualizarFatorAdaptativo(); // os monstros acompanham o teu poder
+  if (J) { const rk = rankJogador().letra; if (rk === 'S' || rk === 'Nacional') desbloquear('rankS'); if (rk === 'Nacional') desbloquear('nacional'); }
   mapa = gerarMapa(andar);
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
@@ -375,6 +379,7 @@ function proximoAndar() {
   reiniciarCampo();
   J.x = mapa.inicio.x; J.y = mapa.inicio.y;
   J.invuln = 1.2; J.golpe = null;
+  levantarExercito();
   if (mapa.eBoss) {
     boss = criarBoss();
     inimigos.push(boss);
@@ -385,6 +390,8 @@ function proximoAndar() {
     const zona = NOMES_ZONAS[zonaAtual()];
     if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 40 ? ' (Profundezas)' : ''}`, '#ffe14d');
     else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
+    banner.extra = `Portal Rank ${rankDoAndar(andar).letra} · poder recomendado ${poderRecomendado(andar)} · o teu: ${poderJogador()}`;
+    banner.corExtra = corPoder();
     if (andar > 1) som(300, 0.3, 'triangle', 0.05, -150);
   }
   cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
@@ -554,7 +561,8 @@ function reducaoDefesa() {
 
 function criarInimigo(tipo, x, y) {
   const d = INIMIGOS[tipo], D = dif();
-  const E = escalaAndar(andar), fh = E.hp * D.hp * (1 + 0.25 * nPacto('pele')), fd = E.dano * D.dano * (1 + 0.2 * nPacto('forca'));
+  const F = fatorAdapt();
+  const E = escalaAndar(andar), fh = E.hp * D.hp * (1 + 0.25 * nPacto('pele')) * F.hp, fd = E.dano * D.dano * (1 + 0.2 * nPacto('forca')) * F.dano;
   const hp = Math.round(d.hp * fh);
   return {
     tipo, nome: d.nome, x, y, r: d.r, hp, maxHp: hp,
@@ -570,7 +578,8 @@ function criarBoss() {
   const b = BOSSES[(n - 1) % BOSSES.length];
   const ciclo = Math.floor((n - 1) / BOSSES.length);
   const D = dif();
-  const E = escalaAndar(andar), fh = E.hp * D.hp * (1 + 0.25 * nPacto('pele')) * (nPacto('furia') ? 1.3 : 1), fd = E.dano * D.dano * (1 + 0.2 * nPacto('forca'));
+  const F = fatorAdapt();
+  const E = escalaAndar(andar), fh = E.hp * D.hp * (1 + 0.25 * nPacto('pele')) * (nPacto('furia') ? 1.3 : 1) * F.hp, fd = E.dano * D.dano * (1 + 0.2 * nPacto('forca')) * F.dano;
   const hp = Math.round(b.hp * fh);
   return {
     tipo: b.id, nome: ciclo > 0 ? `${b.nome} +${ciclo}` : b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
@@ -629,6 +638,7 @@ function ganharXp(q) {
     J.escolhasPendentes++;
     vibrar(50);
     if (J.nivel >= 30) desbloquear('nivel30');
+    aoSubirNivelCacador();
     S = stats();
     J.hp = S.maxHp;
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
@@ -681,6 +691,7 @@ function atacar(dx, dy) {
 
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   if (e.morto || e.enterrado > 0) return;
+  if (e.medo > 0) dano = Math.round(dano * 1.3);
   if (e.elite === 'blindado') dano = Math.max(1, Math.ceil(dano * 0.5));
   e.hp -= dano;
   e.flash = 0.1;
@@ -733,6 +744,7 @@ function matarInimigo(e) {
   if (e.elite) registar('elite');
   if (e.nv === 3) registar('campeao');
   if (e.boss) registar('boss');
+  deixarCadaver(e);
   explosao(e.x, e.y, e.cor, e.boss ? 80 : 16, e.boss ? 350 : 180, e.boss ? 7 : 4);
   som(e.boss ? 60 : 150, e.boss ? 1 : 0.2, 'sawtooth', 0.05, -40);
   ganharXp(e.xp);
@@ -890,6 +902,7 @@ function atualizar(dt) {
   S = stats();
   atualizarJogador(dt);
   if (estado !== 'jogo') return;
+  atualizarCacador(dt);
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
@@ -1220,7 +1233,17 @@ function atualizarInimigo(e, dt) {
   if (e.lento > 0) e.lento -= dt;
   if (e.congelado > 0) e.congelado -= dt;
   const fLento = e.congelado > 0 ? 0.1 : e.lento > 0 ? 0.6 : 1;
-  if (e.boss) { atualizarBoss(e, dt, d, ux, uy, fLento); return; }
+  if (e.medo > 0) { // paralisado de medo (Sede de Sangue)
+    e.medo -= dt;
+    if (!e.boss) {
+      moverEntidade(mapa, e, e.kbx * dt, e.kby * dt);
+      e.kbx *= Math.max(0, 1 - dt * 10); e.kby *= Math.max(0, 1 - dt * 10);
+      if (Math.random() < 0.1) particulas.push({ x: e.x + rand(-6, 6), y: e.y - e.r, vx: 0, vy: -30, t: 0.4, cor: '#ff3b3b', tam: 3 });
+      return;
+    }
+  }
+  if (e.boss) { atualizarBoss(e, dt, d, ux, uy, e.medo > 0 ? fLento * 0.3 : fLento); return; }
+  if (J.furtivo > 0) e.acordado = false; // não te vêem enquanto estás invisível
   if (e.caido > 0) { e.caido -= dt; return; } // zumbi a levantar-se
   if (e.congelado > 0) { // congelado: não ataca nem se mexe (só é empurrado)
     moverEntidade(mapa, e, e.kbx * dt, e.kby * dt);
@@ -1228,7 +1251,7 @@ function atualizarInimigo(e, dt) {
     e.kby *= Math.max(0, 1 - dt * 10);
     return;
   }
-  if (!e.acordado && d < 300) {
+  if (!e.acordado && d < 300 && !(J.furtivo > 0)) {
     const dc = distCampo(mapa, e.x, e.y);
     if (e.tipo === 'fantasma' || (dc >= 0 && dc <= 12)) e.acordado = true;
   }
@@ -2214,7 +2237,10 @@ function loop(agora) {
   } else if (estado === 'pausa') {
     atualizarPausa();
   } else if (estado === 'personagem') {
-    if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo';
+    if (clicou(BOTAO_STATUS) || premiu('u')) abrirStatus();
+    else if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo';
+  } else if (estado === 'status') {
+    atualizarStatus(dt);
   } else if (estado === 'loja') {
     atualizarLoja(dt);
     atualizarEfeitos(dt);

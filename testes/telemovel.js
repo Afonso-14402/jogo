@@ -56,15 +56,29 @@ const APARELHOS = [
     ok(d1 < d0 - 40 || hp1 < hp0, `o monstro aproxima-se (${Math.round(d0)} -> ${Math.round(d1)} px) e ataca (vida ${Math.round(hp0)} -> ${Math.round(hp1)})`);
     ok(hp1 < hp0, 'o monstro tira vida ao jogador');
     // joystick move o jogador
-    const x0 = await p.evaluate(() => J.x);
+    // arrasta o joystick para o lado com mais espaço livre (o mapa é aleatório)
+    const dir = await p.evaluate(() => {
+      let melhor = [1, 0], md = -1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        let d = 0; while (d < 200 && !colideCirculo(mapa, J.x + dx * d, J.y + dy * d, J.r)) d += 8;
+        if (d > md) { md = d; melhor = [dx, dy]; }
+      }
+      return melhor;
+    });
+    const p0 = await p.evaluate(() => ({ x: J.x, y: J.y }));
     const c0 = await p.evaluate(() => centroJoystick());
     await toque('touchStart', [[c0.x, c0.y]]);
-    await toque('touchMove', [[c0.x + 50, c0.y]]);
+    await toque('touchMove', [[c0.x + dir[0] * 50, c0.y + dir[1] * 50]]);
     await p.waitForTimeout(700);
     await toque('touchEnd', []);
-    ok(await p.evaluate(() => J.x) - x0 > 30, 'o joystick mexe o jogador');
+    const p1 = await p.evaluate(() => ({ x: J.x, y: J.y }));
+    ok(Math.hypot(p1.x - p0.x, p1.y - p0.y) > 30, 'o joystick mexe o jogador');
     // botão de ataque acerta no monstro
-    await p.evaluate(() => { _m.x = J.x + 40; _m.y = J.y; _m.hp = _m.maxHp = 99999; });
+    await p.evaluate(() => { // o monstro fica mesmo ao lado, num sítio livre
+      const q = pontoPerto(J.x, J.y, 30, 44, 14) || { x: J.x + 40, y: J.y };
+      _m.x = q.x; _m.y = q.y; _m.hp = _m.maxHp = 99999; _m.vel = 0;
+      for (const o of inimigos) if (o !== _m) o.morto = true;
+    });
     const hpm = await p.evaluate(() => _m.hp);
     const a = await p.evaluate(() => { const a = botoesToque().find(x => x.id === 'atacar'); return [a.x, a.y]; });
     await toque('touchStart', [a]); await p.waitForTimeout(600); await toque('touchEnd', []);

@@ -70,6 +70,7 @@ function desenharControlosToque(t) {
     const on = carregados.includes(b.id) || (b.id === 'atacar' && toque.atacar);
     let borda = '#cfc6e0';
     if (b.feitico) borda = FEITICOS[b.feitico].cor;
+    if (b.hab != null) borda = HABILIDADES_CACADOR[b.hab].cor;
     if (b.id === 'atacar') borda = RARIDADES[J.arma.r].cor;
     if (b.id === 'usar' && podeUsar) borda = '#ffe14d';
     alfa(on ? 0.95 : 0.7);
@@ -98,6 +99,19 @@ function desenharControlosToque(t) {
         ctx.fill();
       }
       textoCentro(`${custoMana(b.feitico)}`, b.x + 14, b.y + 18, 10, '#c9b0ff');
+    } else if (b.hab != null) { // habilidade de caçador
+      const h = HABILIDADES_CACADOR[b.hab], cd = (J.cdHab || {})[h.id] || 0;
+      alfa(J.mana < h.mana ? 0.4 : 1);
+      textoCentro(h.nome[0], b.x, b.y, 16, h.cor);
+      alfa(1);
+      if (cd > 0) {
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y);
+        ctx.arc(b.x, b.y, b.r - 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(cd / h.cd, 0, 1));
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fill();
+      }
+      textoCentro(`${h.mana}`, b.x + 14, b.y + 17, 10, '#9fdcff');
     } else if (b.id === 'pausa') {
       ctx.fillStyle = '#cfc6e0';
       ctx.fillRect(b.x - 8, b.y - 9, 5, 18);
@@ -224,16 +238,16 @@ function desenharMenuMeta(t) {
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
     textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
     CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
-      const x = 16 + (i % 3) * 312, y = 88 + Math.floor(i / 3) * 45, w = 304, h = 41;
+      const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * 41, w = 304, h = 38;
       const tem = meta.conquistas[c.id];
       painel(x, y, w, h, tem ? 'rgba(40,34,14,0.95)' : 'rgba(18,14,28,0.95)', tem ? '#ffe14d' : '#3a3150');
       iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 20, y + h / 2, 13);
       const premio = c.almas ? `+${c.almas} almas` : `Skin ${SKINS[c.skin].nome}`;
       textoDir(premio, x + w - 8, y + 13, 10, tem ? '#b48cff' : '#666');
-      textoEsq(c.nome, x + 40, y + 12, 12, tem ? '#ffe14d' : '#bbb');
+      textoEsq(c.nome, x + 40, y + 11, 12, tem ? '#ffe14d' : '#bbb');
       ctx.font = fonte(11, 'normal');
       const larg = ctx.measureText(traduzir(c.desc)).width;
-      textoEsq(c.desc, x + 40, y + 29, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
+      textoEsq(c.desc, x + 40, y + 27, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
     });
   }
 }

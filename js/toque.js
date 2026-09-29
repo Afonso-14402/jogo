@@ -38,7 +38,9 @@ const BOTOES_BASE = [
 
 function botoesToque() {
   const k = TAMANHOS_BOTAO[opcoes.tamanho] || 1;
-  return BOTOES_BASE.map(b => {
+  // as habilidades de caçador só aparecem quando já as tens
+  const habs = J && estado !== 'titulo' ? botoesHabilidadeToque().filter(b => temHabilidade(HABILIDADES_CACADOR[b.hab])) : [];
+  return BOTOES_BASE.concat(habs).map(b => {
     const [ax, ay] = b.ancora;
     const n = Object.assign({}, b, { x: ax + (b.x - ax) * k, y: ay + (b.y - ay) * k, r: Math.round(b.r * k) });
     const trocado = opcoes.canhoto && b.lado;

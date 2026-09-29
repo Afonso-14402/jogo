@@ -454,6 +454,9 @@ const CONQUISTAS = [
   { id: 'segredos',  nome: 'Caça-Segredos',      desc: 'Encontra 3 salas secretas (no total)',  almas: 30 },
   { id: 'diabo',     nome: 'Pacto com o Diabo',  desc: 'Faz 3 negócios com o Diabo (no total)', almas: 25 },
   { id: 'missoes10', nome: 'Trabalhador',        desc: 'Cumpre 10 missões diárias',             almas: 50 },
+  { id: 'exercito',  nome: 'Rei das Sombras',    desc: 'Tem 10 sombras no teu exército',        almas: 50 },
+  { id: 'rankS',     nome: 'Caçador de Rank S',  desc: 'Chega ao Rank S',                       almas: 60 },
+  { id: 'nacional',  nome: 'Nível Nacional',     desc: 'Chega ao Rank Nacional',                almas: 100 },
 ];
 
 // ---------------------------------------------------------------------

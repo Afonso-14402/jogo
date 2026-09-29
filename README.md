@@ -29,6 +29,8 @@ No telemóvel há ainda:
 | Q | Beber poção (cura 40%) |
 | C | Ecrã de personagem (todos os stats, equipamento e melhorias) |
 | I | Mochila (guarda até 6 itens, equipa ou vende) |
+| U | Janela de Estado (atributos, poder, rank e habilidades) |
+| 5 6 7 8 | Habilidades de Caçador (desbloqueiam nos níveis 5, 10, 15 e 20) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
 | I (no menu inicial) | Mudar o idioma entre Português e Inglês |
@@ -50,7 +52,7 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Missões diárias**: todos os dias há 3 missões novas (matar monstros, abrir baús, chegar a um andar…) que dão almas.
   - **Estatísticas e histórico**: partidas, mortes, tempo de jogo, monstros mortos… e as últimas 8 partidas, com o que te matou.
   - **Coleção e Bestiário**: separadores com os itens, todos os monstros e bosses (com as habilidades de Veterano e Campeão) e as relíquias que já encontraste.
-  - **Conquistas**: 36 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
+  - **Conquistas**: 39 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal, Cristal, Vazio, Lendária, Magma).
 - **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
 - **Zonas (biomas)**: a cada 5 andares muda a zona. Cada uma tem o seu cenário (cores, decoração no chão e nas paredes, tochas de cor própria, partículas no ar e luz) e os seus monstros:
 
@@ -142,6 +144,18 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - Andar 35: **Guardião de Cristal**. Anéis de estilhaços, cristais que nascem do chão à tua volta e espíritos de cristal.
   - Andar 40: **Senhor do Vazio**. Raios que rodam à volta dele, teletransporte com explosão de magia e sombras.
   - Depois disso os bosses repetem-se, cada vez mais fortes. Abaixo de 50% de vida entram em **fase 2 (enfurecidos)**.
+- **Caçador** (inspirado em manhwas como Solo Leveling):
+  - **Atributos**: em cada nível ganhas 2 pontos para pôr em Força, Agilidade, Vitalidade, Inteligência ou Perceção, na **Janela de Estado** (tecla **U**, ou no ecrã de personagem → Estado).
+  - **Habilidades de Caçador** (teclas **5 a 8**; no telemóvel aparece uma segunda fila de botões):
+    | Nível | Habilidade | O que faz |
+    |---|---|---|
+    | 5 | **Ergue-te!** | os monstros que mataste há pouco levantam-se como **soldados sombra** e lutam contigo |
+    | 10 | **Sede de Sangue** | os monstros à tua volta ficam paralisados de medo e levam +30% dano |
+    | 15 | **Mão Invisível** | uma força invisível esmaga e empurra os monstros à tua frente |
+    | 20 | **Furtividade** | ficas invisível 5 s e o golpe seguinte faz dano x3 |
+  - **Exército das Sombras**: até 10 soldados (mais com o nível) e 1 sombra de boss. Ficam contigo de andar para andar.
+  - **Poder de combate e Rank de Caçador** (E, D, C, B, A, S, Nacional): o Poder aparece no topo do ecrã (verde = mais forte do que o andar, amarelo = ao nível, vermelho = perigo). Cada andar é um **portal** com um rank e um **poder recomendado** (aparece ao entrar no andar e na Janela de Estado).
+  - **Equilíbrio dinâmico**: se ficares muito mais forte do que o andar, os monstros também sobem (até 2x vida e 1.6x dano). Com equipamento normal o jogo continua difícil; só com o melhor equipamento (lendário/mítico e reforçado) é que matas tudo depressa.
 - **Níveis e melhorias**: ganhas XP ao matar inimigos. Cada nível dá +vida, +ataque e +defesa, cura-te por completo e deixa-te **escolher 1 de 3 melhorias** (teclas 1, 2, 3 ou clique). Há 16 melhorias, por exemplo:
   - Força Bruta, Fúria, Vitalidade, Olho Certeiro, Trevo da Sorte (baús dão itens melhores)…
   - Únicas: **Remoinho** (cada 4.º ataque atinge à tua volta), **Lâminas Voadoras**, **Escudo Divino** e **Morte Explosiva**.
@@ -198,6 +212,7 @@ js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
 js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros e as suas habilidades
 js/conteudo.js      tipos de arma, relíquias, companheiros novos, bosses dos andares 35 e 40, conquistas novas
 js/extras.js        Pacto de Castigo, missões diárias, estatísticas, salas secretas, Diabo e Anjo, bestiário
+js/cacador.js       atributos, habilidades de caçador, exército das sombras, poder, rank e equilíbrio dinâmico
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)
