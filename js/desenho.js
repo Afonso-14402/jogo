@@ -210,8 +210,14 @@ function desenhar(t) {
   ctxTela.fillStyle = '#07060a';
   ctxTela.fillRect(0, 0, LARGURA, ALTURA);
   ctx = ctxTela;
-  if (estado === 'titulo') { desenharTitulo(t); return; }
-  if (estado === 'criar') { desenharCriacao(t); return; }
+  if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
+    if (estado === 'titulo') desenharTitulo(t);
+    else if (estado === 'criar') desenharCriacao(t);
+    else desenharMenuMeta(t);
+    desenharAvisos();
+    desenharAvisoRodar();
+    return;
+  }
 
   const sx = tremor > 0 ? rand(-tremor, tremor) : 0;
   const sy = tremor > 0 ? rand(-tremor, tremor) : 0;
@@ -238,8 +244,11 @@ function desenhar(t) {
   else if (estado === 'loja') desenharLoja(t);
   else if (estado === 'encantar') desenharMesa(t);
   else if (estado === 'personagem') desenharPersonagem();
+  else if (estado === 'mochila') desenharMochila();
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'morto') desenharMorte();
+  desenharAvisos();
+  desenharAvisoRodar();
 }
 
 function desenharMundo(t) {
@@ -255,6 +264,7 @@ function desenharMundo(t) {
   const lista = [];
   for (const b of baus) lista.push({ y: b.y, f: () => desenharBau(b) });
   for (const o of objetos) lista.push({ y: o.y, f: () => desenharObjeto(o, t) });
+  if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
   for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
   if (estado !== 'morto') lista.push({ y: J.y, f: () => desenharJogador(t) });
   lista.sort((a, b) => a.y - b.y);
@@ -310,6 +320,7 @@ function desenharLuz(t) {
     L.fillRect(bx - br, by - br, br * 2, br * 2);
   };
   luz(J.x, J.y, 330 + Math.sin(t * 7) * 6, 1);
+  if (pet && J.pet && J.pet.tipo !== 'lobo') luz(pet.x, pet.y, 70, 0.6);
   for (const tc of mapa.tochas) luz(tc.x, tc.y + 20, 150 + Math.sin(t * 9 + tc.x) * 8, 0.85);
   for (const o of objetos) {
     if (o.tipo === 'cristal') luz(o.x, o.y, 110, o.fase === 'feito' ? 0.3 : 0.8);
@@ -408,7 +419,7 @@ function desenharPerigo(p) {
   ctx.globalAlpha = 0.9;
   aro(p.x, p.y, p.r, cor, 2);
   ctx.globalAlpha = 1;
-  if (f > 0.4 && cor !== '#ff3b3b') { // algo a cair do teto
+  if (f > 0.4 && cor !== '#ff3b3b' && !p.semQueda) { // algo a cair do teto
     const q = (f - 0.4) / 0.6;
     const y = p.y - (1 - q) * 160;
     circulo(p.x, y, 10, cor === '#a89f91' ? '#6d665c' : '#ff9b45');
@@ -452,6 +463,11 @@ function desenharObjeto(o, t) {
       ctx.fillRect(alinhar(o.x - 30), alinhar(o.y - 16), 2, 2);
       ctx.fillRect(alinhar(o.x + 28), alinhar(o.y - 16), 2, 2);
     }
+  } else if (o.tipo === 'gaiola') {
+    sombra(o.x, o.y + 18, 16);
+    const frames = SPR.pet[o.pet];
+    spr(frames[Math.floor(t * 3) % frames.length], o.x, o.y + 4 + Math.sin(t * 3 + o.x) * 2, Math.sin(t + o.x) > 0);
+    spr(SPR.gaiola, o.x, o.y);
   } else if (o.tipo === 'mesa') {
     sombra(o.x, o.y + 14, 16);
     spr(SPR.mesa, o.x, o.y);
@@ -524,6 +540,14 @@ function spriteInimigo(e, t) {
     case 'fantasma': return { c: SPR.fantasma[Math.floor(e.t * 2.5) % 2], y: -6 + Math.sin(e.t * 2) * 4, alpha: 0.75, voa: true };
     case 'aranha': return { c: SPR.aranha[Math.floor(e.t * 10) % 2], y: 0 };
     case 'mimico': return { c: SPR.mimico[Math.floor(e.t * 8) % 2], y: 0 };
+    case 'zumbi': return { c: SPR.zumbi[0], y: e.caido > 0 ? 8 : e.acordado ? -Math.abs(Math.sin(e.t * 5)) * 2 : 0, alpha: e.caido > 0 ? 0.5 : 0, flip: Math.sin(e.t * 2.5) > 0 };
+    case 'diabrete': return { c: SPR.diabrete[0], y: -8 + Math.sin(e.t * 7) * 3, voa: true, flip: J.x < e.x };
+    case 'slimeLava': {
+      const pulo = e.acordado && e.t % 1.0 < 0.45;
+      return { c: SPR.slimeLava[pulo ? 0 : 1], y: pulo ? -Math.sin((e.t % 1.0) / 0.45 * Math.PI) * 10 : 0 };
+    }
+    case 'loboGelo': return { c: SPR.loboGelo[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 12)) * 3 : 0, flip: J.x < e.x };
+    case 'elementalGelo': return { c: SPR.elementalGelo[0], y: -10 + Math.sin(e.t * 3) * 4, voa: true };
     case 'reiSlime': return { c: SPR.reiSlime[e.salto > 0 ? 0 : Math.floor(t * 1.5) % 2], y: -e.z };
     case 'lich': return { c: SPR.lich[0], y: Math.sin(t * 2) * 4 };
     case 'dragao': return { c: SPR.dragao[0], y: 0 };
@@ -630,6 +654,9 @@ function desenharTextosMundo() {
     textoCentro(tx.txt, tx.x - vista.x, tx.y - vista.y, tx.tam, tx.cor);
   }
   ctx.globalAlpha = 1;
+  if (pet && J.pet && estado !== 'morto') {
+    textoCentro(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`, pet.x - vista.x, pet.y - vista.y - 26, 11, PETS[J.pet.tipo].cor);
+  }
   // nomes dos inimigos de elite
   for (const e of inimigos) {
     if (!e.elite || e.morto) continue;
@@ -663,6 +690,8 @@ function desenharHUD(t) {
   });
 
   desenharMinimapa();
+
+  if (modoToque) { desenharHUDFinal(t); desenharControlosToque(t); return; }
 
   // equipamento
   const slots = [['arma', 'Arma'], ['armadura', 'Armadura'], ['amuleto', 'Amuleto']];
@@ -744,6 +773,19 @@ function desenharHUD(t) {
     textoCentro(nv ? `Mana ${custoMana(id)} · Recarga ${f.cd}s` : 'Encontra um Livro de Feitiço', px + 120, by - 42, 12, '#aaa', false);
   });
 
+  desenharHUDFinal(t);
+  textoDir(`[C] Personagem   [I] Mochila   [M] Som: ${somLigado ? 'ligado' : 'desligado'}`, LARGURA - 16, ALTURA - 14, 12, 'rgba(255,255,255,0.45)', 'normal');
+  if (estado === 'jogo') {
+    const b = BOTAO_PAUSA, sobre = dentro(b);
+    painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(14,11,22,0.85)', sobre ? '#ffffff' : '#5a4d74');
+    ctx.fillStyle = sobre ? '#ffffff' : '#cfc6e0';
+    ctx.fillRect(b.x + 13, b.y + 10, 5, 16);
+    ctx.fillRect(b.x + 22, b.y + 10, 5, 16);
+  }
+}
+
+// Partes do HUD comuns ao teclado e ao toque
+function desenharHUDFinal(t) {
   if (boss && !boss.morto) {
     const w = 340, x = (LARGURA - w) / 2;
     painel(x - 10, 12, w + 20, 52, 'rgba(30,4,8,0.88)', '#8a2a2a');
@@ -756,7 +798,7 @@ function desenharHUD(t) {
     else if (J.objPerto) desenharInfoObjeto(J.objPerto);
     else if (J.escadaPerto) {
       const sx = mapa.escada.x - vista.x, sy = mapa.escada.y - vista.y - 40;
-      if (mapa.escada.ativa) textoCentro('[E] Descer', sx, sy, 16, '#ffe680');
+      if (mapa.escada.ativa) textoCentro(modoToque ? 'Usar: Descer' : '[E] Descer', sx, sy, 16, '#ffe680');
       else textoCentro('Derrota o boss para abrir', sx, sy, 14, '#ff8080');
     }
   }
@@ -767,15 +809,6 @@ function desenharHUD(t) {
     textoCentro(banner.titulo, LARGURA / 2, 170, 40, banner.cor);
     if (banner.sub) textoCentro(banner.sub, LARGURA / 2, 210, 18, '#ddd');
     ctx.globalAlpha = 1;
-  }
-
-  textoDir(`[C] Personagem   [M] Som: ${somLigado ? 'ligado' : 'desligado'}`, LARGURA - 16, ALTURA - 14, 12, 'rgba(255,255,255,0.45)', 'normal');
-  if (estado === 'jogo') {
-    const b = BOTAO_PAUSA, sobre = dentro(b);
-    painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(14,11,22,0.85)', sobre ? '#ffffff' : '#5a4d74');
-    ctx.fillStyle = sobre ? '#ffffff' : '#cfc6e0';
-    ctx.fillRect(b.x + 13, b.y + 10, 5, 16);
-    ctx.fillRect(b.x + 22, b.y + 10, 5, 16);
   }
 }
 
@@ -803,7 +836,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff' };
+  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3' };
   for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
@@ -836,15 +869,20 @@ function tabelaChances(tipoBau, x, y, largura) {
 function desenharInfoBau(b) {
   const tb = TIPOS_BAU[b.tipo];
   let x = b.x - vista.x + 34, y = b.y - vista.y - 90;
-  const w = 190, h = (tb.mimico > 0 ? 184 : 165) + (S.sorte > 0 ? 16 : 0);
+  const w = 190, h = (tb.mimico > 0 ? 184 : 165) + (S.sorte > 0 ? 16 : 0) + (tb.maldito ? 30 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 110, ALTURA - h - 100);
   painel(x, y, w, h);
   textoCentro(tb.nome, x + w / 2, y + 16, 14, tb.aro);
   let y0 = y + 40;
   if (S.sorte > 0) { textoCentro(`Sorte +${S.sorte} aplicada`, x + w / 2, y + 33, 11, '#3ddc84', false); y0 += 14; }
-  const fim = tabelaChances(b.tipo, x + 14, y0, w - 28);
-  textoCentro('[E] Abrir', x + w / 2, fim + 4, 15, '#ffe680');
+  let fim = tabelaChances(b.tipo, x + 14, y0, w - 28);
+  if (tb.maldito) {
+    textoCentro('Todos os itens trazem', x + w / 2, fim - 2, 11, '#d9a6ff', false);
+    textoCentro('uma maldição!', x + w / 2, fim + 12, 11, '#d9a6ff', false);
+    fim += 30;
+  }
+  textoCentro(modoToque ? 'Usar: Abrir' : '[E] Abrir', x + w / 2, fim + 4, 15, '#ffe680');
 }
 
 function desenharInfoObjeto(o) {
@@ -858,6 +896,10 @@ function desenharInfoObjeto(o) {
       textoCentro(`[E] Sacrificar ${Math.round(S.maxHp * 0.35)} de vida`, sx, sy - 18, 15, '#ff8080');
       textoCentro('e receber um Baú Dourado', sx, sy, 13, '#ffd23f');
     }
+  } else if (o.tipo === 'gaiola') {
+    const P = PETS[o.pet];
+    textoCentro(`${modoToque ? 'Usar' : '[E]'}: Libertar ${P.nome}`, sx, sy - 18, 15, P.cor);
+    textoCentro(P.desc, sx, sy, 12, '#ddd');
   } else if (o.tipo === 'mesa') {
     textoCentro('Mesa de Encantamentos', sx, sy - 18, 14, '#d9a6ff');
     textoCentro('[E] Encantar equipamento', sx, sy, 15, '#ffe680');
@@ -873,7 +915,7 @@ function desenharInfoObjeto(o) {
 function desenharCartaItem(it, x, y, cabecalho) {
   const info = RARIDADES[it.r];
   const linhas = linhasItem(it);
-  const w = 230, h = 128 + linhas.length * 18 + (it.afixo ? 22 : 0);
+  const w = 230, h = 128 + linhas.length * 18 + (it.afixo ? 22 : 0) + (it.maldicao ? 36 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 10, ALTURA - h - 10);
   painel(x, y, w, h, 'rgba(12,10,20,0.96)', info.cor);
@@ -883,6 +925,11 @@ function desenharCartaItem(it, x, y, cabecalho) {
   textoCentro(`${info.nome} · ${NOME_TIPO[it.tipo]}`, x + w / 2, y + 106, 11, '#bbb', false);
   linhas.forEach((l, i) => textoCentro(l, x + w / 2, y + 126 + i * 18, 13, '#eee', false));
   if (it.afixo) textoCentroAjustado(`+ ${it.afixo.desc}`, x + w / 2, y + 130 + linhas.length * 18, 13, it.afixo.cor, w - 16, false);
+  if (it.maldicao) {
+    const ym = y + 130 + linhas.length * 18 + (it.afixo ? 22 : 0);
+    textoCentro(`Maldição: ${it.maldicao.nome}`, x + w / 2, ym + 2, 13, '#ff5ce0', false);
+    textoCentroAjustado(it.maldicao.desc, x + w / 2, ym + 19, 12, '#d98ad0', w - 16, false);
+  }
   return h;
 }
 
@@ -930,6 +977,7 @@ function desenharRoleta(t) {
   ctx.fillRect(cx - 2, cy - H / 2, 4, H);
 
   if (!R.fim) {
+    if (tb.maldito) textoCentro('Todos os itens deste baú trazem uma maldição!', LARGURA / 2, 250, 14, '#d9a6ff');
     const w = 230, x = (LARGURA - w) / 2, y = 272;
     painel(x, y, w, tb.mimico > 0 ? 190 : 170);
     textoCentro(S.sorte > 0 ? `Probabilidades (Sorte +${S.sorte})` : 'Probabilidades', x + w / 2, y + 18, 14, S.sorte > 0 ? '#3ddc84' : '#ddd');
@@ -969,8 +1017,13 @@ function desenharRoleta(t) {
   }
   textoCentro('>', LARGURA / 2, 376, 34, '#fff');
   desenharCartaItem(R.premio, LARGURA / 2 + 30, 296, 'NOVO');
+  if (R.brilho < 0.25) return;
   const xp = info.xpReciclar * andar;
-  textoCentro(`[E] Equipar          [X] Vender (+${valorVenda(R.premio)} ouro, +${xp} XP)`, LARGURA / 2, ALTURA - 30, 18, '#ffe680');
+  const B = BOTOES_ROLETA, cheia = J.mochila.length >= TAMANHO_MOCHILA;
+  botao(B.equipar, modoToque ? 'Equipar' : '[E] Equipar', '#5dff7a');
+  botao(B.mochila, cheia ? 'Mochila cheia' : `${modoToque ? '' : '[M] '}Mochila (${J.mochila.length}/${TAMANHO_MOCHILA})`, cheia ? '#777' : '#7ec8ff');
+  botao(B.vender, `${modoToque ? '' : '[X] '}Vender +${valorVenda(R.premio)}`, '#ffd23f');
+  textoCentro(`Vender também dá +${xp} XP · ao equipar, o item antigo vai para a mochila`, LARGURA / 2, 572, 11, '#999', false);
 }
 
 // ---------------------------------------------------------------------
@@ -1073,7 +1126,8 @@ function desenharLoja(t) {
       TIPOS_BAU[of.id].mimico = antes;
     }
   }
-  if (loja.msg) textoCentro(loja.msg.txt, LARGURA / 2, 592, 18, loja.msg.cor);
+  if (loja.msg) textoCentro(loja.msg.txt, 460, 590, 16, loja.msg.cor);
+  botao(BOTAO_FECHAR, 'Sair', '#ff8080');
   textoCentro(`1-${stock.length} ou clique: comprar    ·    E / Esc: sair`, LARGURA / 2, ALTURA - 20, 15, '#aaa', false);
 }
 
@@ -1152,6 +1206,10 @@ function desenharPersonagem() {
   painel(340, 350, 600, 254);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
   textoEsq(obtidas.length ? 'Melhorias' : 'Melhorias: ainda nenhuma. Sobe de nível!', 356, 370, 16, '#ffe14d');
+  const extraP = [];
+  if (J.pet) extraP.push(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`);
+  if (J.vidasExtra > 0) extraP.push('Segunda Vida pronta');
+  if (extraP.length) textoDir(extraP.join('  ·  '), 924, 370, 13, '#ff9ff3');
   obtidas.forEach((p, i) => {
     const col = i % 2, lin = Math.floor(i / 2);
     const x = 356 + col * 292, y = 402 + lin * 28;
@@ -1226,9 +1284,17 @@ function desenharMesa(t) {
       ctx.restore();
     }
     desenharCartaItem(it, 570, 110, nv ? `ENCANTADO +${nv}` : 'ITEM');
+    if (it.maldicao) {
+      const r3 = BOTAO_PURIFICAR;
+      painel(r3.x, r3.y, r3.w, r3.h, dentro(r3) ? 'rgba(40,30,62,0.97)' : 'rgba(18,14,28,0.95)', '#fff0a0');
+      textoEsq(`${modoToque ? '' : '[P] '}Purificar (tira a maldição ${it.maldicao.nome})`, r3.x + 16, r3.y + r3.h / 2, 14, '#fff0a0');
+      sprEcra(SPR.moeda, r3.x + r3.w - 80, r3.y + r3.h / 2, 3);
+      textoDir(`${custoPurificar(it)}`, r3.x + r3.w - 14, r3.y + r3.h / 2, 18, J.ouro < custoPurificar(it) ? '#ff6060' : '#ffd23f');
+    }
   }
-  if (mesa.msg) textoCentro(mesa.msg.txt, LARGURA / 2, 590, 16, mesa.msg.cor);
-  textoCentro('1-3: escolher item  ·  E: reforçar  ·  R: encantar  ·  Esc: sair', LARGURA / 2, ALTURA - 20, 14, '#aaa', false);
+  if (mesa.msg) textoCentro(mesa.msg.txt, 460, 600, 15, mesa.msg.cor);
+  textoCentro('1-3: item  ·  E: reforçar  ·  R: encantar  ·  P: purificar  ·  Esc: sair', 400, ALTURA - 16, 12, '#888', false);
+  botao(BOTAO_FECHAR, 'Sair', '#ff8080');
 }
 
 // ---------------------------------------------------------------------
@@ -1236,6 +1302,7 @@ function desenharMesa(t) {
 // ---------------------------------------------------------------------
 function desenharCriacao(t) {
   textoCentro('CRIA A TUA PERSONAGEM', LARGURA / 2, 40, 30, '#ffae00');
+  botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
   // raças
   ORDEM_RACAS.forEach((id, i) => {
     const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;
@@ -1271,9 +1338,9 @@ function desenharCriacao(t) {
     if (livre) sprEcra(c, r.x + r.w / 2, r.y + 38, 3);
     else {
       sprEcra(silhueta(c, '#2a2438'), r.x + r.w / 2, r.y + 38, 3);
-      textoCentro(`Andar ${SKINS[id].recorde}`, r.x + r.w / 2, r.y + 40, 12, '#ff8080');
+      textoCentroAjustado(SKINS[id].conquista ? 'Conquista' : `Andar ${SKINS[id].recorde}`, r.x + r.w / 2, r.y + 40, 11, '#ff8080', r.w - 6);
     }
-    textoCentroAjustado(SKINS[id].nome, r.x + r.w / 2, r.y + r.h - 14, 12, livre ? '#ddd' : '#666', r.w - 8, false);
+    textoCentroAjustado(SKINS[id].nome, r.x + r.w / 2, r.y + r.h - 12, 11, livre ? '#ddd' : '#666', r.w - 6, false);
   });
   if (criacao.msg) textoCentro(criacao.msg.txt, 720, 360, 13, criacao.msg.cor);
   // dificuldade
@@ -1321,39 +1388,48 @@ function desenharTitulo(t) {
   ctx.restore();
   textoCentro('Um RPG de masmorras, bosses e baús da sorte', LARGURA / 2, 118, 17, '#ccc', false);
 
-  painel(LARGURA / 2 - 300, 212, 600, 96);
-  desenharIcone(ITENS.find(i => i.nome === 'Colher Enferrujada'), LARGURA / 2 - 235, 244, 48);
-  textoCentro('Colher Enferrujada', LARGURA / 2 - 235, 280, 13, RARIDADES.lixo.cor);
-  textoCentro('O pior item (30%)', LARGURA / 2 - 235, 296, 11, '#999', false);
-  desenharIcone(ITENS.find(i => i.nome === 'Espada do Infinito'), LARGURA / 2 + 235, 244, 48);
-  textoCentro('Espada do Infinito', LARGURA / 2 + 235, 280, 13, RARIDADES.mitico.cor);
-  textoCentro('O melhor item (1%)', LARGURA / 2 + 235, 296, 11, '#999', false);
-  textoCentro('Cada baú pode dar', LARGURA / 2, 246, 16, '#fff', false);
-  textoCentro('o PIOR ou o MELHOR item do jogo!', LARGURA / 2, 270, 16, '#fff', false);
+  // botões do menu
+  botoesTitulo().forEach((b, i) => {
+    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : '#ddd';
+    botao(b, b.txt, cor);
+  });
+  if (saveInfo) {
+    const rs = (RACAS[saveInfo.J.raca] ? RACAS[saveInfo.J.raca].nome : '') + (DIFICULDADES[saveInfo.J.dificuldade] ? ` · ${DIFICULDADES[saveInfo.J.dificuldade].nome}` : '');
+    textoEsq(`Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel} · ${rs}`, 74, 214, 11, '#999', 'normal');
+  }
 
-  const controlos = [
+  // como jogar
+  painel(440, 212, 460, 286);
+  textoCentro('Como jogar', 670, 232, 16, '#ffe14d');
+  const controlos = modoToque ? [
+    ['Joystick (esquerda)', 'Mover'],
+    ['Botão grande', 'Atacar o inimigo mais perto'],
+    ['»»', 'Esquiva'],
+    ['Usar', 'Abrir baús, lojas, escadas...'],
+    ['Poção', 'Beber poção'],
+    ['1 2 3 4', 'Feitiços (usam mana)'],
+    ['Botões à direita', 'Pausa, personagem, mochila'],
+  ] : [
     ['WASD / Setas', 'Mover'],
     ['Clique / Espaço', 'Atacar'],
     ['Shift', 'Dash (esquiva)'],
     ['E', 'Abrir / Usar / Descer'],
     ['1 2 3 4', 'Feitiços (usam mana)'],
     ['Q', 'Beber poção'],
-    ['C', 'Personagem'],
-    ['P / Esc', 'Pausa (G para guardar e sair)'],
+    ['C / I', 'Personagem / Mochila'],
+    ['P / Esc', 'Pausa'],
   ];
-  painel(LARGURA / 2 - 240, 322, 480, 188);
   controlos.forEach(([k, d], i) => {
-    textoEsq(k, LARGURA / 2 - 214, 340 + i * 21, 14, '#ffe680');
-    textoEsq(d, LARGURA / 2 - 50, 340 + i * 21, 14, '#ddd', 'normal');
+    textoEsq(k, 462, 262 + i * 28, 14, '#ffe680');
+    textoEsq(d, 640, 262 + i * 28, 13, '#ddd', 'normal');
   });
-  textoCentro('Raças · Skins · Magia · Encantamentos · Lojas · Bosses a cada 5 andares', LARGURA / 2, 528, 13, '#aaa', false);
-  if (recorde > 0) textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 548, 14, '#7ec8ff', false);
-  const piscar = Math.floor(t * 2) % 2 === 0;
-  if (saveInfo) {
-    const rs = (RACAS[saveInfo.J.raca] ? ` · ${RACAS[saveInfo.J.raca].nome}` : '') + (DIFICULDADES[saveInfo.J.dificuldade] ? ` · ${DIFICULDADES[saveInfo.J.dificuldade].nome}` : '');
-    if (piscar) textoCentro(`ENTER: Continuar (Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel}${rs})`, LARGURA / 2, 580, 22, '#ffffff');
-    textoCentro('N: Novo jogo (apaga a partida guardada)', LARGURA / 2, 610, 14, '#aaa', false);
-  } else if (piscar) textoCentro('Carrega ENTER para começar', LARGURA / 2, 584, 24, '#fff');
+
+  desenharIcone(ITENS.find(i => i.nome === 'Colher Enferrujada'), 110, 548, 32);
+  desenharIcone(ITENS.find(i => i.nome === 'Espada do Infinito'), 850, 548, 32);
+  textoCentro('Cada baú pode dar o PIOR ou o MELHOR item do jogo!', LARGURA / 2, 548, 16, '#fff', false);
+  const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
+  textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 584, 13, '#7ec8ff', false);
+  if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas', LARGURA / 2, 612, 11, '#777', false);
 }
 
 function desenharPausa() {
@@ -1407,7 +1483,10 @@ function desenharMorte() {
     desenharIcone(J.melhorItem, LARGURA / 2, 392, 48);
     textoCentro(J.melhorItem.nome, LARGURA / 2, 432, 20, RARIDADES[J.melhorItem.r].cor);
   }
-  if (J.novoRecorde) textoCentro('NOVO RECORDE!', LARGURA / 2, 480, 26, '#ffe14d');
-  else textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 480, 18, '#7ec8ff');
-  textoCentro('ENTER: tentar outra vez    ·    Esc: menu', LARGURA / 2, 540, 20, '#fff');
+  if (J.novoRecorde) textoCentro('NOVO RECORDE!', LARGURA / 2, 476, 26, '#ffe14d');
+  else textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 476, 18, '#7ec8ff');
+  textoCentro(`+${J.almasGanhas || 0} almas  (tens ${meta.almas})`, LARGURA / 2, 514, 20, '#b48cff');
+  textoCentro('Gasta-as no Altar das Almas, no menu inicial', LARGURA / 2, 540, 12, '#aaa', false);
+  botao(BOTOES_MORTE.denovo, modoToque ? 'Tentar outra vez' : 'ENTER: Outra vez', '#5dff7a');
+  botao(BOTOES_MORTE.menu, modoToque ? 'Menu' : 'Esc: Menu', '#ddd');
 }

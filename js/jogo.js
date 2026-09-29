@@ -9,13 +9,15 @@ let ctx = ctxTela; // durante o desenho do mundo aponta para o buffer de pixel a
 canvas.width = LARGURA;
 canvas.height = ALTURA;
 
-let estado = 'titulo'; // titulo | criar | jogo | pausa | bau | nivel | loja | encantar | personagem | morto
+let estado = 'titulo'; // titulo | criar | almas | colecao | conquistas | jogo | pausa | bau | nivel | loja | encantar | mochila | personagem | morto
 let andar = 0;
 let mapa, mapaImg, J, S;
 let inimigos = [], projeteis = [], baus = [], drops = [], particulas = [], textos = [], perigos = [];
 let boss = null, roleta = null, banner = null, escolha = null;
 let raios = [], objetos = [], armadilhas = [], ondas = [];
-let loja = null, mesa = null, criacao = null;
+let loja = null, mesa = null, criacao = null, mochilaUI = null;
+let pet = null; // o companheiro no mundo (os dados ficam em J.pet)
+const TAMANHO_MOCHILA = 6;
 let cam = { x: 0, y: 0 };
 let tremor = 0;
 let tempoJogo = 0;
@@ -29,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos'];
 
 function lerSave() {
   try {
@@ -53,7 +55,7 @@ function apagarSave() {
 }
 
 function guardarSeAJogar() {
-  if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'encantar', 'personagem'].includes(estado)) guardarJogo();
+  if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'encantar', 'mochila', 'personagem'].includes(estado)) guardarJogo();
 }
 addEventListener('pagehide', guardarSeAJogar);
 
@@ -66,7 +68,7 @@ try {
   if (e && DIFICULDADES[e.dificuldade]) escolhaDificuldade = e.dificuldade;
 } catch (e) { /* sem storage */ }
 const dif = () => DIFICULDADES[(J && J.dificuldade) || 'normal'] || DIFICULDADES.normal;
-const skinLivre = id => !SKINS[id].recorde || recorde >= SKINS[id].recorde;
+const skinLivre = id => (!SKINS[id].recorde || recorde >= SKINS[id].recorde) && (!SKINS[id].conquista || !!meta.conquistas[SKINS[id].conquista]);
 if (!skinLivre(escolhaSkin)) escolhaSkin = 'azul';
 function guardarEscolha() {
   try { localStorage.setItem('masmorra_personagem', JSON.stringify({ raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade })); } catch (e) { /* sem storage */ }
@@ -164,7 +166,38 @@ function chancesBau(tipoBau) {
 function sortearItem(tipoBau) {
   const r = escolherPeso(chancesBau(tipoBau));
   const pool = ITENS.filter(i => i.r === r && !i.inicial);
-  return criarItem(escolher(pool), andar);
+  const it = criarItem(escolher(pool), andar);
+  if (TIPOS_BAU[tipoBau].maldito) { // sempre com encantamento, mas amaldiçoado
+    if (!it.afixo || it.afixo.id === 'maldicao') { retirarAfixo(it); aplicarAfixo(it, escolher(AFIXOS[it.tipo])); }
+    it.maldicao = escolher(MALDICOES);
+    renomear(it);
+  }
+  return it;
+}
+
+function retirarAfixo(it) {
+  const a = it.afixo;
+  if (!a) return;
+  if (a.multDano) it.dano = Math.round(it.dano / a.multDano);
+  if (a.multVel) it.vel = +(it.vel / a.multVel).toFixed(2);
+  if (a.multDef) it.def = Math.round(it.def / a.multDef);
+  if (a.multHp && it.hp > 0) it.hp = Math.round(it.hp / a.multHp);
+  it.afixo = null;
+}
+
+function aplicarAfixo(it, af) {
+  if (af.multDano) it.dano = Math.round(it.dano * af.multDano);
+  if (af.multVel) it.vel = +(it.vel * af.multVel).toFixed(2);
+  if (af.multDef) it.def = Math.round(it.def * af.multDef);
+  if (af.multHp && it.hp > 0) it.hp = Math.round(it.hp * af.multHp);
+  it.afixo = af;
+}
+
+// Soma um atributo das maldições do equipamento
+function somaMaldicoes(k) {
+  let v = 0;
+  for (const t of ['arma', 'armadura', 'amuleto']) if (J[t] && J[t].maldicao && J[t].maldicao[k]) v += J[t].maldicao[k];
+  return v;
 }
 
 // Soma um atributo de afixo em todo o equipamento
@@ -180,25 +213,26 @@ function stats() {
   const R = RACAS[J.raca] || RACAS.humano;
   const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0);
   return {
-    maxHp: Math.max(10, J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0)),
+    maxHp: Math.max(10, Math.round((J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct')))),
     def: J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0),
-    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0))),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano'))),
     crit: 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0),
-    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0)),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov')),
     roubo: (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0),
-    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen'),
+    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen'),
     danoPct: am.danoPct || 0,
     cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0))),
     alcance: a.alcance,
-    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0)) * dif().xp,
-    sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0),
+    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp')) * dif().xp,
+    sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte'),
     espinhos: somaAfixos('espinhos'),
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')),
     curaPocao: 0.4 + 0.15 * nPerk('pocoes') + (R.cura || 0),
-    ouroMult: (1 + (R.ouro || 0)) * dif().ouro,
+    ouroMult: Math.max(0.1, (1 + (R.ouro || 0)) * dif().ouro * (1 + somaMaldicoes('ouroPct'))),
+    danoRecebido: somaMaldicoes('danoRecebido'),
     magia,
     poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
-    maxMana: 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana'),
+    maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax')),
     manaRegen: 3 + 2 * nPerk('canal'),
   };
 }
@@ -207,7 +241,21 @@ function equipar(item) {
   J[item.tipo] = item;
   S = stats();
   J.hp = Math.min(J.hp, S.maxHp);
+  J.mana = Math.min(J.mana, S.maxMana);
   if (!J.melhorItem || RARIDADES[item.r].ordem > RARIDADES[J.melhorItem.r].ordem) J.melhorItem = item;
+  registrarItem(item);
+  if (item.maldicao) desbloquear('maldito');
+}
+
+// Equipa e manda o item antigo para a mochila (ou vende-o se estiver cheia)
+function trocarEquipamento(item) {
+  const antigo = J[item.tipo];
+  equipar(item);
+  if (!antigo) return '';
+  if (J.mochila.length < TAMANHO_MOCHILA) { J.mochila.push(antigo); return `${antigo.nome} foi para a mochila`; }
+  const v = valorVenda(antigo);
+  J.ouro += v;
+  return `Mochila cheia: vendeste ${antigo.nome} (+${v} ouro)`;
 }
 
 // ---------------------------------------------------------------------
@@ -274,6 +322,7 @@ function criarJogador() {
     kills: 0, bausAbertos: 0, melhorItem: null,
     perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0, ouro: 0, lentoT: 0,
     raca: escolhaRaca, skin: escolhaSkin, dificuldade: escolhaDificuldade, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
+    mochila: [], pet: null, vidasExtra: 0, bossesMortos: 0,
   };
 }
 
@@ -281,7 +330,10 @@ function novoJogo() {
   apagarSave();
   J = criarJogador();
   const R = RACAS[J.raca];
-  J.pocoes = Math.max(0, J.pocoes + (R.pocoes || 0) + dif().pocoes);
+  J.pocoes = Math.max(0, J.pocoes + (R.pocoes || 0) + dif().pocoes + nMeta('pocao'));
+  J.ouro += 25 * nMeta('ouro');
+  if (nMeta('feitico')) J.feiticos.raio = 1;
+  J.vidasExtra = nMeta('reviver');
   J.ouro += R.ouroInicial || 0;
   andar = 0;
   tempoJogo = 0;
@@ -321,17 +373,27 @@ function proximoAndar() {
     som(80, 1.2, 'sawtooth', 0.06, -30);
   } else {
     popularAndar();
-    mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
+    const zona = NOMES_ZONAS[Math.floor((andar - 1) / 5) % NOMES_ZONAS.length];
+    if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 20 ? ' (Profundezas)' : ''}`, '#ffe14d');
+    else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
     if (andar > 1) som(300, 0.3, 'triangle', 0.05, -150);
   }
   cam.x = J.x - LARGURA / 2; cam.y = J.y - ALTURA / 2;
   revelar(mapa, J.x, J.y, 7);
+  criarPetEntidade();
+  if (andar >= 10) desbloquear('andar10');
+  if (andar >= 20) desbloquear('andar20');
   guardarJogo();
 }
 
 function pesosInimigos() {
   const pesos = {};
-  for (const k in INIMIGOS) if (INIMIGOS[k].minAndar <= andar) pesos[k] = INIMIGOS[k].peso;
+  const zona = Math.floor((andar - 1) / 5) % NOMES_ZONAS.length;
+  for (const k in INIMIGOS) {
+    const d = INIMIGOS[k];
+    if (!d.peso || d.minAndar > andar) continue;
+    if (andar > 20 || (d.zonas && d.zonas.includes(zona))) pesos[k] = d.peso;
+  }
   return pesos;
 }
 
@@ -353,6 +415,15 @@ function popularAndar() {
   const salaAltar = andar >= 2 && Math.random() < 0.25 ? marcar('altar') : null;
   const salaDesafio = andar >= 2 && Math.random() < 0.3 ? marcar('desafio') : null;
   const salaEnc = (andar % 5 === 2 || (andar >= 2 && Math.random() < 0.2)) ? marcar('encantamento') : null;
+  const salaPet = (!J.pet && (andar === 2 || (andar > 2 && Math.random() < 0.3))) ? marcar('companheiro') : null;
+  if (salaPet) {
+    const c = centroPx(salaPet);
+    ORDEM_PETS.forEach((id, i) => {
+      let x = c.x + (i - 1) * 76, y = c.y;
+      if (colideCirculo(mapa, x, y, 16)) ({ x, y } = pontoLivreNaSala(mapa, salaPet, 16, 1));
+      objetos.push({ tipo: 'gaiola', pet: id, sala: salaPet, x, y });
+    });
+  }
   if (salaEnc) objetos.push(Object.assign(centroPx(salaEnc), { tipo: 'mesa', sala: salaEnc }));
   if (salaLoja) objetos.push(Object.assign(centroPx(salaLoja), { tipo: 'mercador', sala: salaLoja, stock: null }));
   if (salaAltar) objetos.push(Object.assign(centroPx(salaAltar), { tipo: 'altar', sala: salaAltar, usado: false }));
@@ -389,7 +460,8 @@ function popularAndar() {
   for (let i = 0; i < nBaus; i++) {
     const p = pontoLivreNaSala(mapa, escolher(salas), 16, 1);
     if (Math.hypot(p.x - mapa.escada.x, p.y - mapa.escada.y) < 50 || !longeDe(p, objetos, 50) || !longeDe(p, baus, 40)) continue;
-    baus.push({ x: p.x, y: p.y, tipo: Math.random() < 0.07 ? 'ouro' : 'madeira', t: Math.random() * 6 });
+    const r = Math.random();
+    baus.push({ x: p.x, y: p.y, tipo: r < 0.07 ? 'ouro' : (andar >= 3 && r < 0.16) ? 'maldito' : 'madeira', t: Math.random() * 6 });
   }
   if (andar === 1) { // um baú logo no início para experimentar
     baus.push({ x: mapa.inicio.x + TILE * 2, y: mapa.inicio.y, tipo: 'madeira', semMimico: true, t: 0 });
@@ -601,6 +673,13 @@ function relampago(origem, dano, saltos = 3, fator = 0.6) {
 }
 
 function matarInimigo(e) {
+  if (e.tipo === 'zumbi' && !e.reviveu) { // os zumbis levantam-se uma vez
+    e.reviveu = true;
+    e.hp = Math.round(e.maxHp * 0.4);
+    e.caido = 1.6;
+    texto(e.x, e.y - 24, 'Levanta-se...', '#7fa65a', 14);
+    return;
+  }
   e.morto = true;
   J.kills++;
   explosao(e.x, e.y, e.cor, e.boss ? 80 : 16, e.boss ? 350 : 180, e.boss ? 7 : 4);
@@ -608,6 +687,11 @@ function matarInimigo(e) {
   ganharXp(e.xp);
   if (e.boss) {
     boss = null;
+    J.bossesMortos = (J.bossesMortos || 0) + 1;
+    if (e.tipo === 'reiSlime') desbloquear('rei');
+    if (e.tipo === 'dragao' && J.dificuldade === 'pesadelo') desbloquear('pesadelo');
+    if (e.tipo === 'demonio') desbloquear('demonio');
+    if (J.pet) petGanharXp(10);
     mapa.escada.ativa = true;
     tremor = 20;
     const ex = mapa.escada.x, ey = mapa.escada.y;
@@ -637,7 +721,12 @@ function matarInimigo(e) {
     if (e.elite === 'explosivo') perigos.push({ x: e.x, y: e.y, r: 75, t: 0.7, dur: 0.7, dano: Math.round(e.dano * 1.3), cor: '#ff7b25' });
     if (Math.random() < 0.35) baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
   }
-  if (e.tipo === 'mimico') baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
+  if (e.tipo === 'mimico') {
+    baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
+    if (contar('mimicos') >= 5) desbloquear('mimicos');
+  }
+  if (e.tipo === 'slimeLava') perigos.push({ x: e.x, y: e.y, r: 55, t: 0.6, dur: 0.6, dano: e.dano, cor: '#ff7b25', semQueda: true });
+  if (J.pet) petGanharXp(1);
 }
 
 function danoJogador(d, fx, fy, fonte = null) {
@@ -651,7 +740,8 @@ function danoJogador(d, fx, fy, fonte = null) {
     return;
   }
   if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
-  const final = Math.max(1, Math.round(d * 60 / (60 + S.def * 5)));
+  const final = Math.max(1, Math.round(d * 60 / (60 + S.def * 5) * (1 + S.danoRecebido)));
+  if (fonte && fonte.tipo === 'loboGelo') J.lentoT = Math.max(J.lentoT, 1.2);
   J.hp -= final;
   if (fonte && fonte.elite === 'vampirico' && !fonte.morto) {
     fonte.hp = Math.min(fonte.maxHp, fonte.hp + final * 3);
@@ -665,12 +755,24 @@ function danoJogador(d, fx, fy, fonte = null) {
     const dx = J.x - fx, dy = J.y - fy, l = Math.hypot(dx, dy) || 1;
     J.kbx = dx / l * 260; J.kby = dy / l * 260;
   }
-  if (J.hp <= 0) morrer();
+  if (J.hp <= 0) {
+    if (J.vidasExtra > 0) {
+      J.vidasExtra--;
+      J.hp = Math.round(S.maxHp * 0.3);
+      J.invuln = 2.5;
+      mostrarBanner('SEGUNDA VIDA!', 'As almas trouxeram-te de volta', '#fff0a0');
+      explosao(J.x, J.y, '#fff0a0', 50, 280, 6);
+      fanfarra([523, 784, 1046, 1568], 0.05);
+    } else morrer();
+  }
 }
 
 function morrer(desistiu = false) {
   J.hp = 0;
   J.desistiu = desistiu;
+  J.almasGanhas = calcularAlmas();
+  meta.almas += J.almasGanhas;
+  salvarMeta();
   estado = 'morto';
   confirmarDesistir = false;
   explosao(J.x, J.y, '#3a6ad4', 40, 250, 6);
@@ -755,6 +857,8 @@ function atualizar(dt) {
   drops = drops.filter(d => !d.morto);
   for (const b of baus) b.t += dt;
   atualizarArmadilhas(dt);
+  atualizarPet(dt);
+  if (J.ouro >= 1000) desbloquear('rico');
   inimigos = inimigos.filter(e => !e.morto);
   for (const o of objetos) {
     if (o.tipo !== 'cristal' || o.fase !== 'ativo') continue;
@@ -840,6 +944,16 @@ function atualizarArmadilhas(dt) {
 function usarObjeto(o) {
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
   if (o.tipo === 'mesa') { abrirMesa(o); return; }
+  if (o.tipo === 'gaiola') {
+    J.pet = { tipo: o.pet, nivel: 1, xp: 0 };
+    objetos = objetos.filter(x => x.tipo !== 'gaiola');
+    criarPetEntidade();
+    pet.x = o.x; pet.y = o.y;
+    explosao(o.x, o.y, PETS[o.pet].cor, 30, 200, 5);
+    mostrarBanner(`${PETS[o.pet].nome} juntou-se a ti!`, PETS[o.pet].desc, PETS[o.pet].cor);
+    fanfarra([523, 659, 784, 1046], 0.05);
+    return;
+  }
   if (o.tipo === 'altar') {
     if (o.usado) { texto(o.x, o.y - 30, 'O altar já foi usado', '#aaa', 14); return; }
     const custo = Math.round(S.maxHp * 0.35);
@@ -915,8 +1029,8 @@ function retLinhaLoja(i) { return { x: 40, y: 108 + i * 66, w: 500, h: 58 }; }
 function atualizarLoja(dt) {
   loja.t += dt;
   if (loja.msg) { loja.msg.t -= dt; if (loja.msg.t <= 0) loja.msg = null; }
-  if (loja.t < 0.2) return;
-  if (premiu('escape', 'e')) { loja = null; estado = 'jogo'; rato.baixo = false; return; }
+  if (loja.t < 0.1) return;
+  if (premiu('escape', 'e') || clicou(BOTAO_FECHAR)) { loja = null; estado = 'jogo'; rato.baixo = false; return; }
   const stock = loja.obj.stock;
   stock.forEach((_, i) => {
     const r = retLinhaLoja(i);
@@ -948,7 +1062,7 @@ function comprar(i) {
   fanfarra([1046, 1318], 0.03);
   if (of.id === 'pocao') { J.pocoes++; loja.msg = { txt: '+1 Poção', cor: '#ff6b8a', t: 1.6 }; }
   else if (of.id === 'cura') { J.hp = S.maxHp; loja.msg = { txt: 'Vida recuperada', cor: '#5dff7a', t: 1.6 }; }
-  else if (of.id === 'item') { equipar(of.item); loja.msg = { txt: `Equipaste ${of.item.nome}`, cor: RARIDADES[of.item.r].cor, t: 2 }; }
+  else if (of.id === 'item') { const m = trocarEquipamento(of.item); loja.msg = { txt: `Equipaste ${of.item.nome}. ${m}`, cor: RARIDADES[of.item.r].cor, t: 2.5 }; }
   else if (of.id === 'madeira' || of.id === 'ouro') { J.bausAbertos++; iniciarRoleta(of.id, 'loja'); }
   else if (of.id === 'perk') { J.escolhasPendentes++; abrirEscolha(); if (escolha) escolha.voltar = 'loja'; }
   else if (of.id === 'livro') { aprenderFeitico(of.feitico); loja.msg = { txt: `${FEITICOS[of.feitico].nome}: nível ${J.feiticos[of.feitico]}`, cor: FEITICOS[of.feitico].cor, t: 2 }; }
@@ -960,6 +1074,10 @@ function atualizarJogador(dt) {
   if (teclas['s'] || teclas['arrowdown']) my += 1;
   if (teclas['a'] || teclas['arrowleft']) mx -= 1;
   if (teclas['d'] || teclas['arrowright']) mx += 1;
+  if (toque.joy) {
+    const jx = toque.joy.x - toque.joy.cx, jy = toque.joy.y - toque.joy.cy;
+    if (Math.hypot(jx, jy) > 10) { mx = jx; my = jy; }
+  }
   J.andando = !!(mx || my);
   if (mx || my) {
     const l = Math.hypot(mx, my);
@@ -986,7 +1104,10 @@ function atualizarJogador(dt) {
   J.kbx *= Math.max(0, 1 - dt * 10);
   J.kby *= Math.max(0, 1 - dt * 10);
 
-  if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
+  if (toque.atacar) {
+    const a = alvoProximo(S.alcance + J.r + 80);
+    if (a) atacar(a.x - J.x, a.y - J.y); else atacar(J.dirX, J.dirY);
+  } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
   else if (teclas[' '] || teclas['j']) atacar(J.dirX, J.dirY);
   if (premiu('q')) beberPocao();
   for (let i = 0; i < ORDEM_FEITICOS.length; i++) if (premiu(String(i + 1))) lancarFeitico(ORDEM_FEITICOS[i]);
@@ -994,6 +1115,7 @@ function atualizarJogador(dt) {
   J.mana = Math.min(S.maxMana, J.mana + S.manaRegen * dt);
 
   J.hp = Math.min(S.maxHp, J.hp + S.regen * dt);
+  if (S.regen < 0) J.hp = Math.max(1, J.hp); // a maldição Sangrento não te mata sozinha
   if (J.golpe) { J.golpe.t -= dt; if (J.golpe.t <= 0) J.golpe = null; }
 }
 
@@ -1018,6 +1140,7 @@ function atualizarInimigo(e, dt) {
   if (e.congelado > 0) e.congelado -= dt;
   const fLento = e.congelado > 0 ? 0.1 : e.lento > 0 ? 0.6 : 1;
   if (e.boss) { atualizarBoss(e, dt, d, ux, uy, fLento); return; }
+  if (e.caido > 0) { e.caido -= dt; return; } // zumbi a levantar-se
   if (e.congelado > 0) { // congelado: não ataca nem se mexe (só é empurrado)
     moverEntidade(mapa, e, e.kbx * dt, e.kby * dt);
     e.kbx *= Math.max(0, 1 - dt * 10);
@@ -1063,8 +1186,33 @@ function atualizarInimigo(e, dt) {
         break;
       case 'fantasma':
       case 'mimico':
+      case 'zumbi':
+      case 'loboGelo':
         vx = ru.x * e.vel; vy = ru.y * e.vel;
         break;
+      case 'slimeLava':
+        if (e.t % 1.0 < 0.45) { vx = ru.x * e.vel * 1.9; vy = ru.y * e.vel * 1.9; }
+        break;
+      case 'diabrete':
+      case 'elementalGelo': {
+        const vejo = linhaDeVista(mapa, e.x, e.y, J.x, J.y, 4);
+        if (!vejo || d > 240) { vx = ru.x * e.vel; vy = ru.y * e.vel; }
+        else if (d < 150) { vx = -ux * e.vel; vy = -uy * e.vel; }
+        else { const s = Math.sin(e.t * 0.9) > 0 ? 1 : -1; vx = -uy * e.vel * 0.7 * s; vy = ux * e.vel * 0.7 * s; }
+        if (e.cd <= 0 && d < 380 && vejo) {
+          if (e.tipo === 'diabrete') {
+            e.cd = rand(1.8, 2.6);
+            disparar(e.x, e.y, ux, uy, 230, e.dano, '#ff7b25', 7, 'fogo', 2.5);
+            som(250, 0.15, 'sawtooth', 0.03, -100);
+          } else {
+            e.cd = rand(2.2, 3);
+            const base = Math.atan2(uy, ux);
+            for (const s of [-0.25, 0, 0.25]) disparar(e.x, e.y, Math.cos(base + s), Math.sin(base + s), 220, Math.round(e.dano * 0.7), '#bfe6ff', 6, 'bola', 2.5).efeito = 'gelo';
+            som(1100, 0.12, 'sine', 0.03, -500);
+          }
+        }
+        break;
+      }
     }
   }
   const mx = (vx * fLento + e.kbx) * dt, my = (vy * fLento + e.kby) * dt;
@@ -1366,6 +1514,7 @@ function atualizarProjeteis(dt) {
         if (J.lentoT <= 0) texto(J.x, J.y - 30, 'PRESO NA TEIA!', '#e8e8f0', 15);
         J.lentoT = 2.5;
       }
+      if (p.efeito === 'gelo') J.lentoT = Math.max(J.lentoT, 1.5);
       danoJogador(p.dano, p.x - p.vx, p.y - p.vy);
       p.morto = true;
     }
@@ -1390,7 +1539,22 @@ function atualizarPerigos(dt) {
 // ---------------------------------------------------------------------
 //  Magia
 // ---------------------------------------------------------------------
+function alvoProximo(raio) {
+  let alvo = null, md = raio;
+  for (const e of inimigos) {
+    if (e.morto) continue;
+    const d = Math.hypot(e.x - J.x, e.y - J.y);
+    if (d < md) { md = d; alvo = e; }
+  }
+  return alvo;
+}
+
 function mira() {
+  if (modoToque) {
+    const a = alvoProximo(420);
+    if (a) { const dx = a.x - J.x, dy = a.y - J.y, l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
+    return [J.dirX, J.dirY];
+  }
   if (performance.now() - rato.movido < 4000) {
     const dx = rato.x + cam.x - J.x, dy = rato.y + cam.y - J.y, l = Math.hypot(dx, dy) || 1;
     return [dx / l, dy / l];
@@ -1481,6 +1645,7 @@ function aprenderFeitico(id) {
   const antes = J.feiticos[id] || 0;
   if (antes >= 3) { J.ouro += 50; texto(J.x, J.y - 30, `Já dominas ${f.nome}: +50 ouro`, '#ffd23f', 14); return; }
   J.feiticos[id] = antes + 1;
+  if (ORDEM_FEITICOS.every(k => J.feiticos[k])) desbloquear('arquimago');
   const tecla = ORDEM_FEITICOS.indexOf(id) + 1;
   mostrarBanner(antes ? `${f.nome} nível ${antes + 1}` : `Aprendeste: ${f.nome}`, antes ? 'O feitiço ficou mais forte' : `Carrega ${tecla} para lançar`, f.cor);
   texto(J.x, J.y - 30, antes ? `${f.nome} Nv ${antes + 1}!` : `Novo feitiço!`, f.cor, 18);
@@ -1495,8 +1660,11 @@ const SLOTS_EQUIP = ['arma', 'armadura', 'amuleto'];
 const custoReforco = it => Math.round((20 + 15 * RARIDADES[it.r].ordem) * ((it.enc || 0) + 1) * (1 + andar * 0.15));
 const custoEncanto = it => Math.round((35 + 12 * RARIDADES[it.r].ordem) * (1 + andar * 0.15));
 function retSlotMesa(i) { return { x: 40, y: 116 + i * 92, w: 470, h: 80 }; }
-const BOTAO_REFORCAR = { x: 40, y: 410, w: 470, h: 64 };
-const BOTAO_ENCANTO = { x: 40, y: 490, w: 470, h: 64 };
+const BOTAO_REFORCAR = { x: 40, y: 398, w: 470, h: 58 };
+const BOTAO_ENCANTO = { x: 40, y: 464, w: 470, h: 58 };
+const BOTAO_PURIFICAR = { x: 40, y: 530, w: 470, h: 50 };
+const BOTAO_FECHAR = { x: LARGURA - 132, y: ALTURA - 52, w: 116, h: 38 };
+const custoPurificar = it => Math.round((60 + 20 * RARIDADES[it.r].ordem) * (1 + andar * 0.15));
 const dentro = (r) => rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
 
 function renomear(it) {
@@ -1532,6 +1700,7 @@ function reforcar(it) {
   J.ouro -= custo;
   if (Math.random() < CHANCE_REFORCO[nv]) {
     it.enc = nv + 1;
+    if (it.enc >= 5) desbloquear('encantar5');
     melhorarStats(it);
     renomear(it);
     S = stats();
@@ -1549,18 +1718,9 @@ function novoEncanto(it) {
   if (J.ouro < custo) { mesa.msg = { txt: 'Não tens ouro suficiente', cor: '#ff6060', t: 2 }; som(140, 0.2, 'square', 0.04); return; }
   J.ouro -= custo;
   const antigo = it.afixo;
-  if (antigo) {
-    if (antigo.multDano) it.dano = Math.round(it.dano / antigo.multDano);
-    if (antigo.multVel) it.vel = +(it.vel / antigo.multVel).toFixed(2);
-    if (antigo.multDef) it.def = Math.round(it.def / antigo.multDef);
-    if (antigo.multHp && it.hp > 0) it.hp = Math.round(it.hp / antigo.multHp);
-  }
+  retirarAfixo(it);
   const af = escolher(AFIXOS[it.tipo].filter(a => !antigo || a.id !== antigo.id));
-  if (af.multDano) it.dano = Math.round(it.dano * af.multDano);
-  if (af.multVel) it.vel = +(it.vel * af.multVel).toFixed(2);
-  if (af.multDef) it.def = Math.round(it.def * af.multDef);
-  if (af.multHp && it.hp > 0) it.hp = Math.round(it.hp * af.multHp);
-  it.afixo = af;
+  aplicarAfixo(it, af);
   renomear(it);
   S = stats();
   J.hp = Math.min(J.hp, S.maxHp);
@@ -1573,8 +1733,8 @@ function atualizarMesa(dt) {
   mesa.t += dt;
   if (mesa.brilho) mesa.brilho = Math.max(0, mesa.brilho - dt * 2);
   if (mesa.msg) { mesa.msg.t -= dt; if (mesa.msg.t <= 0) mesa.msg = null; }
-  if (mesa.t < 0.2) return;
-  if (premiu('escape')) { mesa = null; estado = 'jogo'; rato.baixo = false; return; }
+  if (mesa.t < 0.1) return;
+  if (premiu('escape') || clicou(BOTAO_FECHAR)) { mesa = null; estado = 'jogo'; rato.baixo = false; return; }
   SLOTS_EQUIP.forEach((k, i) => {
     if (!J[k]) return;
     if (premiu(String(i + 1)) || (premiu('rato') && dentro(retSlotMesa(i)))) mesa.slot = k;
@@ -1583,6 +1743,134 @@ function atualizarMesa(dt) {
   if (!it) return;
   if (premiu('e') || (premiu('rato') && dentro(BOTAO_REFORCAR))) reforcar(it);
   else if (premiu('r') || (premiu('rato') && dentro(BOTAO_ENCANTO))) novoEncanto(it);
+  else if (it.maldicao && (premiu('p') || clicou(BOTAO_PURIFICAR))) purificar(it);
+}
+
+function purificar(it) {
+  const custo = custoPurificar(it);
+  if (J.ouro < custo) { mesa.msg = { txt: 'Não tens ouro suficiente', cor: '#ff6060', t: 2 }; som(140, 0.2, 'square', 0.04); return; }
+  J.ouro -= custo;
+  it.maldicao = null;
+  S = stats();
+  mesa.msg = { txt: 'A maldição foi quebrada!', cor: '#fff0a0', t: 2.5 };
+  mesa.brilho = 1;
+  fanfarra([659, 784, 1046, 1318], 0.04);
+}
+
+// ---------------------------------------------------------------------
+//  Companheiro
+// ---------------------------------------------------------------------
+function criarPetEntidade() {
+  pet = J && J.pet ? { x: J.x - 24, y: J.y + 12, r: 9, t: 0, cd: 1, curaCd: 3, dir: 1, andando: false } : null;
+}
+
+const xpPetProximo = n => 6 + n * 4;
+function petGanharXp(q) {
+  J.pet.xp += q;
+  while (J.pet.xp >= xpPetProximo(J.pet.nivel)) {
+    J.pet.xp -= xpPetProximo(J.pet.nivel);
+    J.pet.nivel++;
+    if (pet) { texto(pet.x, pet.y - 24, `${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}!`, PETS[J.pet.tipo].cor, 15); explosao(pet.x, pet.y, PETS[J.pet.tipo].cor, 14, 140, 4); }
+    if (J.pet.nivel >= 5) desbloquear('amigo');
+  }
+}
+
+const danoPet = () => Math.round((4 + J.pet.nivel * 3) * (1 + (andar - 1) * 0.12));
+
+function atualizarPet(dt) {
+  if (!J.pet || !pet) return;
+  pet.t += dt; pet.cd -= dt; pet.curaCd -= dt;
+  const alvo = (() => {
+    let a = null, md = 240;
+    for (const e of inimigos) {
+      if (e.morto || e.z > 20) continue;
+      const d = Math.hypot(e.x - J.x, e.y - J.y);
+      if (d < md) { md = d; a = e; }
+    }
+    return a;
+  })();
+  const tipo = J.pet.tipo, dano = danoPet();
+  if (tipo === 'lobo') {
+    const tx = alvo ? alvo.x : J.x - J.dirX * 32, ty = alvo ? alvo.y : J.y - J.dirY * 32 + 8;
+    const dx = tx - pet.x, dy = ty - pet.y, d = Math.hypot(dx, dy) || 1;
+    const perto = alvo ? alvo.r + 12 : 26;
+    pet.andando = d > perto;
+    if (pet.andando) moverEntidade(mapa, pet, dx / d * 210 * dt, dy / d * 210 * dt);
+    if (Math.abs(dx) > 2) pet.dir = dx > 0 ? 1 : -1;
+    if (alvo && d < alvo.r + 18 && pet.cd <= 0) {
+      pet.cd = 0.75;
+      danoInimigo(alvo, Math.round(dano * 1.3), false, dx / d, dy / d);
+      som(420, 0.06, 'square', 0.02, -200);
+    }
+    if (Math.hypot(pet.x - J.x, pet.y - J.y) > 420) { pet.x = J.x - 20; pet.y = J.y + 10; }
+  } else {
+    const ang = pet.t * 1.6;
+    const tx = J.x + Math.cos(ang) * 38, ty = J.y - 28 + Math.sin(ang) * 12;
+    pet.dir = tx > pet.x ? 1 : -1;
+    pet.x += (tx - pet.x) * Math.min(1, dt * 5);
+    pet.y += (ty - pet.y) * Math.min(1, dt * 5);
+    if (alvo && pet.cd <= 0) {
+      const dx = alvo.x - pet.x, dy = alvo.y - pet.y, d = Math.hypot(dx, dy) || 1;
+      if (tipo === 'fada') {
+        pet.cd = 1.2;
+        projeteis.push({ x: pet.x, y: pet.y, vx: dx / d * 380, vy: dy / d * 380, r: 5, vida: 1, cor: '#ff9ff3', tipo: 'bola', dono: 'jogador', dano: Math.max(1, Math.round(dano * 0.6)) });
+        som(1500, 0.05, 'sine', 0.02, 300);
+      } else {
+        pet.cd = 1.8;
+        projeteis.push({ x: pet.x, y: pet.y, vx: dx / d * 340, vy: dy / d * 340, r: 7, vida: 1.2, cor: '#ff7b25', tipo: 'fogo', dono: 'jogador', dano, explode: 42 });
+        som(260, 0.12, 'sawtooth', 0.03, -120);
+      }
+    }
+    if (tipo === 'fada' && pet.curaCd <= 0) {
+      pet.curaCd = 4;
+      if (J.hp < S.maxHp) {
+        const cura = Math.round(S.maxHp * 0.03 + J.pet.nivel * 2);
+        J.hp = Math.min(S.maxHp, J.hp + cura);
+        texto(J.x, J.y - 24, `+${cura}`, '#ff9ff3', 13);
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+//  Mochila
+// ---------------------------------------------------------------------
+function retMochila(i) { return { x: 40 + (i % 3) * 110, y: 262 + Math.floor(i / 3) * 110, w: 100, h: 100 }; }
+const BOTOES_MOCHILA = {
+  equipar: { x: 40, y: 500, w: 160, h: 44 },
+  vender:  { x: 210, y: 500, w: 160, h: 44 },
+};
+
+function abrirMochila() {
+  mochilaUI = { t: 0, sel: 0, msg: null };
+  estado = 'mochila';
+  som(500, 0.08, 'triangle', 0.03, 100);
+}
+
+function atualizarMochila(dt) {
+  const M = mochilaUI;
+  M.t += dt;
+  if (M.msg) { M.msg.t -= dt; if (M.msg.t <= 0) M.msg = null; }
+  if (M.t < 0.1) return;
+  if (premiu('escape', 'i') || clicou(BOTAO_FECHAR)) { mochilaUI = null; estado = 'jogo'; rato.baixo = false; return; }
+  for (let i = 0; i < TAMANHO_MOCHILA; i++) if (premiu(String(i + 1)) || clicou(retMochila(i))) M.sel = i;
+  const it = J.mochila[M.sel];
+  if (!it) return;
+  if (premiu('e') || clicou(BOTOES_MOCHILA.equipar)) {
+    const antigo = J[it.tipo];
+    J.mochila.splice(M.sel, 1);
+    equipar(it);
+    if (antigo) J.mochila.splice(M.sel, 0, antigo);
+    M.msg = { txt: `Equipaste ${it.nome}`, cor: RARIDADES[it.r].cor, t: 2 };
+    som(520, 0.12, 'triangle', 0.04, 200);
+  } else if (premiu('x') || clicou(BOTOES_MOCHILA.vender)) {
+    const v = valorVenda(it);
+    J.mochila.splice(M.sel, 1);
+    J.ouro += v;
+    M.msg = { txt: `Vendeste ${it.nome} por ${v} ouro`, cor: '#ffd23f', t: 2 };
+    som(1300, 0.08, 'square', 0.03, 300);
+    if (M.sel >= J.mochila.length) M.sel = Math.max(0, J.mochila.length - 1);
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -1601,6 +1889,16 @@ const BOTOES_CONFIRMAR = {
 };
 const clicou = r => premiu('rato') && dentro(r);
 
+function botoesTitulo() {
+  const l = saveInfo ? [['continuar', 'Continuar'], ['novo', 'Novo jogo']] : [['novo', 'Começar']];
+  l.push(['almas', `Altar das Almas (${meta.almas})`], ['colecao', 'Coleção de itens'], ['conquistas', 'Conquistas']);
+  return l.map(([id, txt], i) => ({ id, txt, x: 70, y: 226 + i * 56, w: 330, h: 46 }));
+}
+const BOTOES_MORTE = {
+  denovo: { x: 250, y: 566, w: 220, h: 44 },
+  menu:   { x: 490, y: 566, w: 220, h: 44 },
+};
+
 function atualizarPausa() {
   if (confirmarDesistir) {
     if (premiu('x', 'enter') || clicou(BOTOES_CONFIRMAR.sim)) morrer(true);
@@ -1616,7 +1914,7 @@ function atualizarPausa() {
 //  Criação de personagem
 // ---------------------------------------------------------------------
 function retRaca(i) { return { x: 30, y: 84 + i * 94, w: 450, h: 86 }; }
-function retSkin(i) { return { x: 506 + (i % 4) * 108, y: 372 + Math.floor(i / 4) * 102, w: 98, h: 94 }; }
+function retSkin(i) { return { x: 506 + (i % 6) * 72, y: 372 + Math.floor(i / 6) * 100, w: 66, h: 92 }; }
 const BOTAO_COMECAR = { x: 700, y: 586, w: 240, h: 40 };
 function retDificuldade(i) { return { x: 30 + i * 114, y: 562, w: 106, h: 34 }; }
 
@@ -1628,7 +1926,7 @@ function abrirCriacao() {
 function atualizarCriacao(dt) {
   criacao.t += dt;
   if (criacao.msg) { criacao.msg.t -= dt; if (criacao.msg.t <= 0) criacao.msg = null; }
-  if (criacao.t < 0.2) return;
+  if (criacao.t < 0.1) return;
   let ir = ORDEM_RACAS.indexOf(escolhaRaca), is = ORDEM_SKINS.indexOf(escolhaSkin);
   const n = ORDEM_SKINS.length;
   const proxSkin = d => {
@@ -1646,7 +1944,7 @@ function atualizarCriacao(dt) {
     ORDEM_SKINS.forEach((id, i) => {
       if (!dentro(retSkin(i))) return;
       if (skinLivre(id)) is = i;
-      else criacao.msg = { txt: `Chega ao andar ${SKINS[id].recorde} para desbloquear esta skin`, cor: '#ff8080', t: 2.5 };
+      else criacao.msg = { txt: SKINS[id].conquista ? `Desbloqueia com a conquista "${CONQUISTAS.find(c => c.id === SKINS[id].conquista).nome}"` : `Chega ao andar ${SKINS[id].recorde} para desbloquear esta skin`, cor: '#ff8080', t: 2.5 };
     });
     if (dentro(BOTAO_COMECAR)) comecar = true;
   }
@@ -1654,7 +1952,7 @@ function atualizarCriacao(dt) {
   escolhaRaca = ORDEM_RACAS[ir];
   escolhaSkin = ORDEM_SKINS[is];
   if (comecar) { guardarEscolha(); rato.baixo = false; novoJogo(); }
-  else if (premiu('escape')) estado = 'titulo';
+  else if (premiu('escape') || clicou(BOTAO_VOLTAR)) estado = 'titulo';
 }
 
 // ---------------------------------------------------------------------
@@ -1688,6 +1986,12 @@ function iniciarRoleta(tipoBau, voltar) {
 
 const valorVenda = it => Math.round(PRECO_VENDA[it.r] * (1 + andar * 0.3));
 
+const BOTOES_ROLETA = {
+  equipar: { x: 150, y: 586, w: 200, h: 42 },
+  mochila: { x: 380, y: 586, w: 200, h: 42 },
+  vender:  { x: 610, y: 586, w: 200, h: 42 },
+};
+
 function atualizarRoleta(dt) {
   const R = roleta;
   R.brilho += dt;
@@ -1706,14 +2010,23 @@ function atualizarRoleta(dt) {
       if (ordem === 0) fanfarra([300, 250, 200, 120], 0.04);
       else if (ordem >= 4) { fanfarra([523, 659, 784, 1046, 1318, 1568], 0.05); tremor = 12; }
       else fanfarra([440, 554, 659], 0.04);
+      registrarItem(R.premio);
     }
   } else {
-    if (premiu('e')) {
-      equipar(R.premio);
+    if (R.brilho < 0.25) return;
+    if (premiu('e') || clicou(BOTOES_ROLETA.equipar)) {
+      const m = trocarEquipamento(R.premio);
+      if (m) texto(J.x, J.y - 44, m, '#cfc6e0', 13);
       som(520, 0.15, 'triangle', 0.05, 200);
       roleta = null;
       estado = R.voltar;
-    } else if (premiu('x')) {
+    } else if ((premiu('m') || clicou(BOTOES_ROLETA.mochila)) && J.mochila.length < TAMANHO_MOCHILA) {
+      J.mochila.push(R.premio);
+      texto(J.x, J.y - 44, 'Guardado na mochila', '#cfc6e0', 14);
+      som(600, 0.1, 'triangle', 0.04, 100);
+      roleta = null;
+      estado = R.voltar;
+    } else if (premiu('x') || clicou(BOTOES_ROLETA.vender)) {
       const xp = RARIDADES[R.premio.r].xpReciclar * andar;
       const ouro = valorVenda(R.premio);
       roleta = null;
@@ -1737,10 +2050,20 @@ function loop(agora) {
   if (premiu('m')) somLigado = !somLigado;
 
   if (estado === 'titulo') {
-    if (saveInfo) {
-      if (premiu('enter', ' ', 'rato')) continuarJogo();
-      else if (premiu('n')) abrirCriacao();
-    } else if (premiu('enter', ' ', 'rato')) abrirCriacao();
+    let acao = null;
+    for (const b of botoesTitulo()) if (clicou(b)) acao = b.id;
+    if (premiu('enter', ' ')) acao = saveInfo ? 'continuar' : 'novo';
+    if (premiu('n')) acao = 'novo';
+    if (premiu('a')) acao = 'almas';
+    if (premiu('l')) acao = 'colecao';
+    if (premiu('t')) acao = 'conquistas';
+    if (acao === 'continuar') continuarJogo();
+    else if (acao === 'novo') abrirCriacao();
+    else if (acao) abrirMenuMeta(acao);
+  } else if (estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
+    atualizarMenuMeta(dt);
+  } else if (estado === 'mochila') {
+    atualizarMochila(dt);
   } else if (estado === 'criar') {
     atualizarCriacao(dt);
   } else if (estado === 'encantar') {
@@ -1749,6 +2072,7 @@ function loop(agora) {
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape') || clicou(BOTAO_PAUSA)) { estado = 'pausa'; rato.baixo = false; }
     else if (premiu('c', 'tab')) estado = 'personagem';
+    else if (premiu('i')) abrirMochila();
     else atualizar(dt);
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
@@ -1757,7 +2081,7 @@ function loop(agora) {
   } else if (estado === 'pausa') {
     atualizarPausa();
   } else if (estado === 'personagem') {
-    if (premiu('c', 'tab', 'escape')) estado = 'jogo';
+    if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo';
   } else if (estado === 'loja') {
     atualizarLoja(dt);
     atualizarEfeitos(dt);
@@ -1766,9 +2090,11 @@ function loop(agora) {
     atualizarEfeitos(dt);
   } else if (estado === 'morto') {
     atualizarEfeitos(dt);
-    if (premiu('enter')) novoJogo();
-    else if (premiu('escape')) estado = 'titulo';
+    if (premiu('enter') || clicou(BOTOES_MORTE.denovo)) novoJogo();
+    else if (premiu('escape') || clicou(BOTOES_MORTE.menu)) estado = 'titulo';
   }
+  if (estado !== 'jogo') toque.atacar = false;
+  atualizarAvisos(dt);
 
   desenhar(agora / 1000);
   for (const k in premidas) delete premidas[k];

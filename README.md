@@ -6,6 +6,8 @@ RPG 2D de masmorras em pixel art que corre direto no browser. Não precisa de in
 
 Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo clique.
 
+**No telemóvel ou tablet** aparecem controlos de toque: joystick à esquerda, botão grande de ataque (acerta no inimigo mais perto), esquiva, poção, "Usar", os 4 feitiços e botões de pausa, personagem e mochila. Só aparecem em ecrãs táteis; no computador continuas a jogar com teclado e rato. Joga com o telemóvel na horizontal.
+
 | Tecla | Ação |
 |---|---|
 | WASD / Setas | Mover |
@@ -15,6 +17,7 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 | E | Abrir baú, falar com o mercador, usar altar/cristal, descer a escada |
 | Q | Beber poção (cura 40%) |
 | C | Ecrã de personagem (todos os stats, equipamento e melhorias) |
+| I | Mochila (guarda até 6 itens, equipa ou vende) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
 
@@ -23,6 +26,20 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu inicial aparece **Continuar** (ENTER) ou **Novo jogo** (N). Ao continuar recomeças o andar onde estavas, com tudo o que tinhas. Se morreres, a partida guardada é apagada.
 
 ## O que há no jogo
+
+- **Progressão entre partidas** (menu inicial):
+  - **Altar das Almas**: quando morres ou desistes ganhas almas (mais em dificuldades altas) e gastas em melhorias permanentes: vida, dano, mana, ouro e poções iniciais, XP, sorte, começar com o Relâmpago e **Segunda Vida** (revives uma vez por partida).
+  - **Coleção de itens**: todos os itens do jogo; os que ainda não encontraste aparecem como "???".
+  - **Conquistas**: 14 conquistas que dão almas ou skins novas (Celestial, Dracónica, Infernal).
+- **Mochila**: ao abrir um baú podes equipar, guardar na mochila ou vender. Ao equipar, o item antigo vai para a mochila.
+- **Zonas**: a cada 5 andares muda a zona, com cores e inimigos próprios:
+  - Masmorra (1–5): slimes, morcegos, esqueletos, orcs.
+  - Cemitério (6–10): **zumbis** (levantam-se uma vez depois de morrer), fantasmas, esqueletos.
+  - Cavernas de Lava (11–15): **diabretes** que atiram bolas de fogo, **slimes de lava** que explodem ao morrer.
+  - Abismo Gelado (16–20): **lobos de gelo** e **elementais de gelo** que te abrandam.
+  - Depois do 20 aparece tudo misturado.
+- **Maldições**: a partir do andar 3 aparecem **Baús Amaldiçoados**, com itens muito melhores mas que trazem sempre uma maldição (Frágil, Sangrento, Pesado, Avareza, Vazio ou Vulnerável). Podes **purificar** o item na Mesa de Encantamentos.
+- **Companheiros**: na **Sala do Companheiro** (sempre no andar 2 se ainda não tiveres um) libertas um **Lobo** (morde), uma **Fada** (cura-te e dispara magia) ou um **Mini-Dragão** (cospe fogo). O companheiro sobe de nível com as tuas vitórias.
 
 - **Criação de personagem**: ao começar um jogo novo escolhes a **raça**, a **skin** e a **dificuldade**.
 
@@ -110,7 +127,10 @@ js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigo
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
-js/jogo.js          lógica: combate, IA, bosses, salas especiais, loja, níveis e gravação
+js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
+js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)
+js/jogo.js          lógica: combate, IA, bosses, zonas, salas especiais, loja, mochila, companheiros e gravação
+js/toque.js         controlos de toque (só em ecrãs táteis)
 fontes/Tiny5.woff2  fonte pixel Tiny5 (SIL Open Font License, Google Fonts)
 ```
 

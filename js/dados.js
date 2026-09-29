@@ -25,6 +25,11 @@ const TIPOS_BAU = {
     mimico: 0.08, // 8% de ser um Mímico!
     chances: { lixo: 30, comum: 32, raro: 22, epico: 11, lendario: 4, mitico: 1 },
   },
+  maldito: {
+    nome: 'Baú Amaldiçoado', corpo: '#4a2a60', aro: '#d9a6ff',
+    mimico: 0, maldito: true, // todos os itens vêm com uma maldição
+    chances: { lixo: 0, comum: 4, raro: 24, epico: 36, lendario: 28, mitico: 8 },
+  },
   ouro: {
     nome: 'Baú Dourado', corpo: '#d9a400', aro: '#fff0a0',
     mimico: 0,
@@ -102,13 +107,20 @@ const ITENS = [
 
 // Inimigos normais. Os stats escalam com o andar.
 const INIMIGOS = {
-  slime:     { nome: 'Slime',     hp: 22, dano: 6,  vel: 70,  r: 12, xp: 6,  cor: '#5fd35f', minAndar: 1, peso: 5 },
-  morcego:   { nome: 'Morcego',   hp: 14, dano: 5,  vel: 135, r: 10, xp: 7,  cor: '#8a64c0', minAndar: 1, peso: 4 },
-  esqueleto: { nome: 'Esqueleto', hp: 28, dano: 8,  vel: 80,  r: 13, xp: 12, cor: '#e8e2cf', minAndar: 2, peso: 3 },
-  orc:       { nome: 'Orc',       hp: 60, dano: 13, vel: 75,  r: 14, xp: 20, cor: '#6b8e23', minAndar: 3, peso: 3 },
-  fantasma:  { nome: 'Fantasma',  hp: 38, dano: 10, vel: 85,  r: 13, xp: 16, cor: '#bfe6ff', minAndar: 5, peso: 2 },
-  aranha:    { nome: 'Aranha',    hp: 16, dano: 7,  vel: 150, r: 9,  xp: 5,  cor: '#7a3f96', minAndar: 21, peso: 3 },
-  mimico:    { nome: 'Mímico',    hp: 70, dano: 14, vel: 150, r: 14, xp: 35, cor: '#8b5a2b', minAndar: 999, peso: 0 },
+  // zonas: em que zonas aparece (0 Masmorra, 1 Cemitério, 2 Cavernas de Lava, 3 Abismo Gelado).
+  // Depois do andar 20 aparecem todos misturados.
+  slime:     { nome: 'Slime',     hp: 22, dano: 6,  vel: 70,  r: 12, xp: 6,  cor: '#5fd35f', minAndar: 1, peso: 5, zonas: [0] },
+  morcego:   { nome: 'Morcego',   hp: 14, dano: 5,  vel: 135, r: 10, xp: 7,  cor: '#8a64c0', minAndar: 1, peso: 4, zonas: [0, 1, 2] },
+  esqueleto: { nome: 'Esqueleto', hp: 28, dano: 8,  vel: 80,  r: 13, xp: 12, cor: '#e8e2cf', minAndar: 2, peso: 3, zonas: [0, 1, 3] },
+  orc:       { nome: 'Orc',       hp: 60, dano: 13, vel: 75,  r: 14, xp: 20, cor: '#6b8e23', minAndar: 3, peso: 3, zonas: [0, 2] },
+  fantasma:  { nome: 'Fantasma',  hp: 38, dano: 10, vel: 85,  r: 13, xp: 16, cor: '#bfe6ff', minAndar: 5, peso: 2, zonas: [1, 3] },
+  zumbi:     { nome: 'Zumbi',     hp: 50, dano: 11, vel: 48,  r: 13, xp: 13, cor: '#7fa65a', minAndar: 1, peso: 5, zonas: [1] },
+  diabrete:  { nome: 'Diabrete',  hp: 26, dano: 9,  vel: 120, r: 11, xp: 14, cor: '#e0403a', minAndar: 1, peso: 4, zonas: [2] },
+  slimeLava: { nome: 'Slime de Lava', hp: 30, dano: 9, vel: 75, r: 12, xp: 12, cor: '#ff7b25', minAndar: 1, peso: 4, zonas: [2] },
+  loboGelo:  { nome: 'Lobo de Gelo', hp: 34, dano: 10, vel: 165, r: 12, xp: 15, cor: '#cfeaff', minAndar: 1, peso: 4, zonas: [3] },
+  elementalGelo: { nome: 'Elemental de Gelo', hp: 30, dano: 9, vel: 70, r: 12, xp: 16, cor: '#9fdcff', minAndar: 1, peso: 3, zonas: [3] },
+  aranha:    { nome: 'Aranha',    hp: 16, dano: 7,  vel: 150, r: 9,  xp: 5,  cor: '#7a3f96', minAndar: 21, peso: 3, zonas: [] },
+  mimico:    { nome: 'Mímico',    hp: 70, dano: 14, vel: 150, r: 14, xp: 35, cor: '#8b5a2b', minAndar: 999, peso: 0, zonas: [] },
 };
 
 // Um boss a cada 5 andares (5, 10, 15, 20, 25, 30, depois repete mais forte).
@@ -136,6 +148,7 @@ const SALAS_ESPECIAIS = {
   altar:   { nome: 'Altar de Sacrifício', desc: 'Troca vida por um Baú Dourado',            cor: '#ff3b3b' },
   desafio: { nome: 'Sala de Desafio',     desc: 'Sobrevive a 3 ondas e ganha um Baú Dourado', cor: '#b44dff' },
   encantamento: { nome: 'Sala de Encantamentos', desc: 'Reforça e encanta o teu equipamento', cor: '#9b5cff' },
+  companheiro: { nome: 'Sala do Companheiro', desc: 'Liberta um amigo para lutar contigo', cor: '#ff9ff3' },
 };
 
 // Ouro que recebes ao vender um item (multiplicado pelo andar)
@@ -241,8 +254,11 @@ const SKINS = {
   gelo:     { nome: 'Gelo',           pal: { b: '#7fd8ff', B: '#3a9ac0', l: '#d0f4ff', s: '#ffffff', m: '#bfe6ff', d: '#7aa8c8', r: '#3d9bff' } },
   dourado:  { nome: 'Dourado',        pal: { s: '#fff0a0', m: '#ffd23f', d: '#b88a00', b: '#e0b000', B: '#a07800', l: '#fff6c8', r: '#ff3355', p: '#8a6a30' }, recorde: 10 },
   infinito: { nome: 'Infinito',       pal: { s: '#2a2030', m: '#1a1422', d: '#0e0a14', b: '#ff3355', B: '#a01830', l: '#ff8095', r: '#ff3355', w: '#ff3355' }, recorde: 20 },
+  celestial: { nome: 'Celestial',     pal: { s: '#ffffff', m: '#d0f4ff', d: '#8ab8d0', b: '#f5f0ff', B: '#c8bff0', l: '#ffffff', r: '#ffd23f', y: '#4dffea', w: '#4dffea' }, conquista: 'mitico' },
+  draconica: { nome: 'Dracónica',     pal: { s: '#c0392b', m: '#8a2219', d: '#5a1410', b: '#e8c080', B: '#c8a060', l: '#f5d8a0', r: '#ffd23f', w: '#ffe14d' }, conquista: 'pesadelo' },
+  infernal:  { nome: 'Infernal',      pal: { s: '#3a2a2a', m: '#241818', d: '#140c0c', b: '#ff7b25', B: '#b03a10', l: '#ffe14d', r: '#ff3b3b', w: '#ff7b25' }, conquista: 'demonio' },
 };
-const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito'];
+const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito', 'celestial', 'draconica', 'infernal'];
 
 // ---------------------------------------------------------------------
 //  FEITIÇOS (teclas 1-4). Aprendem-se e sobem de nível (máx. 3) com Livros de Feitiço.
@@ -262,9 +278,73 @@ const ORDEM_FEITICOS = ['fogo', 'raio', 'gelo', 'cura'];
 //  elite multiplica a chance de aparecer um inimigo de elite; pocoes = poções extra ao começar
 // ---------------------------------------------------------------------
 const DIFICULDADES = {
-  facil:    { nome: 'Fácil',    cor: '#5dff7a', desc: 'Inimigos mais fracos. Bom para aprender.',             hp: 0.65, dano: 0.6,  xp: 1,   ouro: 1,    elite: 0.5, pocoes: 2 },
-  normal:   { nome: 'Normal',   cor: '#ffe14d', desc: 'O jogo como foi pensado.',                             hp: 1,    dano: 1,    xp: 1,   ouro: 1,    elite: 1,   pocoes: 0 },
-  dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0 },
-  pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1 },
+  facil:    { nome: 'Fácil',    cor: '#5dff7a', desc: 'Inimigos mais fracos. Bom para aprender.',             hp: 0.65, dano: 0.6,  xp: 1,   ouro: 1,    elite: 0.5, pocoes: 2, almas: 0.5 },
+  normal:   { nome: 'Normal',   cor: '#ffe14d', desc: 'O jogo como foi pensado.',                             hp: 1,    dano: 1,    xp: 1,   ouro: 1,    elite: 1,   pocoes: 0, almas: 1 },
+  dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0, almas: 1.5 },
+  pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1, almas: 2 },
 };
 const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo'];
+
+// ---------------------------------------------------------------------
+//  ZONAS: cada 5 andares mudam as cores e os inimigos
+// ---------------------------------------------------------------------
+const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado'];
+
+// ---------------------------------------------------------------------
+//  MALDIÇÕES: os itens dos Baús Amaldiçoados são fortes mas trazem uma destas.
+//  Podes purificá-las na Mesa de Encantamentos.
+// ---------------------------------------------------------------------
+const MALDICOES = [
+  { id: 'fragil',     nome: 'Frágil',     desc: '-25% vida máxima',          vidaPct: -0.25 },
+  { id: 'sangue',     nome: 'Sangrento',  desc: 'Perdes 1 vida por segundo', regen: -1 },
+  { id: 'pesado',     nome: 'Pesado',     desc: '-15% velocidade',           velMov: -0.15 },
+  { id: 'avareza',    nome: 'Avareza',    desc: '-40% ouro',                 ouroPct: -0.4 },
+  { id: 'vazio',      nome: 'Vazio',      desc: '-30 mana máxima',           manaMax: -30 },
+  { id: 'vulneravel', nome: 'Vulnerável', desc: 'Recebes +25% de dano',      danoRecebido: 0.25 },
+];
+
+// ---------------------------------------------------------------------
+//  COMPANHEIROS: liberta um na Sala do Companheiro. Sobem de nível contigo.
+// ---------------------------------------------------------------------
+const PETS = {
+  lobo:   { nome: 'Lobo',        desc: 'Corre até aos inimigos e morde-os', cor: '#b8c0d0' },
+  fada:   { nome: 'Fada',        desc: 'Cura-te e dispara magia',           cor: '#ff9ff3' },
+  dragao: { nome: 'Mini-Dragão', desc: 'Cospe bolas de fogo que explodem',  cor: '#ff7b25' },
+};
+const ORDEM_PETS = ['lobo', 'fada', 'dragao'];
+
+// ---------------------------------------------------------------------
+//  ALTAR DAS ALMAS: melhorias permanentes compradas com as almas que ganhas
+//  ao morrer ou desistir. custo[i] = preço para passar ao nível i+1.
+// ---------------------------------------------------------------------
+const MELHORIAS_ALMA = [
+  { id: 'vida',    nome: 'Coração Forte',    desc: '+10 vida máxima',          max: 5, custo: [15, 25, 40, 60, 90], cor: '#ff4d6d', letra: 'V' },
+  { id: 'dano',    nome: 'Braço de Ferro',   desc: '+5% dano',                 max: 5, custo: [15, 25, 40, 60, 90], cor: '#ff9f43', letra: 'F' },
+  { id: 'mana',    nome: 'Alma Arcana',      desc: '+10 mana máxima',          max: 3, custo: [20, 35, 55],         cor: '#9b5cff', letra: 'M' },
+  { id: 'ouro',    nome: 'Herança',          desc: 'Começa com +25 ouro',      max: 4, custo: [10, 20, 35, 50],     cor: '#ffd23f', letra: 'O' },
+  { id: 'pocao',   nome: 'Bolsa de Poções',  desc: '+1 poção ao começar',      max: 2, custo: [25, 50],             cor: '#ff3d6b', letra: 'P' },
+  { id: 'xp',      nome: 'Memória Antiga',   desc: '+10% XP',                  max: 3, custo: [20, 40, 70],         cor: '#7ec8ff', letra: 'X' },
+  { id: 'sorte',   nome: 'Estrela da Sorte', desc: '+1 sorte nos baús',        max: 2, custo: [60, 120],            cor: '#3ddc84', letra: 'S' },
+  { id: 'feitico', nome: 'Aprendiz de Mago', desc: 'Começa a saber Relâmpago', max: 1, custo: [80],                 cor: '#ffe14d', letra: 'R' },
+  { id: 'reviver', nome: 'Segunda Vida',     desc: 'Revives 1 vez por partida', max: 1, custo: [200],               cor: '#fff0a0', letra: '+' },
+];
+
+// ---------------------------------------------------------------------
+//  CONQUISTAS: recompensa em almas ou uma skin nova
+// ---------------------------------------------------------------------
+const CONQUISTAS = [
+  { id: 'rei',       nome: 'Caçador de Reis',    desc: 'Derrota o Rei Slime',                   almas: 20 },
+  { id: 'andar10',   nome: 'Explorador',         desc: 'Chega ao andar 10',                     almas: 25 },
+  { id: 'andar20',   nome: 'Aventureiro',        desc: 'Chega ao andar 20',                     almas: 50 },
+  { id: 'lendario',  nome: 'Tesouro Lendário',   desc: 'Encontra um item Lendário',             almas: 15 },
+  { id: 'mitico',    nome: 'Sorte Divina',       desc: 'Encontra um item Mítico',               skin: 'celestial' },
+  { id: 'pesadelo',  nome: 'Pesadelo Vivo',      desc: 'Mata o Dragão Ancião no Pesadelo',      skin: 'draconica' },
+  { id: 'demonio',   nome: 'Fim do Demónio',     desc: 'Derrota o Rei Demónio',                 skin: 'infernal' },
+  { id: 'mimicos',   nome: 'Caçador de Mímicos', desc: 'Mata 5 Mímicos (no total)',             almas: 20 },
+  { id: 'encantar5', nome: 'Mestre Encantador',  desc: 'Reforça um item até +5',                almas: 30 },
+  { id: 'arquimago', nome: 'Arquimago',          desc: 'Aprende os 4 feitiços numa partida',    almas: 25 },
+  { id: 'rico',      nome: 'Milionário',         desc: 'Tem 1000 ouro ao mesmo tempo',          almas: 20 },
+  { id: 'maldito',   nome: 'Amaldiçoado',        desc: 'Equipa um item amaldiçoado',            almas: 10 },
+  { id: 'amigo',     nome: 'Melhor Amigo',       desc: 'Sobe o teu companheiro ao nível 5',     almas: 20 },
+  { id: 'colecao',   nome: 'Colecionador',       desc: 'Encontra 25 itens diferentes',          almas: 40 },
+];

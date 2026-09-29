@@ -420,6 +420,141 @@ const MIMICO = [
   ],
 ];
 
+const ZUMBI = [
+  '................',
+  '.....kkkkkk.....',
+  '....kzzzzzzk....',
+  '....kzezzezk....',
+  '....kzzzzzzk....',
+  '....kzkwkwzk....',
+  '.....kzzzzk.....',
+  '.kkk.kbbbbk.kkk.',
+  'kzzzkkbBbbkkzzzk',
+  '.kkk.kbbBbk.kkk.',
+  '.....kbbbbk.....',
+  '.....kBbbBk.....',
+  '.....kbkkbk.....',
+  '.....kzk.kzk....',
+  '.....kzk.kzk....',
+  '....kkk..kkk....',
+];
+const PAL_ZUMBI = { z: '#7fa65a', e: '#ff4040', w: '#e8e2cf', b: '#5a6b8a', B: '#3e4a60' };
+
+const DIABRETE = [
+  '...k........k...',
+  '...kk......kk...',
+  '....kkkkkkkk....',
+  '...krrrrrrrrk...',
+  '..krrerrrrerrk..',
+  '..krrrrrrrrrrk..',
+  '..krrkwwwwkrrk..',
+  'kk.krrrrrrrrk.kk',
+  'kdk.krrrrrrk.kdk',
+  'kddkkrRRRRrkkddk',
+  '.kk..krrrrk..kk.',
+  '.....kr..rk.....',
+  '.....kk..kk.....',
+];
+const PAL_DIABRETE = { r: '#e0403a', R: '#a02020', e: '#ffe14d', w: '#ffffff', d: '#6a1a1a' };
+
+const LOBO = [
+  '..........k..k..',
+  '.........kgkkgk.',
+  '.........kgggggk',
+  '.k.......kgegggk',
+  '.kgkkkkkkkgggggk',
+  '..kgggggggggggkk',
+  '..kgGgggggggggk.',
+  '..kGGGGGGGGGGk..',
+  '...kgkgk..kgkgk.',
+  '...kkkkk..kkkkk.',
+];
+const PAL_LOBO = { g: '#b8c0d0', G: '#7d8598', e: '#ffe14d' };
+const PAL_LOBO_GELO = { g: '#cfeaff', G: '#7fb0d0', e: '#3d9bff' };
+
+const ELEMENTAL = [
+  '.......kk.......',
+  '......kcak......',
+  '.....kccaak.....',
+  '..k..kcaaak..k..',
+  '.kck.kcaaak.kck.',
+  '.kak.kceaek.kak.',
+  '..k..kcaaak..k..',
+  '.....kcaaak.....',
+  '.....kcaaAk.....',
+  '......kaAk......',
+  '.......kk.......',
+];
+const PAL_ELEMENTAL = { c: '#ffffff', a: '#9fdcff', A: '#4a9ac8', e: '#1b3a5a' };
+
+const FADA = [
+  [
+    '.kk......kk.',
+    'kwwk....kwwk',
+    'kwwwk..kwwwk',
+    '.kwwkkkkwwk.',
+    '..kkkffkkk..',
+    '....kffk....',
+    '....kppk....',
+    '...kppppk...',
+    '....kkkk....',
+  ],
+  [
+    '............',
+    '..k......k..',
+    '.kwk....kwk.',
+    '.kwwkkkkwwk.',
+    '..kkkffkkk..',
+    '....kffk....',
+    '....kppk....',
+    '...kppppk...',
+    '....kkkk....',
+  ],
+];
+const PAL_FADA = { w: '#bfefff', f: '#f1c8a0', p: '#ff9ff3' };
+
+const MINI_DRAGAO = [
+  [
+    '......k.........',
+    '.....kwk....kk..',
+    '....kwwk...krrk.',
+    '...kwwwk..krrerk',
+    '...kwwkkkkrrrrrk',
+    '..kkkkrrrrrrkkk.',
+    '.krrrrrrrrrrk...',
+    'kyrrryyyyrrk....',
+    '.kkrrrrrrrk.....',
+    '...krk..krk.....',
+    '...kk....kk.....',
+  ],
+  [
+    '................',
+    '............kk..',
+    '...........krrk.',
+    '..........krrerk',
+    '..kwwwwkkkrrrrrk',
+    '..kkkkrrrrrrkkk.',
+    '.krrrrrrrrrrk...',
+    'kyrrryyyyrrk....',
+    '.kkrrrrrrrk.....',
+    '...krk..krk.....',
+    '...kk....kk.....',
+  ],
+];
+const PAL_MINI_DRAGAO = { r: '#ff7b25', y: '#ffe14d', w: '#c0392b', e: '#1b1424' };
+
+function gerarGaiola() {
+  const g = novaGrade(20, 22);
+  const metal = '#8a93a8', claro = '#b8c0d0', escuro = '#4a5068';
+  for (let x = 0; x < 20; x++) {
+    g[0][x] = CONTORNO; g[1][x] = claro; g[2][x] = metal; g[3][x] = CONTORNO;
+    g[18][x] = CONTORNO; g[19][x] = metal; g[20][x] = escuro; g[21][x] = CONTORNO;
+  }
+  for (let x = 1; x < 20; x += 5) for (let y = 4; y < 18; y++) { g[y][x] = metal; g[y][x - 1] = CONTORNO; }
+  for (let y = 4; y < 18; y++) { g[y][19] = CONTORNO; g[y][18] = escuro; }
+  return gradeParaCanvas(g);
+}
+
 const BAU = [
   '..kkkkkkkkkkkk..',
   '.kbllllllllllbk.',
@@ -439,6 +574,7 @@ const BAU = [
 const PAL_BAU = {
   madeira: { B: '#7a4a22', b: '#a86a36', l: '#c98a4a', a: '#c9a15a', A: '#8a6a30', y: '#ffd23f', d: '#7f4f25' },
   ouro: { B: '#b88a00', b: '#e0b000', l: '#fff0a0', a: '#fff6c8', A: '#c9a15a', y: '#ff3355', d: '#b08a00' },
+  maldito: { B: '#2a1638', b: '#4a2a60', l: '#7a4aa0', a: '#b44dff', A: '#6a2a90', y: '#ff3355', d: '#3a1f50' },
 };
 
 const POCAO = [
@@ -1003,7 +1139,18 @@ function construirSprites() {
   SPR.fantasma = [f, virarH(f)];
   SPR.aranha = ARANHA.map(l => sprite(l, PAL_ARANHA));
   SPR.mimico = MIMICO.map(l => sprite(l, PAL_MIMICO));
-  SPR.bau = { madeira: sprite(BAU, PAL_BAU.madeira), ouro: sprite(BAU, PAL_BAU.ouro) };
+  SPR.bau = { madeira: sprite(BAU, PAL_BAU.madeira), ouro: sprite(BAU, PAL_BAU.ouro), maldito: sprite(BAU, PAL_BAU.maldito) };
+  SPR.zumbi = [sprite(ZUMBI, PAL_ZUMBI)];
+  SPR.diabrete = [sprite(DIABRETE, PAL_DIABRETE)];
+  SPR.slimeLava = SLIME.map(l => sprite(l, { g: '#ff7b25', G: '#c0392b', l: '#ffe14d', w: '#ffffff' }));
+  SPR.loboGelo = [sprite(LOBO, PAL_LOBO_GELO)];
+  SPR.elementalGelo = [sprite(ELEMENTAL, PAL_ELEMENTAL)];
+  SPR.pet = {
+    lobo: [sprite(LOBO, PAL_LOBO)],
+    fada: FADA.map(l => sprite(l, PAL_FADA)),
+    dragao: MINI_DRAGAO.map(l => sprite(l, PAL_MINI_DRAGAO)),
+  };
+  SPR.gaiola = gerarGaiola();
   SPR.pocao = sprite(POCAO, PAL_POCAO);
   SPR.moeda = sprite(MOEDA, PAL_MOEDA);
   SPR.mercador = sprite(MERCADOR, PAL_MERCADOR);
