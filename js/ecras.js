@@ -55,9 +55,11 @@ function circuloEcra(x, y, r, fundo, borda, largura = 3) {
 function desenharControlosToque(t) {
   if (estado !== 'jogo') return;
   // joystick
-  const j = toque.joy;
-  const cx = j ? j.cx : 150, cy = j ? j.cy : 500;
-  ctx.globalAlpha = j ? 0.6 : 0.3;
+  const vis = VISIBILIDADES[opcoes.visibilidade] / 0.7; // 1 = normal
+  const alfa = a => { ctx.globalAlpha = Math.min(1, a * vis); };
+  const j = toque.joy, c0 = centroJoystick();
+  const cx = j ? j.cx : c0.x, cy = j ? j.cy : c0.y;
+  alfa(j ? 0.6 : 0.3);
   circuloEcra(cx, cy, RAIO_JOYSTICK, 'rgba(20,16,32,0.5)', '#cfc6e0', 3);
   circuloEcra(j ? j.x : cx, j ? j.y : cy, 24, 'rgba(207,198,224,0.6)', '#ffffff', 2);
   ctx.globalAlpha = 1;
@@ -70,10 +72,10 @@ function desenharControlosToque(t) {
     if (b.feitico) borda = FEITICOS[b.feitico].cor;
     if (b.id === 'atacar') borda = RARIDADES[J.arma.r].cor;
     if (b.id === 'usar' && podeUsar) borda = '#ffe14d';
-    ctx.globalAlpha = on ? 0.95 : 0.7;
+    alfa(on ? 0.95 : 0.7);
     circuloEcra(b.x, b.y, b.r, on ? 'rgba(80,70,110,0.7)' : 'rgba(14,11,22,0.55)', borda, b.id === 'usar' && podeUsar ? 4 : 3);
-    ctx.globalAlpha = 1;
-    if (b.id === 'atacar') sprEcra(iconeItem(J.arma), b.x, b.y, 4);
+    alfa(1);
+    if (b.id === 'atacar') sprEcra(iconeItem(J.arma), b.x, b.y, b.r > 62 ? 5 : 4);
     else if (b.id === 'dash') {
       textoCentro('»»', b.x, b.y, 22, J.cdDash <= 0 ? '#78aaff' : '#556');
     } else if (b.id === 'pocao') {
@@ -84,9 +86,9 @@ function desenharControlosToque(t) {
     } else if (b.feitico) {
       const nv = J.feiticos[b.feitico] || 0;
       if (!nv) { textoCentro('?', b.x, b.y, 16, '#666', false); continue; }
-      ctx.globalAlpha = J.mana < custoMana(b.feitico) ? 0.35 : 1;
+      alfa(J.mana < custoMana(b.feitico) ? 0.35 : 1);
       sprEcra(SPR.feitico[b.feitico], b.x, b.y, 2);
-      ctx.globalAlpha = 1;
+      alfa(1);
       const cd = J.cdFeitico[b.feitico] || 0;
       if (cd > 0) {
         ctx.beginPath();
@@ -115,6 +117,8 @@ function desenharControlosToque(t) {
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fill();
   }
+  ctx.globalAlpha = 1;
+  desenharTutorial(t);
 }
 
 // ---------------------------------------------------------------------

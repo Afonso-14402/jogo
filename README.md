@@ -8,6 +8,16 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 
 **No telemóvel ou tablet** aparecem controlos de toque: joystick à esquerda, botão grande de ataque (acerta no inimigo mais perto), esquiva, poção, "Usar", os 4 feitiços e botões de pausa, personagem e mochila. Só aparecem em ecrãs táteis; no computador continuas a jogar com teclado e rato. Joga com o telemóvel na horizontal.
 
+No telemóvel há ainda:
+
+- **Ecrã inteiro**: botão ⛶ no canto do menu e da pausa (esconde a barra do browser e roda para a horizontal).
+- **Instalar como app**: botão **Instalar app** no menu (Android) ou, no iPhone, *Partilhar → Adicionar ao ecrã principal*. Instalado abre em ecrã inteiro, com ícone próprio, e **funciona sem internet** (quando o jogo está num site, por exemplo no GitHub Pages).
+- **Opções**: tamanho dos botões, transparência, **modo canhoto** (joystick à direita), vibração, **poupança de bateria** (30 FPS), som, ecrã inteiro e rever o tutorial.
+- **Vibração** ao levar dano, subir de nível, tirar um item Lendário ou Mítico, matar um boss e morrer (só Android; o iPhone não deixa).
+- **Pausa automática** quando sais da app, bloqueias o ecrã ou recebes uma chamada.
+- **Tutorial** na primeira partida: mostra o joystick, o ataque, a esquiva e os feitiços (os inimigos esperam por ti). Podes saltá-lo.
+- O jogo respeita o notch e as bordas curvas do ecrã, e as dicas mostram toques em vez de teclas.
+
 | Tecla | Ação |
 |---|---|
 | WASD / Setas | Mover |
@@ -136,7 +146,8 @@ js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loj
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
 js/meta.js          o que fica guardado entre partidas (almas, coleção, conquistas)
 js/jogo.js          lógica: combate, IA, bosses, zonas, salas especiais, loja, mochila, companheiros e gravação
-js/toque.js         controlos de toque (só em ecrãs táteis)
+js/toque.js         controlos de toque, opções, tutorial, ecrã inteiro e vibração (só em ecrãs táteis)
+manifest.webmanifest, sw.js, icones/   para instalar como app e jogar sem internet
 fontes/Tiny5.woff2  fonte pixel Tiny5 (SIL Open Font License, Google Fonts)
 ```
 

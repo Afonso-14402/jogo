@@ -83,6 +83,7 @@ function som(freq, dur, tipo = 'square', vol = 0.05, slide = 0, atraso = 0) {
   if (!somLigado) return;
   try {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended' && !document.hidden) actx.resume();
     const t0 = actx.currentTime + atraso;
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = tipo;
@@ -342,6 +343,8 @@ function novoJogo() {
   J.mana = S.maxMana;
   proximoAndar();
   estado = 'jogo';
+  tutorial = null;
+  if (modoToque && !opcoes.tutorialFeito) iniciarTutorial();
 }
 
 function continuarJogo() {
@@ -593,6 +596,7 @@ function ganharXp(q) {
     J.nivel++;
     J.hpBase += 10; J.atkBase += 2; J.defBase += 1;
     J.escolhasPendentes++;
+    vibrar(50);
     S = stats();
     J.hp = S.maxHp;
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
@@ -687,6 +691,7 @@ function matarInimigo(e) {
   ganharXp(e.xp);
   if (e.boss) {
     boss = null;
+    vibrar([80, 50, 80, 50, 200]);
     J.bossesMortos = (J.bossesMortos || 0) + 1;
     if (e.tipo === 'reiSlime') desbloquear('rei');
     if (e.tipo === 'dragao' && J.dificuldade === 'pesadelo') desbloquear('pesadelo');
@@ -748,6 +753,7 @@ function danoJogador(d, fx, fy, fonte = null) {
     texto(fonte.x, fonte.y - fonte.r - 6, `+${final * 3}`, '#ff4d6d', 14);
   }
   J.invuln = 0.7;
+  vibrar(final > S.maxHp * 0.15 ? 90 : 40);
   texto(J.x, J.y - 20, `-${final}`, '#ff4d4d', 18);
   tremor = Math.max(tremor, 6);
   som(110, 0.18, 'sawtooth', 0.06, -60);
@@ -775,6 +781,8 @@ function morrer(desistiu = false) {
   salvarMeta();
   estado = 'morto';
   confirmarDesistir = false;
+  tutorial = null;
+  if (!desistiu) vibrar([120, 60, 250]);
   explosao(J.x, J.y, '#3a6ad4', 40, 250, 6);
   fanfarra([392, 330, 262, 196], 0.05);
   apagarSave();
@@ -827,7 +835,7 @@ function atualizar(dt) {
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
-  for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
+  if (!tutorial) for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
   separarInimigos();
   atualizarProjeteis(dt);
   atualizarPerigos(dt);
@@ -1906,6 +1914,7 @@ function atualizarPausa() {
     return;
   }
   if (clicou(BOTAO_IDIOMA)) mudarIdioma();
+  else if (modoToque && clicou(BOTAO_OPCOES)) abrirOpcoes();
   else if (premiu('p', 'escape') || clicou(BOTOES_PAUSA.continuar)) { estado = 'jogo'; rato.baixo = false; }
   else if (premiu('g') || clicou(BOTOES_PAUSA.guardar)) { guardarJogo(); estado = 'titulo'; }
   else if (premiu('x') || clicou(BOTOES_PAUSA.desistir)) confirmarDesistir = true;
@@ -2009,7 +2018,7 @@ function atualizarRoleta(dt) {
       R.brilho = 0;
       const ordem = RARIDADES[R.premio.r].ordem;
       if (ordem === 0) fanfarra([300, 250, 200, 120], 0.04);
-      else if (ordem >= 4) { fanfarra([523, 659, 784, 1046, 1318, 1568], 0.05); tremor = 12; }
+      else if (ordem >= 4) { fanfarra([523, 659, 784, 1046, 1318, 1568], 0.05); tremor = 12; vibrar(ordem >= 5 ? [100, 50, 100, 50, 300] : [70, 40, 150]); }
       else fanfarra([440, 554, 659], 0.04);
       registrarItem(R.premio);
     }
@@ -2045,6 +2054,8 @@ function atualizarRoleta(dt) {
 // ---------------------------------------------------------------------
 let ultimo = performance.now();
 function loop(agora) {
+  // poupança de bateria: desenha no máximo 30 vezes por segundo
+  if (opcoes.poupanca && modoToque && agora - ultimo < 30) { requestAnimationFrame(loop); return; }
   const dt = Math.min(0.05, (agora - ultimo) / 1000);
   ultimo = agora;
 
@@ -2059,11 +2070,15 @@ function loop(agora) {
     if (premiu('l')) acao = 'colecao';
     if (premiu('t')) acao = 'conquistas';
     if (premiu('i') || clicou(BOTAO_IDIOMA)) { mudarIdioma(); acao = null; }
-    if (acao === 'continuar') continuarJogo();
+    if (modoToque && clicou(BOTAO_OPCOES)) acao = 'opcoes';
+    if (acao === 'opcoes') abrirOpcoes();
+    else if (acao === 'continuar') continuarJogo();
     else if (acao === 'novo') abrirCriacao();
     else if (acao) abrirMenuMeta(acao);
   } else if (estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
     atualizarMenuMeta(dt);
+  } else if (estado === 'opcoes') {
+    atualizarOpcoes(dt);
   } else if (estado === 'mochila') {
     atualizarMochila(dt);
   } else if (estado === 'criar') {
@@ -2075,7 +2090,7 @@ function loop(agora) {
     if (premiu('p', 'escape') || clicou(BOTAO_PAUSA)) { estado = 'pausa'; rato.baixo = false; }
     else if (premiu('c', 'tab')) estado = 'personagem';
     else if (premiu('i')) abrirMochila();
-    else atualizar(dt);
+    else { atualizar(dt); atualizarTutorial(dt); }
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
     atualizarEscolha(dt);
@@ -2102,4 +2117,3 @@ function loop(agora) {
   for (const k in premidas) delete premidas[k];
   requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);

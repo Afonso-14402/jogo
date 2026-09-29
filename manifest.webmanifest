@@ -1,0 +1,17 @@
+{
+  "name": "Masmorra do Destino",
+  "short_name": "Masmorra",
+  "description": "RPG 2D de masmorras em pixel art: bosses, baús da sorte, magia e companheiros.",
+  "lang": "pt",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07060a",
+  "theme_color": "#07060a",
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

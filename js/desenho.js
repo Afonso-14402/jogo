@@ -111,6 +111,24 @@ function botaoIdioma() {
   ctx.fillText('EN', meio + b.w / 4 - 1, b.y + b.h / 2 + 1);
 }
 
+// Botões extra só para ecrãs táteis: Opções, Instalar e Ecrã inteiro
+function botoesMenuToque(comInstalar) {
+  if (!modoToque) return;
+  botao(BOTAO_OPCOES, 'Opções', '#ddd');
+  if (comInstalar && mostrarInstalar()) botao(BOTAO_INSTALAR, 'Instalar app', '#5dff7a');
+  if (!mostrarBotaoEcra()) return;
+  const b = BOTAO_ECRA, sobre = dentro(b);
+  painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sobre ? '#ffffff' : '#5a4d74');
+  // quatro cantos: para fora = entrar, para dentro = sair do ecrã inteiro
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2, d = 9, l = 6, dentroE = emEcraInteiro() ? -1 : 1;
+  ctx.fillStyle = '#ffe680';
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const x = cx + sx * d, y = cy + sy * d;
+    ctx.fillRect(Math.min(x, x - sx * l * dentroE), y - 1, l, 3);
+    ctx.fillRect(x - 1, Math.min(y, y - sy * l * dentroE), 3, l);
+  }
+}
+
 function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)') {
   const sobre = rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
   painel(r.x, r.y, r.w, r.h, sobre ? 'rgba(50,42,72,0.97)' : fundo, sobre ? '#ffffff' : cor);
@@ -231,9 +249,11 @@ function desenhar(t) {
   ctxTela.fillStyle = '#07060a';
   ctxTela.fillRect(0, 0, LARGURA, ALTURA);
   ctx = ctxTela;
-  if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
+  if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
+      (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
     else if (estado === 'criar') desenharCriacao(t);
+    else if (estado === 'opcoes') desenharOpcoes(t);
     else desenharMenuMeta(t);
     desenharAvisos();
     desenharAvisoRodar();
@@ -267,6 +287,7 @@ function desenhar(t) {
   else if (estado === 'personagem') desenharPersonagem();
   else if (estado === 'mochila') desenharMochila();
   else if (estado === 'pausa') desenharPausa();
+  else if (estado === 'opcoes') desenharOpcoes(t);
   else if (estado === 'morto') desenharMorte();
   desenharAvisos();
   desenharAvisoRodar();
@@ -1149,7 +1170,7 @@ function desenharLoja(t) {
   }
   if (loja.msg) textoCentro(loja.msg.txt, 460, 590, 16, loja.msg.cor);
   botao(BOTAO_FECHAR, 'Sair', '#ff8080');
-  textoCentro(`1-${stock.length} ou clique: comprar    ·    E / Esc: sair`, LARGURA / 2, ALTURA - 20, 15, '#aaa', false);
+  textoCentro(modoToque ? 'Toca num artigo para o comprar' : `1-${stock.length} ou clique: comprar    ·    E / Esc: sair`, LARGURA / 2, ALTURA - 20, 15, '#aaa', false);
 }
 
 // ---------------------------------------------------------------------
@@ -1247,7 +1268,7 @@ function desenharPersonagem() {
     textoEsq(nv ? `${FEITICOS[id].nome} ${'I'.repeat(nv)}` : '???', x + 30, y, 12, nv ? FEITICOS[id].cor : '#777');
     ctx.globalAlpha = 1;
   });
-  textoCentro('C / Esc para voltar', LARGURA / 2, ALTURA - 18, 13, '#888', false);
+  textoCentro(modoToque ? 'Toca no ecrã para voltar' : 'C / Esc para voltar', LARGURA / 2, ALTURA - 18, 13, '#888', false);
 }
 
 // ---------------------------------------------------------------------
@@ -1314,7 +1335,7 @@ function desenharMesa(t) {
     }
   }
   if (mesa.msg) textoCentro(mesa.msg.txt, 460, 600, 15, mesa.msg.cor);
-  textoCentro('1-3: item  ·  E: reforçar  ·  R: encantar  ·  P: purificar  ·  Esc: sair', 400, ALTURA - 16, 12, '#888', false);
+  textoCentro(modoToque ? 'Toca num item e depois no que queres fazer' : '1-3: item  ·  E: reforçar  ·  R: encantar  ·  P: purificar  ·  Esc: sair', 400, ALTURA - 16, 12, '#888', false);
   botao(BOTAO_FECHAR, 'Sair', '#ff8080');
 }
 
@@ -1374,8 +1395,8 @@ function desenharCriacao(t) {
   textoEsq(`Dificuldade: ${Dsel.desc}`, 30, 610, 12, Dsel.cor, 'normal');
   const b = BOTAO_COMECAR;
   painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
-  textoCentro('ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
-  textoEsq('W/S: raça   A/D: skin   1-4: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
+  textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
+  textoEsq(modoToque ? 'Toca numa raça, numa skin e numa dificuldade' : 'W/S: raça   A/D: skin   1-4: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
 }
 
 // ---------------------------------------------------------------------
@@ -1423,13 +1444,14 @@ function desenharTitulo(t) {
   painel(440, 212, 460, 286);
   textoCentro('Como jogar', 670, 232, 16, '#ffe14d');
   const controlos = modoToque ? [
-    ['Joystick (esquerda)', 'Mover'],
+    [opcoes.canhoto ? 'Joystick (direita)' : 'Joystick (esquerda)', 'Mover'],
     ['Botão grande', 'Atacar o inimigo mais perto'],
     ['»»', 'Esquiva'],
     ['Usar', 'Abrir baús, lojas, escadas...'],
     ['Poção', 'Beber poção'],
     ['1 2 3 4', 'Feitiços (usam mana)'],
     ['Botões à direita', 'Pausa, personagem, mochila'],
+    ['Opções', 'Botões, canhoto, vibração, bateria'],
   ] : [
     ['WASD / Setas', 'Mover'],
     ['Clique / Espaço', 'Atacar'],
@@ -1452,17 +1474,18 @@ function desenharTitulo(t) {
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 584, 13, '#7ec8ff', false);
   if (!modoToque) textoCentro('ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas · I: idioma', LARGURA / 2, 612, 11, '#777', false);
   botaoIdioma();
+  botoesMenuToque(true);
 }
 
 function desenharPausa() {
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
   textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
-  if (!confirmarDesistir) botaoIdioma();
+  if (!confirmarDesistir) { botaoIdioma(); botoesMenuToque(false); }
   const B = BOTOES_PAUSA;
-  botao(B.continuar, 'Continuar (P)', '#5dff7a');
-  botao(B.guardar, 'Guardar e sair (G)', '#ffe680');
-  botao(B.desistir, 'Desistir (X)', '#ff6060');
+  botao(B.continuar, modoToque ? 'Continuar' : 'Continuar (P)', '#5dff7a');
+  botao(B.guardar, modoToque ? 'Guardar e sair' : 'Guardar e sair (G)', '#ffe680');
+  botao(B.desistir, modoToque ? 'Desistir' : 'Desistir (X)', '#ff6060');
   const D = dif();
   textoCentro(`${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
@@ -1483,8 +1506,8 @@ function desenharPausa() {
     textoCentro('Desistir desta partida?', LARGURA / 2, 268, 24, '#ff8080');
     textoCentro('A partida termina e a gravação é apagada.', LARGURA / 2, 304, 14, '#ddd', false);
     textoCentro('O andar a que chegaste conta para o recorde.', LARGURA / 2, 326, 14, '#aaa', false);
-    botao(BOTOES_CONFIRMAR.sim, 'Sim, desistir (X)', '#ff6060');
-    botao(BOTOES_CONFIRMAR.nao, 'Não (Esc)', '#5dff7a');
+    botao(BOTOES_CONFIRMAR.sim, modoToque ? 'Sim, desistir' : 'Sim, desistir (X)', '#ff6060');
+    botao(BOTOES_CONFIRMAR.nao, modoToque ? 'Não' : 'Não (Esc)', '#5dff7a');
   }
 }
 
