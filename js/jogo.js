@@ -4,22 +4,59 @@
 // =====================================================================
 
 const canvas = document.getElementById('tela');
-const ctx = canvas.getContext('2d');
+const ctxTela = canvas.getContext('2d');
+let ctx = ctxTela; // durante o desenho do mundo aponta para o buffer de pixel art
 canvas.width = LARGURA;
 canvas.height = ALTURA;
 
-let estado = 'titulo'; // titulo | jogo | pausa | bau | nivel | morto
+let estado = 'titulo'; // titulo | jogo | pausa | bau | nivel | loja | personagem | morto
 let andar = 0;
 let mapa, mapaImg, J, S;
 let inimigos = [], projeteis = [], baus = [], drops = [], particulas = [], textos = [], perigos = [];
 let boss = null, roleta = null, banner = null, escolha = null;
-let raios = [];
+let raios = [], objetos = [], armadilhas = [];
+let loja = null;
 let cam = { x: 0, y: 0 };
 let tremor = 0;
 let tempoJogo = 0;
 let somLigado = true;
 let recorde = 0;
 try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) || 0; } catch (e) { /* sem storage */ }
+
+// ---------------------------------------------------------------------
+//  Guardar / continuar (o jogo guarda sozinho ao entrar em cada andar
+//  e quando fechas a página; ao continuar recomeças esse andar)
+// ---------------------------------------------------------------------
+const CHAVE_SAVE = 'masmorra_save';
+const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro'];
+
+function lerSave() {
+  try {
+    const t = localStorage.getItem(CHAVE_SAVE);
+    const d = t ? JSON.parse(t) : null;
+    return d && d.J && d.andar ? d : null;
+  } catch (e) { return null; }
+}
+let saveInfo = lerSave();
+
+function guardarJogo() {
+  if (!J || J.hp <= 0) return;
+  const dados = { v: 1, andar, tempoJogo, J: {} };
+  for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
+  try { localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e) { /* sem storage */ }
+}
+
+function apagarSave() {
+  try { localStorage.removeItem(CHAVE_SAVE); } catch (e) { /* sem storage */ }
+  saveInfo = null;
+}
+
+function guardarSeAJogar() {
+  if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'personagem'].includes(estado)) guardarJogo();
+}
+addEventListener('pagehide', guardarSeAJogar);
+document.addEventListener('visibilitychange', () => { if (document.hidden) guardarSeAJogar(); });
 
 // ---------------------------------------------------------------------
 //  Som (WebAudio, sem ficheiros)
@@ -185,8 +222,9 @@ function atualizarEscolha(dt) {
   if (p.id === 'vitalidade') J.hp += 30;
   if (p.id === 'pocoes') J.pocoes += 2;
   J.escolhasPendentes--;
+  const voltar = escolha.voltar || 'jogo';
   escolha = null;
-  estado = 'jogo';
+  estado = voltar;
   rato.baixo = false;
   S = stats();
   texto(J.x, J.y - 30, p.nome + '!', p.cor, 20);
@@ -203,18 +241,34 @@ function retCartaPerk(i, n) {
 // ---------------------------------------------------------------------
 //  Início / andares
 // ---------------------------------------------------------------------
-function novoJogo() {
-  J = {
+function criarJogador() {
+  return {
     x: 0, y: 0, r: 12,
     hpBase: 100, hp: 100, nivel: 1, xp: 0, atkBase: 5, defBase: 0, velBase: 165,
     arma: criarItem(ITENS.find(i => i.inicial), 1, true), armadura: null, amuleto: null,
     pocoes: 2, cdAtaque: 0, invuln: 0, dashT: 0, cdDash: 0, dashVX: 0, dashVY: 0,
     kbx: 0, kby: 0, dirX: 1, dirY: 0, angArma: 0, golpe: null,
     kills: 0, bausAbertos: 0, melhorItem: null,
-    perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0,
+    perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0, ouro: 0, lentoT: 0,
   };
+}
+
+function novoJogo() {
+  apagarSave();
+  J = criarJogador();
   andar = 0;
   tempoJogo = 0;
+  S = stats();
+  proximoAndar();
+  estado = 'jogo';
+}
+
+function continuarJogo() {
+  const d = lerSave();
+  if (!d) { novoJogo(); return; }
+  J = Object.assign(criarJogador(), d.J);
+  andar = d.andar - 1;
+  tempoJogo = d.tempoJogo || 0;
   S = stats();
   proximoAndar();
   estado = 'jogo';
@@ -225,6 +279,7 @@ function proximoAndar() {
   mapa = gerarMapa(andar);
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
+  objetos = []; armadilhas = [];
   boss = null;
   reiniciarCampo();
   J.x = mapa.inicio.x; J.y = mapa.inicio.y;
@@ -241,26 +296,122 @@ function proximoAndar() {
   }
   cam.x = J.x - LARGURA / 2; cam.y = J.y - ALTURA / 2;
   revelar(mapa, J.x, J.y, 7);
+  guardarJogo();
 }
 
-function popularAndar() {
+function pesosInimigos() {
   const pesos = {};
   for (const k in INIMIGOS) if (INIMIGOS[k].minAndar <= andar) pesos[k] = INIMIGOS[k].peso;
-  const salas = mapa.salas.filter(s => s !== mapa.salaInicio);
+  return pesos;
+}
+
+const centroPx = s => { const c = centroSala(s); return { x: (c.x + 0.5) * TILE, y: (c.y + 0.5) * TILE }; };
+const longeDe = (p, lista, dist) => lista.every(o => Math.hypot(o.x - p.x, o.y - p.y) > dist);
+
+function popularAndar() {
+  const pesos = pesosInimigos();
+
+  // Salas especiais
+  const candidatas = mapa.salas.filter(s => s !== mapa.salaInicio && s !== mapa.salaEscada);
+  for (let i = candidatas.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [candidatas[i], candidatas[j]] = [candidatas[j], candidatas[i]];
+  }
+  const marcar = tipo => { const s = candidatas.pop(); if (s) s.tipo = tipo; return s || null; };
+  const salaLoja = (andar % 5 === 3 || Math.random() < 0.15) ? marcar('loja') : null;
+  const salaTesouro = Math.random() < 0.3 ? marcar('tesouro') : null;
+  const salaAltar = andar >= 2 && Math.random() < 0.25 ? marcar('altar') : null;
+  const salaDesafio = andar >= 2 && Math.random() < 0.3 ? marcar('desafio') : null;
+  if (salaLoja) objetos.push(Object.assign(centroPx(salaLoja), { tipo: 'mercador', sala: salaLoja, stock: null }));
+  if (salaAltar) objetos.push(Object.assign(centroPx(salaAltar), { tipo: 'altar', sala: salaAltar, usado: false }));
+  if (salaDesafio) objetos.push(Object.assign(centroPx(salaDesafio), { tipo: 'cristal', sala: salaDesafio, fase: 'inativo', onda: 0 }));
+  if (salaTesouro) {
+    const nb = randInt(2, 3);
+    for (let i = 0; i < nb; i++) {
+      const p = pontoLivreNaSala(mapa, salaTesouro, 16, 1);
+      if (longeDe(p, baus, 40)) baus.push({ x: p.x, y: p.y, tipo: Math.random() < 0.3 ? 'ouro' : 'madeira', t: Math.random() * 6 });
+    }
+    for (let i = 0; i < 4; i++) {
+      const p = pontoLivreNaSala(mapa, salaTesouro, 8, 1);
+      soltarOuro(p.x, p.y, Math.round(rand(4, 8) * (1 + (andar - 1) * 0.25)), 1);
+    }
+    const p = pontoLivreNaSala(mapa, salaTesouro, 18);
+    const guarda = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    tornarElite(guarda);
+    inimigos.push(guarda);
+  }
+
+  // Inimigos (a loja e o tesouro não recebem inimigos normais)
+  let salas = mapa.salas.filter(s => s !== mapa.salaInicio && s.tipo !== 'loja' && s.tipo !== 'tesouro');
+  if (!salas.length) salas = mapa.salas.filter(s => s !== mapa.salaInicio);
   const n = Math.min(32, 7 + Math.floor(andar * 1.6));
   for (let i = 0; i < n; i++) {
     const p = pontoLivreNaSala(mapa, escolher(salas), 18);
-    inimigos.push(criarInimigo(escolherPeso(pesos), p.x, p.y));
+    const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    if (andar >= 2 && Math.random() < Math.min(0.22, 0.05 + andar * 0.01)) tornarElite(e);
+    inimigos.push(e);
   }
+
+  // Baús
   const nBaus = randInt(2, 4);
   for (let i = 0; i < nBaus; i++) {
     const p = pontoLivreNaSala(mapa, escolher(salas), 16, 1);
-    if (Math.hypot(p.x - mapa.escada.x, p.y - mapa.escada.y) < 50) continue;
+    if (Math.hypot(p.x - mapa.escada.x, p.y - mapa.escada.y) < 50 || !longeDe(p, objetos, 50) || !longeDe(p, baus, 40)) continue;
     baus.push({ x: p.x, y: p.y, tipo: Math.random() < 0.07 ? 'ouro' : 'madeira', t: Math.random() * 6 });
   }
   if (andar === 1) { // um baú logo no início para experimentar
     baus.push({ x: mapa.inicio.x + TILE * 2, y: mapa.inicio.y, tipo: 'madeira', semMimico: true, t: 0 });
     if (colideCirculo(mapa, mapa.inicio.x + TILE * 2, mapa.inicio.y, 14)) baus[baus.length - 1].x = mapa.inicio.x - TILE * 2;
+  }
+
+  // Armadilhas (a partir do andar 2)
+  if (andar < 2) return;
+  const livres = [mapa.escada, mapa.inicio, ...baus, ...objetos];
+  const salasArm = mapa.salas.filter(s => s !== mapa.salaInicio && s.tipo !== 'loja');
+  const nEsp = Math.min(12, 2 + Math.floor(andar * 0.8));
+  for (let i = 0; i < nEsp && salasArm.length; i++) {
+    const s = escolher(salasArm);
+    const tx0 = randInt(s.x + 1, s.x + s.w - 2), ty0 = randInt(s.y + 1, s.y + s.h - 2);
+    const gw = randInt(1, 2), gh = randInt(1, 2), fase = rand(0, 3.2);
+    for (let ty = ty0; ty < ty0 + gh; ty++) {
+      for (let tx = tx0; tx < tx0 + gw; tx++) {
+        const p = { x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE };
+        if (solido(mapa, tx, ty) || !longeDe(p, livres, 56) || armadilhas.some(a => a.tx === tx && a.ty === ty)) continue;
+        armadilhas.push({ tipo: 'espinhos', tx, ty, x: p.x, y: p.y, fase, estado: 0 });
+      }
+    }
+  }
+  const nSetas = Math.min(6, Math.floor(andar / 2));
+  let feitas = 0;
+  for (let t = 0; t < 400 && feitas < nSetas; t++) {
+    const tx = randInt(1, mapa.W - 2), ty = randInt(1, mapa.H - 2);
+    if (!solido(mapa, tx, ty)) continue;
+    const [dx, dy] = escolher([[1, 0], [-1, 0], [0, 1], [0, -1]]);
+    let livre = 0;
+    for (let k = 1; k <= 6 && !solido(mapa, tx + dx * k, ty + dy * k); k++) livre++;
+    if (livre < 5) continue;
+    const x = (tx + 0.5) * TILE, y = (ty + 0.5) * TILE;
+    if (Math.hypot(x - mapa.inicio.x, y - mapa.inicio.y) < 320 || armadilhas.some(a => a.tx === tx && a.ty === ty)) continue;
+    armadilhas.push({ tipo: 'seta', tx, ty, dx, dy, x, y, cd: rand(0, 2) });
+    feitas++;
+  }
+}
+
+function tornarElite(e) {
+  const mod = escolher(Object.keys(ELITES));
+  e.elite = mod;
+  e.r = Math.min(15, Math.round(e.r * 1.3)); // não passa de 15 para caber nos corredores
+  e.hp = e.maxHp = Math.round(e.maxHp * 3);
+  e.dano = Math.round(e.dano * 1.35);
+  e.xp *= 3;
+  if (mod === 'veloz') e.vel *= 1.5;
+  e.nome = `${e.nome} ${ELITES[mod].nome}`;
+}
+
+function soltarOuro(x, y, total, n = 1) {
+  const cada = Math.max(1, Math.round(total / n));
+  for (let i = 0; i < n; i++) {
+    drops.push({ tipo: 'ouro', valor: cada, x: x + rand(-14, 14), y: y + rand(-14, 14), t: Math.random() * 3 });
   }
 }
 
@@ -279,14 +430,16 @@ function criarInimigo(tipo, x, y) {
 function criarBoss() {
   const n = andar / 5;
   const b = BOSSES[(n - 1) % BOSSES.length];
+  const ciclo = Math.floor((n - 1) / BOSSES.length);
   const fh = 1 + (andar - 1) * 0.3, fd = 1 + (andar - 1) * 0.18;
   const hp = Math.round(b.hp * fh);
   return {
-    tipo: b.id, nome: b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
+    tipo: b.id, nome: ciclo > 0 ? `${b.nome} +${ciclo}` : b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
     dano: Math.round(b.dano * fd), vel: b.vel, xp: Math.round(b.xp * (1 + (andar - 1) * 0.2)),
-    cor: b.cor, t: 0, cd: 0, cdA: 2.5, cdB: 5, cdC: 8, cdD: 1, acordado: true,
+    cor: b.cor, t: 0, cd: 0, cdA: 2.5, cdB: 5, cdC: 8, cdD: 1, cdE: 10, acordado: true,
     kbx: 0, kby: 0, flash: 0, boss: true, morto: false, z: 0,
     salto: 0, sopro: 0, investida: 0, fase2: false, giro: 0,
+    pisao: 0, espiral: 0, aparecer: 0, cdTiro: 0, duracaoSalto: 0.8,
   };
 }
 
@@ -376,6 +529,7 @@ function atacar(dx, dy) {
 
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   if (e.morto) return;
+  if (e.elite === 'blindado') dano = Math.max(1, Math.ceil(dano * 0.5));
   e.hp -= dano;
   e.flash = 0.1;
   e.acordado = true;
@@ -425,6 +579,7 @@ function matarInimigo(e) {
     baus.push({ x: ex - 70, y: ey, tipo: 'ouro', semMimico: true, t: 0 });
     baus.push({ x: ex + 70, y: ey, tipo: 'madeira', semMimico: true, t: 0 });
     J.pocoes += 1;
+    soltarOuro(e.x, e.y, Math.round(40 * (1 + (andar - 1) * 0.25)), 8);
     mostrarBanner('BOSS DERROTADO!', 'Abre os baús e desce a escada', '#ffae00');
     fanfarra([392, 523, 659, 784, 1046, 1318], 0.05);
     projeteis = []; perigos = [];
@@ -440,6 +595,11 @@ function matarInimigo(e) {
     }
   }
   if (Math.random() < 0.12) drops.push({ tipo: 'pocao', x: e.x, y: e.y, t: 0 });
+  soltarOuro(e.x, e.y, Math.max(1, Math.round(rand(1, 3) * (1 + (andar - 1) * 0.25) * (e.elite ? 5 : 1))), e.elite ? 4 : 1);
+  if (e.elite) {
+    if (e.elite === 'explosivo') perigos.push({ x: e.x, y: e.y, r: 75, t: 0.7, dur: 0.7, dano: Math.round(e.dano * 1.3), cor: '#ff7b25' });
+    if (Math.random() < 0.35) baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
+  }
   if (e.tipo === 'mimico') baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
 }
 
@@ -456,6 +616,10 @@ function danoJogador(d, fx, fy, fonte = null) {
   if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
   const final = Math.max(1, Math.round(d * 60 / (60 + S.def * 5)));
   J.hp -= final;
+  if (fonte && fonte.elite === 'vampirico' && !fonte.morto) {
+    fonte.hp = Math.min(fonte.maxHp, fonte.hp + final * 3);
+    texto(fonte.x, fonte.y - fonte.r - 6, `+${final * 3}`, '#ff4d6d', 14);
+  }
   J.invuln = 0.7;
   texto(J.x, J.y - 20, `-${final}`, '#ff4d4d', 18);
   tremor = Math.max(tremor, 6);
@@ -472,6 +636,7 @@ function morrer() {
   estado = 'morto';
   explosao(J.x, J.y, '#3a6ad4', 40, 250, 6);
   fanfarra([392, 330, 262, 196], 0.05);
+  apagarSave();
   if (andar > recorde) {
     recorde = andar;
     J.novoRecorde = true;
@@ -490,7 +655,9 @@ function beberPocao() {
 }
 
 function disparar(x, y, ux, uy, vel, dano, cor, r, tipo = 'bola', vida = 3) {
-  projeteis.push({ x, y, vx: ux * vel, vy: uy * vel, dano, cor, r, tipo, vida });
+  const p = { x, y, vx: ux * vel, vy: uy * vel, dano, cor, r, tipo, vida };
+  projeteis.push(p);
+  return p;
 }
 
 function invocar(tipo, perto, raio) {
@@ -524,16 +691,42 @@ function atualizar(dt) {
   atualizarPerigos(dt);
   for (const d of drops) {
     d.t += dt;
-    if (Math.hypot(d.x - J.x, d.y - J.y) < J.r + 12) {
+    const dd = Math.hypot(d.x - J.x, d.y - J.y);
+    if (d.tipo === 'ouro' && dd < 120 && dd > 1) { // íman
+      d.x += (J.x - d.x) / dd * 380 * dt;
+      d.y += (J.y - d.y) / dd * 380 * dt;
+    }
+    if (dd < J.r + 12) {
       d.morto = true;
-      J.pocoes++;
-      texto(d.x, d.y - 10, '+1 Poção', '#ff6b8a', 15);
-      som(660, 0.12, 'triangle', 0.05, 200);
+      if (d.tipo === 'ouro') {
+        J.ouro += d.valor;
+        texto(d.x, d.y - 10, `+${d.valor} ouro`, '#ffd23f', 13);
+        som(1300, 0.05, 'square', 0.02, 300);
+      } else {
+        J.pocoes++;
+        texto(d.x, d.y - 10, '+1 Poção', '#ff6b8a', 15);
+        som(660, 0.12, 'triangle', 0.05, 200);
+      }
     }
   }
   drops = drops.filter(d => !d.morto);
   for (const b of baus) b.t += dt;
+  atualizarArmadilhas(dt);
   inimigos = inimigos.filter(e => !e.morto);
+  for (const o of objetos) {
+    if (o.tipo !== 'cristal' || o.fase !== 'ativo') continue;
+    if (inimigos.some(e => e.desafio === o)) continue;
+    if (o.onda >= 3) {
+      o.fase = 'feito';
+      baus.push({ x: o.x, y: o.y + 44, tipo: 'ouro', semMimico: true, t: 0 });
+      soltarOuro(o.x, o.y, Math.round(20 * (1 + (andar - 1) * 0.25)), 4);
+      mostrarBanner('DESAFIO CONCLUÍDO!', 'Ganhaste um Baú Dourado', '#b44dff');
+      fanfarra([392, 523, 659, 784, 1046], 0.05);
+    } else {
+      o.onda++;
+      lancarOnda(o);
+    }
+  }
   atualizarEfeitos(dt);
 
   // câmara
@@ -543,6 +736,15 @@ function atualizar(dt) {
   cam.y += (alvoY - cam.y) * Math.min(1, dt * 8);
   revelar(mapa, J.x, J.y, 7);
 
+  // entrar numa sala especial
+  const tx = Math.floor(J.x / TILE), ty = Math.floor(J.y / TILE);
+  const sala = mapa.salas.find(s => tx >= s.x && tx < s.x + s.w && ty >= s.y && ty < s.y + s.h);
+  if (sala && sala.tipo && !sala.visitada) {
+    sala.visitada = true;
+    const info = SALAS_ESPECIAIS[sala.tipo];
+    mostrarBanner(info.nome, info.desc, info.cor);
+  }
+
   // interações
   J.bauPerto = null;
   let md = 46;
@@ -550,11 +752,153 @@ function atualizar(dt) {
     const d = Math.hypot(b.x - J.x, b.y - J.y);
     if (d < md) { md = d; J.bauPerto = b; }
   }
+  J.objPerto = null;
+  md = 52;
+  for (const o of objetos) {
+    const d = Math.hypot(o.x - J.x, o.y - J.y);
+    if (d < md) { md = d; J.objPerto = o; }
+  }
   J.escadaPerto = Math.hypot(mapa.escada.x - J.x, mapa.escada.y - J.y) < 40;
   if (premiu('e')) {
     if (J.bauPerto) abrirBau(J.bauPerto);
+    else if (J.objPerto) usarObjeto(J.objPerto);
     else if (J.escadaPerto && mapa.escada.ativa) proximoAndar();
   }
+}
+
+const danoArmadilha = () => Math.round(8 * (1 + (andar - 1) * 0.18));
+
+function atualizarArmadilhas(dt) {
+  const jtx = Math.floor(J.x / TILE), jty = Math.floor(J.y / TILE);
+  for (const a of armadilhas) {
+    if (a.tipo === 'espinhos') {
+      const t = (tempoJogo + a.fase) % 3.2;
+      const antes = a.estado;
+      a.estado = t < 2.2 ? 0 : t < 2.7 ? 1 : 2; // 0 escondidos, 1 aviso, 2 levantados
+      if (a.estado === 2 && antes !== 2 && Math.hypot(a.x - J.x, a.y - J.y) < 300) som(700, 0.05, 'square', 0.015, -300);
+      if (a.estado === 2 && a.tx === jtx && a.ty === jty) danoJogador(danoArmadilha(), a.x, a.y);
+    } else {
+      a.cd -= dt;
+      const frente = (a.ty + a.dy) * mapa.W + a.tx + a.dx;
+      if (a.cd <= 0 && mapa.explorado[frente] && Math.hypot(J.x - a.x, J.y - a.y) < 420) {
+        a.cd = 2.6;
+        disparar(a.x + a.dx * TILE * 0.6, a.y + a.dy * TILE * 0.6, a.dx, a.dy, 300, danoArmadilha(), '#d8c9a3', 5, 'flecha', 3);
+        som(600, 0.06, 'triangle', 0.02, -300);
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+//  Salas especiais
+// ---------------------------------------------------------------------
+function usarObjeto(o) {
+  if (o.tipo === 'mercador') { abrirLoja(o); return; }
+  if (o.tipo === 'altar') {
+    if (o.usado) { texto(o.x, o.y - 30, 'O altar já foi usado', '#aaa', 14); return; }
+    const custo = Math.round(S.maxHp * 0.35);
+    if (J.hp <= custo + 1) { texto(o.x, o.y - 30, 'Precisas de mais vida!', '#ff6060', 16); som(150, 0.2, 'square', 0.04); return; }
+    J.hp -= custo;
+    o.usado = true;
+    texto(J.x, J.y - 24, `-${custo}`, '#ff4d4d', 20);
+    let p = { x: o.x, y: o.y + 48 };
+    if (colideCirculo(mapa, p.x, p.y, 16)) p = pontoLivreNaSala(mapa, o.sala, 16, 1);
+    baus.push({ x: p.x, y: p.y, tipo: 'ouro', semMimico: true, t: 0 });
+    explosao(o.x, o.y, '#ff3b3b', 40, 240, 6);
+    tremor = 8;
+    fanfarra([220, 185, 147, 440], 0.05);
+    return;
+  }
+  if (o.tipo === 'cristal') {
+    if (o.fase === 'inativo') {
+      o.fase = 'ativo';
+      o.onda = 1;
+      lancarOnda(o);
+    } else if (o.fase === 'feito') texto(o.x, o.y - 40, 'Desafio concluído', '#aaa', 14);
+  }
+}
+
+function lancarOnda(o) {
+  const pesos = pesosInimigos();
+  const n = 3 + o.onda * 2;
+  for (let k = 0; k < n; k++) {
+    let p = pontoLivreNaSala(mapa, o.sala, 18);
+    if (Math.hypot(p.x - J.x, p.y - J.y) < 90) p = pontoLivreNaSala(mapa, o.sala, 18);
+    const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
+    e.acordado = true;
+    e.desafio = o;
+    if (o.onda === 3 && k === 0) tornarElite(e);
+    inimigos.push(e);
+    explosao(p.x, p.y, '#b44dff', 10, 120);
+  }
+  mostrarBanner(`ONDA ${o.onda}/3`, 'Derrota todos os inimigos', '#b44dff');
+  som(200, 0.4, 'sawtooth', 0.05, 200);
+}
+
+// ---------------------------------------------------------------------
+//  Loja do Mercador
+// ---------------------------------------------------------------------
+function gerarStock() {
+  const r = escolherPeso({ raro: 60, epico: 30, lendario: 9, mitico: 1 });
+  const item = criarItem(escolher(ITENS.filter(i => i.r === r && !i.inicial)), andar);
+  return [
+    { id: 'pocao', nome: 'Poção de Vida', desc: 'Cura parte da tua vida', preco: 15 + andar * 2, qtd: 99 },
+    { id: 'cura', nome: 'Cura Completa', desc: 'Recupera toda a vida', preco: 10 + andar * 3, qtd: 1 },
+    { id: 'madeira', nome: 'Baú de Madeira', desc: 'Roda a roleta (nunca é Mímico)', preco: 40 + andar * 6, qtd: 2 },
+    { id: 'ouro', nome: 'Baú Dourado', desc: 'Roleta com as melhores chances', preco: 120 + andar * 15, qtd: 1 },
+    { id: 'item', nome: item.nome, desc: `${RARIDADES[item.r].nome} · equipa logo`, item, preco: Math.round(PRECO_ITEM_LOJA[item.r] * (1 + andar * 0.1)), qtd: 1 },
+    { id: 'perk', nome: 'Pergaminho de Poder', desc: 'Escolhe 1 de 3 melhorias', preco: 100 + andar * 14, qtd: 1 },
+  ];
+}
+
+function abrirLoja(o) {
+  if (!o.stock) o.stock = gerarStock();
+  loja = { obj: o, t: 0, sel: 4, msg: null };
+  estado = 'loja';
+  som(880, 0.1, 'triangle', 0.04, 200);
+}
+
+function retLinhaLoja(i) { return { x: 40, y: 120 + i * 72, w: 500, h: 62 }; }
+
+function atualizarLoja(dt) {
+  loja.t += dt;
+  if (loja.msg) { loja.msg.t -= dt; if (loja.msg.t <= 0) loja.msg = null; }
+  if (loja.t < 0.2) return;
+  if (premiu('escape', 'e')) { loja = null; estado = 'jogo'; rato.baixo = false; return; }
+  const stock = loja.obj.stock;
+  stock.forEach((_, i) => {
+    const r = retLinhaLoja(i);
+    if (rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h) {
+      loja.sel = i;
+      if (premiu('rato')) comprar(i);
+    }
+  });
+  for (let i = 0; i < stock.length; i++) if (premiu(String(i + 1))) { loja.sel = i; comprar(i); }
+  if (premiu('w', 'arrowup')) loja.sel = (loja.sel + stock.length - 1) % stock.length;
+  if (premiu('s', 'arrowdown')) loja.sel = (loja.sel + 1) % stock.length;
+  if (premiu('enter', ' ')) comprar(loja.sel);
+}
+
+function comprar(i) {
+  const of = loja.obj.stock[i];
+  if (!of || of.qtd <= 0) return;
+  if (J.ouro < of.preco) {
+    loja.msg = { txt: 'Não tens ouro suficiente', cor: '#ff6060', t: 1.6 };
+    som(140, 0.2, 'square', 0.04);
+    return;
+  }
+  if (of.id === 'cura' && J.hp >= S.maxHp) {
+    loja.msg = { txt: 'Já tens a vida cheia', cor: '#aaa', t: 1.6 };
+    return;
+  }
+  J.ouro -= of.preco;
+  of.qtd--;
+  fanfarra([1046, 1318], 0.03);
+  if (of.id === 'pocao') { J.pocoes++; loja.msg = { txt: '+1 Poção', cor: '#ff6b8a', t: 1.6 }; }
+  else if (of.id === 'cura') { J.hp = S.maxHp; loja.msg = { txt: 'Vida recuperada', cor: '#5dff7a', t: 1.6 }; }
+  else if (of.id === 'item') { equipar(of.item); loja.msg = { txt: `Equipaste ${of.item.nome}`, cor: RARIDADES[of.item.r].cor, t: 2 }; }
+  else if (of.id === 'madeira' || of.id === 'ouro') { J.bausAbertos++; iniciarRoleta(of.id, 'loja'); }
+  else if (of.id === 'perk') { J.escolhasPendentes++; abrirEscolha(); if (escolha) escolha.voltar = 'loja'; }
 }
 
 function atualizarJogador(dt) {
@@ -563,13 +907,15 @@ function atualizarJogador(dt) {
   if (teclas['s'] || teclas['arrowdown']) my += 1;
   if (teclas['a'] || teclas['arrowleft']) mx -= 1;
   if (teclas['d'] || teclas['arrowright']) mx += 1;
+  J.andando = !!(mx || my);
   if (mx || my) {
     const l = Math.hypot(mx, my);
     mx /= l; my /= l;
     J.dirX = mx; J.dirY = my;
     if (!J.golpe) J.angArma = Math.atan2(my, mx);
   }
-  J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt;
+  J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt; J.lentoT -= dt;
+  const fLento = J.lentoT > 0 ? 0.5 : 1;
 
   if (premiu('shift') && J.cdDash <= 0) {
     const dx = (mx || my) ? mx : J.dirX, dy = (mx || my) ? my : J.dirY;
@@ -582,7 +928,7 @@ function atualizarJogador(dt) {
     moverEntidade(mapa, J, J.dashVX * dt, J.dashVY * dt);
     particulas.push({ x: J.x, y: J.y, vx: 0, vy: 0, t: 0.25, cor: 'rgba(120,170,255,0.6)', tam: 10 });
   } else {
-    moverEntidade(mapa, J, (mx * S.vel + J.kbx) * dt, (my * S.vel + J.kby) * dt);
+    moverEntidade(mapa, J, (mx * S.vel * fLento + J.kbx) * dt, (my * S.vel * fLento + J.kby) * dt);
   }
   J.kbx *= Math.max(0, 1 - dt * 10);
   J.kby *= Math.max(0, 1 - dt * 10);
@@ -774,6 +1120,136 @@ function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
       for (let k = 0; k < 3; k++)
         perigos.push({ x: J.x + rand(-90, 90), y: J.y + rand(-90, 90), r: 46, t: 1.1, dur: 1.1, dano: e.dano });
     }
+  } else if (e.tipo === 'golem') {
+    if (e.pisao > 0) { // prepara o pisão
+      e.pisao -= dt;
+      if (e.pisao <= 0) {
+        tremor = 16;
+        som(50, 0.5, 'sawtooth', 0.08, -20);
+        explosao(e.x, e.y, '#a89f91', 40, 300, 7);
+        if (d < 150 + J.r) danoJogador(e.dano * 1.2, e.x, e.y, e);
+        const n = fase2 ? 18 : 12;
+        for (let k = 0; k < n; k++) {
+          const a = k * Math.PI * 2 / n;
+          disparar(e.x, e.y, Math.cos(a), Math.sin(a), 160, Math.round(e.dano * 0.6), '#a89f91', 9, 'rocha', 4);
+        }
+      }
+    } else {
+      vx = ru.x * e.vel; vy = ru.y * e.vel;
+      if (e.cdA <= 0 && d < 260) {
+        e.cdA = fase2 ? 2.6 : 3.6;
+        e.pisao = 0.8;
+        som(80, 0.8, 'triangle', 0.05, -40);
+      } else if (e.cdB <= 0) {
+        e.cdB = fase2 ? 1.7 : 2.5;
+        const base = Math.atan2(uy, ux);
+        for (const s of [-0.3, 0, 0.3]) disparar(e.x + ux * e.r, e.y + uy * e.r, Math.cos(base + s), Math.sin(base + s), 230, Math.round(e.dano * 0.8), '#8a8176', 13, 'rocha', 3);
+        som(110, 0.2, 'square', 0.04, -50);
+      }
+    }
+    if (fase2 && e.cdC <= 0) { // rochas a cair do teto
+      e.cdC = 2.2;
+      for (let k = 0; k < 5; k++) {
+        const p = k === 0 ? { x: J.x, y: J.y } : pontoLivreNaSala(mapa, mapa.salas[0], 20, 1);
+        perigos.push({ x: p.x, y: p.y, r: 40, t: 1.2, dur: 1.2, dano: e.dano, cor: '#a89f91' });
+      }
+    }
+  } else if (e.tipo === 'rainha') {
+    if (e.salto > 0) {
+      e.salto -= dt;
+      const p = 1 - e.salto / e.duracaoSalto;
+      e.z = Math.sin(clamp(p, 0, 1) * Math.PI) * 60;
+      vx = e.svx; vy = e.svy;
+      if (e.salto <= 0) {
+        e.z = 0;
+        tremor = 8;
+        for (let k = 0; k < 10; k++) {
+          const a = k * Math.PI * 2 / 10;
+          disparar(e.x, e.y, Math.cos(a), Math.sin(a), 190, Math.round(e.dano * 0.6), '#9dff4d', 7, 'bola', 3);
+        }
+        if (d < e.r + J.r + 16) danoJogador(e.dano * 1.2, e.x, e.y, e);
+      }
+    } else {
+      if (d > 230) { vx = ru.x * e.vel; vy = ru.y * e.vel; }
+      else { const s = Math.sin(e.t * 0.7) > 0 ? 1 : -1; vx = -uy * e.vel * 0.8 * s; vy = ux * e.vel * 0.8 * s; }
+      if (e.cdA <= 0) { // teias
+        e.cdA = fase2 ? 1.2 : 1.8;
+        const n = fase2 ? 5 : 3, base = Math.atan2(uy, ux);
+        for (let k = 0; k < n; k++) {
+          const a = base + (k - (n - 1) / 2) * 0.28;
+          disparar(e.x, e.y, Math.cos(a), Math.sin(a), 260, Math.round(e.dano * 0.5), '#e8e8f0', 8, 'teia', 3).efeito = 'teia';
+        }
+        som(400, 0.15, 'sine', 0.04, -200);
+      }
+      if (e.cdB <= 0) {
+        e.cdB = fase2 ? 3.5 : 5;
+        e.duracaoSalto = 0.55; e.salto = 0.55;
+        e.svx = (J.x - e.x) / 0.55; e.svy = (J.y - e.y) / 0.55;
+      }
+      if (e.cdC <= 0) {
+        e.cdC = 8;
+        const lacaios = inimigos.filter(o => !o.boss && !o.morto).length;
+        if (lacaios < 12) for (let k = 0; k < (fase2 ? 5 : 3); k++) invocar('aranha', e, e.r + 24);
+      }
+    }
+  } else if (e.tipo === 'demonio') {
+    if (e.aparecer > 0) { // acabou de se teletransportar: pausa curta antes de investir
+      e.aparecer -= dt;
+      if (e.aparecer <= 0) {
+        const l = Math.hypot(J.x - e.x, J.y - e.y) || 1;
+        e.investida = 0.45; e.ivx = (J.x - e.x) / l * 460; e.ivy = (J.y - e.y) / l * 460;
+        som(150, 0.3, 'sawtooth', 0.05, 200);
+      }
+    } else if (e.investida > 0) {
+      e.investida -= dt;
+      vx = e.ivx; vy = e.ivy;
+      particulas.push({ x: e.x, y: e.y, vx: 0, vy: 0, t: 0.3, cor: 'rgba(255,50,50,0.5)', tam: 16 });
+    } else if (e.espiral > 0) {
+      e.espiral -= dt;
+      vx = ru.x * e.vel * 0.2; vy = ru.y * e.vel * 0.2;
+      e.cdTiro -= dt;
+      if (e.cdTiro <= 0) {
+        e.cdTiro = 0.09;
+        e.giro += 0.23;
+        const bracos = fase2 ? 4 : 2;
+        for (let k = 0; k < bracos; k++) {
+          const a = e.giro + k * Math.PI * 2 / bracos;
+          disparar(e.x, e.y, Math.cos(a), Math.sin(a), 170, Math.round(e.dano * 0.55), '#ff3b3b', 7, 'bola', 4);
+        }
+      }
+    } else {
+      if (d < 140) { vx = -uy * e.vel; vy = ux * e.vel; } else { vx = ru.x * e.vel; vy = ru.y * e.vel; }
+      if (e.cdA <= 0) { // pilares de fogo em linha
+        e.cdA = fase2 ? 2.6 : 3.6;
+        const base = Math.atan2(uy, ux);
+        for (let k = 0; k < 8; k++) {
+          perigos.push({ x: e.x + Math.cos(base) * (60 + k * 55), y: e.y + Math.sin(base) * (60 + k * 55), r: 34, t: 0.55 + k * 0.1, dur: 0.55 + k * 0.1, dano: e.dano, cor: '#ff3b3b' });
+        }
+        som(90, 0.6, 'sawtooth', 0.05, 80);
+      } else if (e.cdB <= 0) {
+        e.cdB = 6;
+        e.espiral = fase2 ? 2.6 : 2;
+        e.cdTiro = 0;
+      } else if (e.cdC <= 0) {
+        e.cdC = 7;
+        for (let t = 0; t < 20; t++) {
+          const a = rand(0, Math.PI * 2);
+          const x = J.x + Math.cos(a) * 170, y = J.y + Math.sin(a) * 170;
+          if (!colideCirculo(mapa, x, y, e.r)) {
+            explosao(e.x, e.y, '#b3122e', 25, 200);
+            e.x = x; e.y = y;
+            explosao(e.x, e.y, '#b3122e', 25, 200);
+            e.aparecer = 0.4;
+            som(900, 0.3, 'sine', 0.04, -700);
+            break;
+          }
+        }
+      }
+    }
+    if (fase2 && e.cdE <= 0) {
+      e.cdE = 10;
+      if (inimigos.filter(o => !o.boss && !o.morto).length < 4) for (let k = 0; k < 2; k++) invocar('fantasma', e, 70);
+    }
   }
 
   const bateu = moverEntidade(mapa, e, vx * dt * fLento, vy * dt * fLento);
@@ -821,6 +1297,10 @@ function atualizarProjeteis(dt) {
       continue;
     }
     if (J.dashT <= 0 && Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r - 2) {
+      if (p.efeito === 'teia') {
+        if (J.lentoT <= 0) texto(J.x, J.y - 30, 'PRESO NA TEIA!', '#e8e8f0', 15);
+        J.lentoT = 2.5;
+      }
       danoJogador(p.dano, p.x - p.vx, p.y - p.vy);
       p.morto = true;
     }
@@ -858,14 +1338,20 @@ function abrirBau(b) {
     return;
   }
   J.bausAbertos++;
-  const premio = sortearItem(b.tipo);
+  iniciarRoleta(b.tipo, 'jogo');
+}
+
+function iniciarRoleta(tipoBau, voltar) {
+  const premio = sortearItem(tipoBau);
   const IDX = 42;
   const faixa = [];
-  for (let i = 0; i < 50; i++) faixa.push(i === IDX ? premio : sortearItem(b.tipo));
-  roleta = { tipoBau: b.tipo, faixa, premio, idx: IDX, t: 0, dur: 4.5, fim: false, pos: 0, desvio: rand(-0.38, 0.38), ultimoTick: -1, brilho: 0 };
+  for (let i = 0; i < 50; i++) faixa.push(i === IDX ? premio : sortearItem(tipoBau));
+  roleta = { tipoBau, faixa, premio, idx: IDX, t: 0, dur: 4.5, fim: false, pos: 0, desvio: rand(-0.38, 0.38), ultimoTick: -1, brilho: 0, voltar };
   estado = 'bau';
   som(300, 0.2, 'triangle', 0.05, 300);
 }
+
+const valorVenda = it => Math.round(PRECO_VENDA[it.r] * (1 + andar * 0.3));
 
 function atualizarRoleta(dt) {
   const R = roleta;
@@ -891,11 +1377,15 @@ function atualizarRoleta(dt) {
       equipar(R.premio);
       som(520, 0.15, 'triangle', 0.05, 200);
       roleta = null;
-      estado = 'jogo';
+      estado = R.voltar;
     } else if (premiu('x')) {
       const xp = RARIDADES[R.premio.r].xpReciclar * andar;
+      const ouro = valorVenda(R.premio);
       roleta = null;
-      estado = 'jogo';
+      estado = R.voltar;
+      J.ouro += ouro;
+      texto(J.x, J.y - 44, `+${ouro} ouro`, '#ffd23f', 16);
+      som(1300, 0.08, 'square', 0.03, 300);
       ganharXp(xp);
     }
   }
@@ -912,9 +1402,13 @@ function loop(agora) {
   if (premiu('m')) somLigado = !somLigado;
 
   if (estado === 'titulo') {
-    if (premiu('enter', ' ', 'rato')) novoJogo();
+    if (saveInfo) {
+      if (premiu('enter', ' ', 'rato')) continuarJogo();
+      else if (premiu('n')) novoJogo();
+    } else if (premiu('enter', ' ', 'rato')) novoJogo();
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape')) estado = 'pausa';
+    else if (premiu('c', 'tab')) estado = 'personagem';
     else atualizar(dt);
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
@@ -922,12 +1416,19 @@ function loop(agora) {
     atualizarEfeitos(dt);
   } else if (estado === 'pausa') {
     if (premiu('p', 'escape')) estado = 'jogo';
+    else if (premiu('g')) { guardarJogo(); estado = 'titulo'; }
+  } else if (estado === 'personagem') {
+    if (premiu('c', 'tab', 'escape')) estado = 'jogo';
+  } else if (estado === 'loja') {
+    atualizarLoja(dt);
+    atualizarEfeitos(dt);
   } else if (estado === 'bau') {
     atualizarRoleta(dt);
     atualizarEfeitos(dt);
   } else if (estado === 'morto') {
     atualizarEfeitos(dt);
     if (premiu('enter')) novoJogo();
+    else if (premiu('escape')) estado = 'titulo';
   }
 
   desenhar(agora / 1000);

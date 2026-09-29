@@ -1,0 +1,4 @@
+Tiny5 (fontes/Tiny5.woff2)
+Copyright 2024 The tiny5 Project Authors (https://github.com/Gissio/font_tiny5)
+Distribuída pelo Google Fonts sob a SIL Open Font License, Version 1.1.
+Texto completo da licença: https://openfontlicense.org/open-font-license-official-text/

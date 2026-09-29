@@ -179,66 +179,46 @@ function revelar(m, px, py, raio) {
   }
 }
 
-// Pré-desenha o mapa num canvas escondido (muito mais rápido)
+// Pré-desenha o mapa num canvas escondido com os ladrilhos de pixel art
+// (16 pixels por tile; no ecrã cada pixel vale 2)
 function renderizarMapa(m, andar) {
+  const L = ladrilhosZona(andar);
+  const T = TILE / ESCALA;
   const c = document.createElement('canvas');
-  c.width = m.W * TILE; c.height = m.H * TILE;
+  c.width = m.W * T; c.height = m.H * T;
   const g = c.getContext('2d');
-  // Paleta muda a cada bioma (5 andares)
-  const paletas = [
-    { chao: [43, 36, 56], parede: '#4a3f5e', topo: '#1a1522' },
-    { chao: [34, 44, 40], parede: '#3e5a4a', topo: '#121c17' },
-    { chao: [52, 34, 30], parede: '#6a3a2e', topo: '#200f0c' },
-    { chao: [30, 38, 56], parede: '#3a4a70', topo: '#0f1422' },
-  ];
-  const p = paletas[Math.floor((andar - 1) / 5) % paletas.length];
   g.fillStyle = '#07060a';
   g.fillRect(0, 0, c.width, c.height);
-
+  m.tochas = [];
   for (let y = 0; y < m.H; y++) {
     for (let x = 0; x < m.W; x++) {
-      const px = x * TILE, py = y * TILE;
+      const px = x * T, py = y * T;
+      const h = (x * 73856093) ^ (y * 19349663);
       if (!solido(m, x, y)) {
-        const v = ((x * 7 + y * 13) % 5) * 3;
-        g.fillStyle = `rgb(${p.chao[0] + v},${p.chao[1] + v},${p.chao[2] + v})`;
-        g.fillRect(px, py, TILE, TILE);
-        g.strokeStyle = 'rgba(0,0,0,0.18)';
-        g.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
-        if ((x * 31 + y * 17) % 11 === 0) { // rachas
-          g.strokeStyle = 'rgba(0,0,0,0.3)';
-          g.beginPath();
-          g.moveTo(px + 6, py + 8); g.lineTo(px + 14, py + 16); g.lineTo(px + 12, py + 24);
-          g.stroke();
-        }
-      } else {
-        const chaoAbaixo = !solido(m, x, y + 1);
-        let vizinhoChao = false;
-        for (let dy = -1; dy <= 1; dy++)
-          for (let dx = -1; dx <= 1; dx++)
-            if (!solido(m, x + dx, y + dy)) vizinhoChao = true;
-        if (!vizinhoChao) continue;
-        if (chaoAbaixo) {
-          // Face da parede com tijolos
-          g.fillStyle = p.parede;
-          g.fillRect(px, py, TILE, TILE);
-          g.strokeStyle = 'rgba(0,0,0,0.35)';
-          for (let row = 0; row < 4; row++) {
-            const ry = py + row * 8;
-            g.beginPath(); g.moveTo(px, ry + 0.5); g.lineTo(px + TILE, ry + 0.5); g.stroke();
-            const off = row % 2 ? 8 : 0;
-            for (let bx = off; bx < TILE; bx += 16) {
-              g.beginPath(); g.moveTo(px + bx + 0.5, ry); g.lineTo(px + bx + 0.5, ry + 8); g.stroke();
-            }
-          }
+        const v = Math.abs(h) % 17;
+        g.drawImage(L.chaos[v === 0 ? 1 : v === 1 ? 2 : v === 2 ? 3 : 0], px, py);
+        if (solido(m, x, y - 1)) { // sombra da parede de cima
           g.fillStyle = 'rgba(0,0,0,0.35)';
-          g.fillRect(px, py + TILE - 4, TILE, 4);
-        } else {
-          g.fillStyle = p.topo;
-          g.fillRect(px, py, TILE, TILE);
+          g.fillRect(px, py, T, 3);
         }
+        if (solido(m, x - 1, y)) {
+          g.fillStyle = 'rgba(0,0,0,0.2)';
+          g.fillRect(px, py, 2, T);
+        }
+        continue;
       }
+      let vizinhoChao = false;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++)
+          if (!solido(m, x + dx, y + dy)) vizinhoChao = true;
+      if (!vizinhoChao) continue;
+      if (!solido(m, x, y + 1)) {
+        g.drawImage(L.face, px, py);
+        if (!m.eBoss && Math.abs(h) % 19 === 0) m.tochas.push({ x: (x + 0.5) * TILE, y: y * TILE + 12 });
+      } else g.drawImage(L.topo, px, py);
     }
   }
+  if (m.eBoss) for (const tx of [6, 12, 23, 29]) m.tochas.push({ x: (tx + 0.5) * TILE, y: TILE + 12 });
   return c;
 }
 

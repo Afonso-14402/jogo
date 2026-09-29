@@ -103,15 +103,40 @@ const INIMIGOS = {
   esqueleto: { nome: 'Esqueleto', hp: 28, dano: 8,  vel: 80,  r: 13, xp: 12, cor: '#e8e2cf', minAndar: 2, peso: 3 },
   orc:       { nome: 'Orc',       hp: 60, dano: 13, vel: 75,  r: 14, xp: 20, cor: '#6b8e23', minAndar: 3, peso: 3 },
   fantasma:  { nome: 'Fantasma',  hp: 38, dano: 10, vel: 85,  r: 13, xp: 16, cor: '#bfe6ff', minAndar: 5, peso: 2 },
+  aranha:    { nome: 'Aranha',    hp: 16, dano: 7,  vel: 150, r: 9,  xp: 5,  cor: '#7a3f96', minAndar: 21, peso: 3 },
   mimico:    { nome: 'Mímico',    hp: 70, dano: 14, vel: 150, r: 14, xp: 35, cor: '#8b5a2b', minAndar: 999, peso: 0 },
 };
 
-// Um boss a cada 5 andares (5, 10, 15, depois repete mais forte).
+// Um boss a cada 5 andares (5, 10, 15, 20, 25, 30, depois repete mais forte).
 const BOSSES = [
   { id: 'reiSlime', nome: 'Rei Slime',       hp: 420, dano: 16, vel: 60, r: 42, xp: 150, cor: '#3fbf3f' },
   { id: 'lich',     nome: 'Lich Necromante', hp: 380, dano: 14, vel: 90, r: 24, xp: 220, cor: '#6a3fb5' },
   { id: 'dragao',   nome: 'Dragão Ancião',   hp: 600, dano: 20, vel: 70, r: 46, xp: 320, cor: '#c0392b' },
+  { id: 'golem',    nome: 'Golem de Pedra',  hp: 900, dano: 24, vel: 45, r: 46, xp: 420, cor: '#8a8176' },
+  { id: 'rainha',   nome: 'Rainha Aranha',   hp: 700, dano: 18, vel: 120, r: 32, xp: 520, cor: '#5b2a6e' },
+  { id: 'demonio',  nome: 'Rei Demónio',     hp: 1000, dano: 24, vel: 95, r: 34, xp: 650, cor: '#b3122e' },
 ];
+
+// Inimigos de elite: mais fortes, com um modificador, e largam mais ouro e às vezes um baú
+const ELITES = {
+  veloz:     { nome: 'Veloz',     cor: '#9dff7a', desc: '+50% velocidade' },
+  blindado:  { nome: 'Blindado',  cor: '#b8b8d0', desc: 'Recebe metade do dano' },
+  explosivo: { nome: 'Explosivo', cor: '#ff7b25', desc: 'Explode ao morrer' },
+  vampirico: { nome: 'Vampírico', cor: '#ff4d6d', desc: 'Cura-se ao acertar-te' },
+};
+
+// Salas especiais que podem aparecer em cada andar
+const SALAS_ESPECIAIS = {
+  loja:    { nome: 'Loja do Mercador',    desc: 'Gasta o teu ouro',                         cor: '#3ddc84' },
+  tesouro: { nome: 'Sala do Tesouro',     desc: 'Guardada por um inimigo de elite',         cor: '#ffd23f' },
+  altar:   { nome: 'Altar de Sacrifício', desc: 'Troca vida por um Baú Dourado',            cor: '#ff3b3b' },
+  desafio: { nome: 'Sala de Desafio',     desc: 'Sobrevive a 3 ondas e ganha um Baú Dourado', cor: '#b44dff' },
+};
+
+// Ouro que recebes ao vender um item (multiplicado pelo andar)
+const PRECO_VENDA = { lixo: 1, comum: 3, raro: 8, epico: 20, lendario: 45, mitico: 100 };
+// Preço base dos itens à venda na loja
+const PRECO_ITEM_LOJA = { raro: 70, epico: 140, lendario: 280, mitico: 600 };
 
 // ---------------------------------------------------------------------
 //  AFIXOS: atributos aleatórios que um item pode trazer ("Espada Longa de Fogo")
