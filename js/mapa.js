@@ -241,3 +241,76 @@ function renderizarMapa(m, andar) {
   }
   return c;
 }
+
+// ---------------------------------------------------------------------
+//  Pathfinding: mapa de distâncias (BFS) a partir do tile do jogador.
+//  Os inimigos descem este "campo" para contornar paredes.
+// ---------------------------------------------------------------------
+let campo = null, campoTile = -1, campoFila = null;
+
+function reiniciarCampo() { campo = null; campoTile = -1; }
+
+function atualizarCampo(m, px, py) {
+  const tx = Math.floor(px / TILE), ty = Math.floor(py / TILE);
+  const origem = ty * m.W + tx;
+  if (campo && origem === campoTile) return;
+  const n = m.W * m.H;
+  if (!campo || campo.length !== n) { campo = new Int16Array(n); campoFila = new Int32Array(n); }
+  campo.fill(-1);
+  campoTile = origem;
+  if (solido(m, tx, ty)) return;
+  let ini = 0, fim = 0;
+  campo[origem] = 0;
+  campoFila[fim++] = origem;
+  while (ini < fim) {
+    const i = campoFila[ini++];
+    const x = i % m.W, y = (i - x) / m.W, d = campo[i] + 1;
+    if (x > 0 && m.tiles[i - 1] && campo[i - 1] < 0) { campo[i - 1] = d; campoFila[fim++] = i - 1; }
+    if (x < m.W - 1 && m.tiles[i + 1] && campo[i + 1] < 0) { campo[i + 1] = d; campoFila[fim++] = i + 1; }
+    if (y > 0 && m.tiles[i - m.W] && campo[i - m.W] < 0) { campo[i - m.W] = d; campoFila[fim++] = i - m.W; }
+    if (y < m.H - 1 && m.tiles[i + m.W] && campo[i + m.W] < 0) { campo[i + m.W] = d; campoFila[fim++] = i + m.W; }
+  }
+}
+
+function distCampo(m, x, y) {
+  if (!campo) return -1;
+  const tx = Math.floor(x / TILE), ty = Math.floor(y / TILE);
+  if (tx < 0 || ty < 0 || tx >= m.W || ty >= m.H) return -1;
+  return campo[ty * m.W + tx];
+}
+
+// Há caminho reto (com a largura do corpo) entre dois pontos?
+function linhaDeVista(m, x0, y0, x1, y1, r) {
+  const d = Math.hypot(x1 - x0, y1 - y0);
+  const passos = Math.ceil(d / 10);
+  for (let i = 1; i < passos; i++) {
+    const f = i / passos;
+    if (colideCirculo(m, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, r * 0.9)) return false;
+  }
+  return true;
+}
+
+// Direção (vetor unitário) que a entidade deve seguir para chegar ao jogador
+function rumo(m, e, alvoX, alvoY) {
+  const dx = alvoX - e.x, dy = alvoY - e.y;
+  const d = Math.hypot(dx, dy) || 1;
+  const direto = { x: dx / d, y: dy / d };
+  const d0 = distCampo(m, e.x, e.y);
+  if (d0 < 0 || d0 <= 1 || linhaDeVista(m, e.x, e.y, alvoX, alvoY, e.r)) return direto;
+  const tx = Math.floor(e.x / TILE), ty = Math.floor(e.y / TILE);
+  let melhor = null, mv = d0;
+  for (let oy = -1; oy <= 1; oy++) {
+    for (let ox = -1; ox <= 1; ox++) {
+      if (!ox && !oy) continue;
+      const nx = tx + ox, ny = ty + oy;
+      if (solido(m, nx, ny)) continue;
+      if (ox && oy && (solido(m, tx + ox, ty) || solido(m, tx, ty + oy))) continue; // não corta cantos
+      const v = campo[ny * m.W + nx];
+      if (v >= 0 && (v < mv || (v === mv && melhor && ox * oy === 0))) { mv = v; melhor = { nx, ny }; }
+    }
+  }
+  if (!melhor) return direto;
+  const cx = (melhor.nx + 0.5) * TILE - e.x, cy = (melhor.ny + 0.5) * TILE - e.y;
+  const l = Math.hypot(cx, cy) || 1;
+  return { x: cx / l, y: cy / l };
+}

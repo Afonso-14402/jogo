@@ -8,11 +8,12 @@ const ctx = canvas.getContext('2d');
 canvas.width = LARGURA;
 canvas.height = ALTURA;
 
-let estado = 'titulo'; // titulo | jogo | pausa | bau | morto
+let estado = 'titulo'; // titulo | jogo | pausa | bau | nivel | morto
 let andar = 0;
 let mapa, mapaImg, J, S;
 let inimigos = [], projeteis = [], baus = [], drops = [], particulas = [], textos = [], perigos = [];
-let boss = null, roleta = null, banner = null;
+let boss = null, roleta = null, banner = null, escolha = null;
+let raios = [];
 let cam = { x: 0, y: 0 };
 let tremor = 0;
 let tempoJogo = 0;
@@ -73,35 +74,72 @@ const premiu = (...ks) => ks.some(k => premidas[k]);
 // ---------------------------------------------------------------------
 //  Itens
 // ---------------------------------------------------------------------
-function criarItem(modelo, nAndar) {
+function criarItem(modelo, nAndar, semAfixo = false) {
   const esc = modelo.r === 'lixo' ? 1 : 1 + (nAndar - 1) * 0.12;
   const it = Object.assign({}, modelo);
+  it.nomeBase = modelo.nome;
   if (it.dano != null) it.dano = Math.round(modelo.dano * esc);
   if (it.def != null) it.def = Math.round(modelo.def * esc);
   if (it.hp != null && modelo.hp > 0) it.hp = Math.round(modelo.hp * esc);
   if (it.regen) it.regen = +(modelo.regen * esc).toFixed(1);
+  if (!semAfixo && Math.random() < CHANCE_AFIXO[it.r]) {
+    const af = it.r === 'lixo' ? AFIXO_MALDICAO : escolher(AFIXOS[it.tipo]);
+    it.afixo = af;
+    it.nome = `${modelo.nome} ${af.nome}`;
+    if (af.multDano) it.dano = Math.round(it.dano * af.multDano);
+    if (af.multVel) it.vel = +(it.vel * af.multVel).toFixed(2);
+    if (af.multDef) it.def = Math.round(it.def * af.multDef);
+    if (af.multHp && it.hp > 0) it.hp = Math.round(it.hp * af.multHp);
+  }
   return it;
 }
 
+// Probabilidades do baú já com a Sorte do jogador aplicada (somam 100)
+function chancesBau(tipoBau) {
+  const base = TIPOS_BAU[tipoBau].chances;
+  const sorte = J && S ? S.sorte : 0;
+  const pesos = {};
+  let total = 0;
+  for (const r of ORDEM_RARIDADES) {
+    pesos[r] = base[r] * Math.pow(EFEITO_SORTE[r], sorte);
+    total += pesos[r];
+  }
+  for (const r of ORDEM_RARIDADES) pesos[r] = pesos[r] * 100 / total;
+  return pesos;
+}
+
 function sortearItem(tipoBau) {
-  const r = escolherPeso(TIPOS_BAU[tipoBau].chances);
+  const r = escolherPeso(chancesBau(tipoBau));
   const pool = ITENS.filter(i => i.r === r && !i.inicial);
   return criarItem(escolher(pool), andar);
 }
 
+// Soma um atributo de afixo em todo o equipamento
+function somaAfixos(k) {
+  let v = 0;
+  for (const t of ['arma', 'armadura', 'amuleto']) if (J[t] && J[t].afixo && J[t].afixo[k]) v += J[t].afixo[k];
+  return v;
+}
+const nPerk = id => J.perks[id] || 0;
+
 function stats() {
   const a = J.arma, ar = J.armadura, am = J.amuleto || {};
   return {
-    maxHp: Math.max(10, J.hpBase + (ar ? ar.hp : 0)),
-    def: J.defBase + (ar ? ar.def : 0),
-    dano: J.atkBase + a.dano,
-    crit: 0.05 + (a.crit || 0) + (am.crit || 0),
-    vel: J.velBase * (1 + (am.velMov || 0)),
-    roubo: am.roubo || 0,
-    regen: am.regen || 0,
+    maxHp: Math.max(10, J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade')),
+    def: J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra'),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca'))),
+    crit: 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho'),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes')),
+    roubo: (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue'),
+    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen'),
     danoPct: am.danoPct || 0,
-    cdAtaque: 0.42 / a.vel,
+    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia'))),
     alcance: a.alcance,
+    xpMult: 1 + somaAfixos('xp') + 0.2 * nPerk('iman'),
+    sorte: somaAfixos('sorte') + nPerk('sorte'),
+    espinhos: somaAfixos('espinhos'),
+    cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')),
+    curaPocao: 0.4 + 0.15 * nPerk('pocoes'),
   };
 }
 
@@ -113,16 +151,67 @@ function equipar(item) {
 }
 
 // ---------------------------------------------------------------------
+//  Melhorias ao subir de nível
+// ---------------------------------------------------------------------
+function abrirEscolha() {
+  const disponiveis = PERKS.filter(p => nPerk(p.id) < p.max);
+  const opcoes = [];
+  while (opcoes.length < 3 && opcoes.length < disponiveis.length) {
+    const pesos = {};
+    for (const p of disponiveis) if (!opcoes.includes(p)) pesos[p.id] = p.unica ? 0.6 : 1;
+    const id = escolherPeso(pesos);
+    opcoes.push(disponiveis.find(p => p.id === id));
+  }
+  if (!opcoes.length) { J.escolhasPendentes = 0; return; }
+  escolha = { opcoes, t: 0 };
+  estado = 'nivel';
+  fanfarra([523, 659, 784, 1046], 0.04);
+}
+
+function atualizarEscolha(dt) {
+  escolha.t += dt;
+  if (escolha.t < 0.35) return; // evita escolher sem querer
+  let i = -1;
+  if (premiu('1')) i = 0; else if (premiu('2')) i = 1; else if (premiu('3')) i = 2;
+  if (premiu('rato')) {
+    escolha.opcoes.forEach((_, k) => {
+      const r = retCartaPerk(k, escolha.opcoes.length);
+      if (rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h) i = k;
+    });
+  }
+  if (i < 0 || i >= escolha.opcoes.length) return;
+  const p = escolha.opcoes[i];
+  J.perks[p.id] = nPerk(p.id) + 1;
+  if (p.id === 'vitalidade') J.hp += 30;
+  if (p.id === 'pocoes') J.pocoes += 2;
+  J.escolhasPendentes--;
+  escolha = null;
+  estado = 'jogo';
+  rato.baixo = false;
+  S = stats();
+  texto(J.x, J.y - 30, p.nome + '!', p.cor, 20);
+  explosao(J.x, J.y, p.cor, 24, 200, 5);
+  som(660, 0.2, 'triangle', 0.05, 300);
+}
+
+function retCartaPerk(i, n) {
+  const w = 230, h = 280, gap = 30;
+  const total = n * w + (n - 1) * gap;
+  return { x: (LARGURA - total) / 2 + i * (w + gap), y: 190, w, h };
+}
+
+// ---------------------------------------------------------------------
 //  Início / andares
 // ---------------------------------------------------------------------
 function novoJogo() {
   J = {
     x: 0, y: 0, r: 12,
     hpBase: 100, hp: 100, nivel: 1, xp: 0, atkBase: 5, defBase: 0, velBase: 165,
-    arma: criarItem(ITENS.find(i => i.inicial), 1), armadura: null, amuleto: null,
+    arma: criarItem(ITENS.find(i => i.inicial), 1, true), armadura: null, amuleto: null,
     pocoes: 2, cdAtaque: 0, invuln: 0, dashT: 0, cdDash: 0, dashVX: 0, dashVY: 0,
     kbx: 0, kby: 0, dirX: 1, dirY: 0, angArma: 0, golpe: null,
     kills: 0, bausAbertos: 0, melhorItem: null,
+    perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0,
   };
   andar = 0;
   tempoJogo = 0;
@@ -135,8 +224,9 @@ function proximoAndar() {
   andar++;
   mapa = gerarMapa(andar);
   mapaImg = renderizarMapa(mapa, andar);
-  inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = [];
+  inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
   boss = null;
+  reiniciarCampo();
   J.x = mapa.inicio.x; J.y = mapa.inicio.y;
   J.invuln = 1.2; J.golpe = null;
   if (mapa.eBoss) {
@@ -235,17 +325,18 @@ function atualizarEfeitos(dt) {
 function xpProximo(n) { return Math.floor(20 * Math.pow(n, 1.5)); }
 
 function ganharXp(q) {
+  q = Math.round(q * S.xpMult);
   J.xp += q;
   texto(J.x, J.y - 26, `+${q} XP`, '#7ec8ff', 13);
   while (J.xp >= xpProximo(J.nivel)) {
     J.xp -= xpProximo(J.nivel);
     J.nivel++;
-    J.hpBase += 12; J.atkBase += 2; J.defBase += 1;
+    J.hpBase += 10; J.atkBase += 2; J.defBase += 1;
+    J.escolhasPendentes++;
     S = stats();
     J.hp = S.maxHp;
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
     explosao(J.x, J.y, '#ffe14d', 30, 220, 5);
-    fanfarra([523, 659, 784, 1046], 0.04);
   }
 }
 
@@ -256,8 +347,15 @@ function atacar(dx, dy) {
   const ang = Math.atan2(dy, dx);
   J.cdAtaque = S.cdAtaque;
   J.angArma = ang;
-  J.golpe = { ang, t: 0.15, dur: 0.15, alcance: S.alcance + J.r };
-  som(260, 0.07, 'square', 0.025, -150);
+  J.contaGolpes++;
+  const giro = nPerk('remoinho') > 0 && J.contaGolpes % 4 === 0;
+  const arco = giro ? Math.PI + 0.1 : 1.15;
+  J.golpe = { ang, t: giro ? 0.25 : 0.15, dur: giro ? 0.25 : 0.15, alcance: S.alcance + J.r, giro };
+  som(giro ? 180 : 260, giro ? 0.15 : 0.07, 'square', 0.025, -150);
+  if (nPerk('laminas') > 0) {
+    projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * 430, vy: dy * 430, r: 7, vida: 0.55,
+      cor: '#d9a6ff', tipo: 'lamina', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.5)) });
+  }
   let acertou = false;
   for (const e of inimigos) {
     if (e.morto || e.z > 20) continue;
@@ -266,17 +364,18 @@ function atacar(dx, dy) {
     if (d - e.r > S.alcance + J.r) continue;
     let diff = Math.atan2(ey, ex) - ang;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-    if (Math.abs(diff) > 1.15 && d > e.r + J.r + 4) continue;
+    if (Math.abs(diff) > arco && d > e.r + J.r + 4) continue;
     let dano = S.dano * rand(0.85, 1.15) * (1 + S.danoPct);
     const crit = Math.random() < S.crit;
     if (crit) dano *= 2;
-    danoInimigo(e, Math.max(1, Math.round(dano)), crit, dx, dy);
+    danoInimigo(e, Math.max(1, Math.round(dano)), crit, dx, dy, true);
     acertou = true;
   }
   if (acertou) tremor = Math.max(tremor, 2);
 }
 
-function danoInimigo(e, dano, crit, dx, dy) {
+function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
+  if (e.morto) return;
   e.hp -= dano;
   e.flash = 0.1;
   e.acordado = true;
@@ -285,7 +384,31 @@ function danoInimigo(e, dano, crit, dx, dy) {
   explosao(e.x, e.y, e.cor, 5, 120, 3);
   if (S.roubo > 0) J.hp = Math.min(S.maxHp, J.hp + dano * S.roubo);
   som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
+  const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
+  if (af === 'fogo') { e.queima = 3; e.queimaDps = Math.max(1, dano * 0.35); }
+  if (af === 'gelo') e.lento = 2;
   if (e.hp <= 0 && !e.morto) matarInimigo(e);
+  if (af === 'trovao' && Math.random() < 0.25) relampago(e, dano);
+}
+
+// Relâmpago salta do inimigo atingido para até 3 inimigos próximos
+function relampago(origem, dano) {
+  let atual = origem;
+  const atingidos = [origem];
+  for (let k = 0; k < 3; k++) {
+    let prox = null, md = 170;
+    for (const o of inimigos) {
+      if (o.morto || atingidos.includes(o)) continue;
+      const d = Math.hypot(o.x - atual.x, o.y - atual.y);
+      if (d < md) { md = d; prox = o; }
+    }
+    if (!prox) break;
+    raios.push({ x1: atual.x, y1: atual.y, x2: prox.x, y2: prox.y, t: 0.25 });
+    atingidos.push(prox);
+    danoInimigo(prox, Math.max(1, Math.round(dano * 0.6)), false, 0, 0);
+    atual = prox;
+  }
+  if (atingidos.length > 1) som(1200, 0.15, 'sawtooth', 0.03, -900);
 }
 
 function matarInimigo(e) {
@@ -309,12 +432,28 @@ function matarInimigo(e) {
     for (const o of inimigos) if (!o.morto && o !== e) { o.morto = true; explosao(o.x, o.y, o.cor, 10); }
     return;
   }
+  if (nPerk('explosao') > 0) {
+    explosao(e.x, e.y, '#ff7b25', 18, 200, 6);
+    for (const o of inimigos) {
+      if (o.morto || o === e || Math.hypot(o.x - e.x, o.y - e.y) > 80 + o.r) continue;
+      danoInimigo(o, Math.max(1, Math.round(e.maxHp * 0.4)), false, 0, 0);
+    }
+  }
   if (Math.random() < 0.12) drops.push({ tipo: 'pocao', x: e.x, y: e.y, t: 0 });
   if (e.tipo === 'mimico') baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
 }
 
-function danoJogador(d, fx, fy) {
+function danoJogador(d, fx, fy, fonte = null) {
   if (J.invuln > 0 || J.dashT > 0 || estado !== 'jogo') return;
+  if (nPerk('escudo') > 0 && J.escudoCd <= 0) {
+    J.escudoCd = 10;
+    J.invuln = 0.5;
+    texto(J.x, J.y - 24, 'BLOQUEADO!', '#fff0a0', 18);
+    explosao(J.x, J.y, '#fff0a0', 16, 180, 4);
+    som(900, 0.2, 'triangle', 0.05, -400);
+    return;
+  }
+  if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
   const final = Math.max(1, Math.round(d * 60 / (60 + S.def * 5)));
   J.hp -= final;
   J.invuln = 0.7;
@@ -343,7 +482,7 @@ function morrer() {
 function beberPocao() {
   if (J.pocoes <= 0 || J.hp >= S.maxHp) return;
   J.pocoes--;
-  const cura = Math.round(S.maxHp * 0.4);
+  const cura = Math.round(S.maxHp * S.curaPocao);
   J.hp = Math.min(S.maxHp, J.hp + cura);
   texto(J.x, J.y - 24, `+${cura}`, '#5dff7a', 20);
   explosao(J.x, J.y, '#5dff7a', 14, 120, 4);
@@ -376,6 +515,9 @@ function atualizar(dt) {
   S = stats();
   atualizarJogador(dt);
   if (estado !== 'jogo') return;
+  atualizarCampo(mapa, J.x, J.y);
+  for (const r of raios) r.t -= dt;
+  raios = raios.filter(r => r.t > 0);
   for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
   separarInimigos();
   atualizarProjeteis(dt);
@@ -427,11 +569,11 @@ function atualizarJogador(dt) {
     J.dirX = mx; J.dirY = my;
     if (!J.golpe) J.angArma = Math.atan2(my, mx);
   }
-  J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt;
+  J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt;
 
   if (premiu('shift') && J.cdDash <= 0) {
     const dx = (mx || my) ? mx : J.dirX, dy = (mx || my) ? my : J.dirY;
-    J.dashT = 0.16; J.dashVX = dx * 560; J.dashVY = dy * 560; J.cdDash = 0.9;
+    J.dashT = 0.16; J.dashVX = dx * 560; J.dashVY = dy * 560; J.cdDash = S.cdDash;
     som(500, 0.12, 'sine', 0.04, -300);
   }
 
@@ -458,51 +600,75 @@ function atualizarInimigo(e, dt) {
   const dx = J.x - e.x, dy = J.y - e.y;
   const d = Math.hypot(dx, dy) || 1;
   const ux = dx / d, uy = dy / d;
-  if (e.boss) { atualizarBoss(e, dt, d, ux, uy); return; }
-  if (!e.acordado && d < 300) e.acordado = true;
+  // estados: queimado / abrandado
+  if (e.queima > 0) {
+    e.queima -= dt;
+    e.hp -= e.queimaDps * dt;
+    e.acumQueima = (e.acumQueima || 0) + e.queimaDps * dt;
+    if (Math.random() < 0.3) particulas.push({ x: e.x + rand(-e.r, e.r), y: e.y + rand(-e.r, e.r), vx: 0, vy: -40, t: 0.4, cor: '#ff7b25', tam: 4 });
+    if (e.acumQueima >= 1 && (e.queima <= 0 || Math.floor(e.queima * 2) !== Math.floor((e.queima + dt) * 2))) {
+      texto(e.x, e.y - e.r - 4, `${Math.round(e.acumQueima)}`, '#ff9b45', 13);
+      e.acumQueima = 0;
+    }
+    if (e.hp <= 0) { matarInimigo(e); return; }
+  }
+  if (e.lento > 0) e.lento -= dt;
+  const fLento = e.lento > 0 ? 0.6 : 1;
+  if (e.boss) { atualizarBoss(e, dt, d, ux, uy, fLento); return; }
+  if (!e.acordado && d < 300) {
+    const dc = distCampo(mapa, e.x, e.y);
+    if (e.tipo === 'fantasma' || (dc >= 0 && dc <= 12)) e.acordado = true;
+  }
 
   let vx = 0, vy = 0;
+  const ru = e.acordado && e.tipo !== 'fantasma' ? rumo(mapa, e, J.x, J.y) : { x: ux, y: uy };
   if (e.acordado) {
     switch (e.tipo) {
       case 'slime':
-        if (e.t % 1.1 < 0.45) { vx = ux * e.vel * 1.8; vy = uy * e.vel * 1.8; }
+        if (e.t % 1.1 < 0.45) { vx = ru.x * e.vel * 1.8; vy = ru.y * e.vel * 1.8; }
         break;
       case 'morcego': {
-        const a = Math.atan2(uy, ux) + Math.sin(e.t * 5) * 0.9;
+        const a = Math.atan2(ru.y, ru.x) + Math.sin(e.t * 5) * 0.9;
         vx = Math.cos(a) * e.vel; vy = Math.sin(a) * e.vel;
         break;
       }
-      case 'esqueleto':
-        if (d < 170) { vx = -ux * e.vel; vy = -uy * e.vel; }
-        else if (d > 260) { vx = ux * e.vel; vy = uy * e.vel; }
+      case 'esqueleto': {
+        const vejo = linhaDeVista(mapa, e.x, e.y, J.x, J.y, 4);
+        if (!vejo || d > 260) { vx = ru.x * e.vel; vy = ru.y * e.vel; }
+        else if (d < 170) { vx = -ux * e.vel; vy = -uy * e.vel; }
         else { const s = Math.sin(e.t * 0.8) > 0 ? 1 : -1; vx = -uy * e.vel * 0.6 * s; vy = ux * e.vel * 0.6 * s; }
-        if (e.cd <= 0 && d < 400) {
+        if (e.cd <= 0 && d < 400 && vejo) {
           e.cd = rand(1.6, 2.3);
           disparar(e.x, e.y, ux, uy, 250, e.dano, '#e8e2cf', 5, 'flecha');
           som(700, 0.08, 'triangle', 0.02, -400);
         }
         break;
+      }
       case 'orc':
         if (e.carga > 0) { e.carga -= dt; vx = e.cx * e.vel * 3.2; vy = e.cy * e.vel * 3.2; }
         else if (e.preparar > 0) { e.preparar -= dt; if (e.preparar <= 0) { e.carga = 0.45; e.cx = ux; e.cy = uy; } }
-        else { vx = ux * e.vel; vy = uy * e.vel; if (d < 160 && e.cd <= 0) { e.preparar = 0.45; e.cd = 3; } }
+        else {
+          vx = ru.x * e.vel; vy = ru.y * e.vel;
+          if (d < 160 && e.cd <= 0 && linhaDeVista(mapa, e.x, e.y, J.x, J.y, e.r)) { e.preparar = 0.45; e.cd = 3; }
+        }
         break;
       case 'fantasma':
       case 'mimico':
-        vx = ux * e.vel; vy = uy * e.vel;
+        vx = ru.x * e.vel; vy = ru.y * e.vel;
         break;
     }
   }
-  const mx = (vx + e.kbx) * dt, my = (vy + e.kby) * dt;
+  const mx = (vx * fLento + e.kbx) * dt, my = (vy * fLento + e.kby) * dt;
   if (e.tipo === 'fantasma') { e.x += mx; e.y += my; }
   else if (moverEntidade(mapa, e, mx, my) && e.carga > 0) e.carga = 0;
   e.kbx *= Math.max(0, 1 - dt * 10);
   e.kby *= Math.max(0, 1 - dt * 10);
 
-  if (d < e.r + J.r - 2) danoJogador(e.dano * (e.carga > 0 ? 1.5 : 1), e.x, e.y);
+  if (d < e.r + J.r - 2) danoJogador(e.dano * (e.carga > 0 ? 1.5 : 1), e.x, e.y, e);
 }
 
-function atualizarBoss(e, dt, d, ux, uy) {
+function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
+  const ru = rumo(mapa, e, J.x, J.y);
   const fase2 = e.hp < e.maxHp * 0.5;
   if (fase2 && !e.fase2) {
     e.fase2 = true;
@@ -532,7 +698,7 @@ function atualizarBoss(e, dt, d, ux, uy) {
         if (d < e.r + J.r + 20) danoJogador(e.dano * 1.3, e.x, e.y);
       }
     } else {
-      vx = ux * e.vel; vy = uy * e.vel;
+      vx = ru.x * e.vel; vy = ru.y * e.vel;
       if (e.cdA <= 0) {
         e.cdA = fase2 ? 1.7 : 2.6;
         e.duracaoSalto = 0.8; e.salto = 0.8;
@@ -545,7 +711,7 @@ function atualizarBoss(e, dt, d, ux, uy) {
     }
   } else if (e.tipo === 'lich') {
     if (d < 200) { vx = -ux * e.vel; vy = -uy * e.vel; }
-    else if (d > 320) { vx = ux * e.vel; vy = uy * e.vel; }
+    else if (d > 320) { vx = ru.x * e.vel; vy = ru.y * e.vel; }
     else { vx = -uy * e.vel * 0.7; vy = ux * e.vel * 0.7; }
     if (e.cdA <= 0) {
       e.cdA = fase2 ? 1.5 : 2.2;
@@ -592,7 +758,7 @@ function atualizarBoss(e, dt, d, ux, uy) {
         disparar(e.x + ux * e.r * 0.8, e.y + uy * e.r * 0.8, Math.cos(a), Math.sin(a), rand(240, 300), Math.round(e.dano * 0.6), '#ff7b25', 8, 'fogo', 1.4);
       }
     } else {
-      vx = ux * e.vel; vy = uy * e.vel;
+      vx = ru.x * e.vel; vy = ru.y * e.vel;
       if (e.cdA <= 0) {
         e.cdA = fase2 ? 2.4 : 3.4;
         e.sopro = 1.0; e.cdTiro = 0;
@@ -610,9 +776,9 @@ function atualizarBoss(e, dt, d, ux, uy) {
     }
   }
 
-  const bateu = moverEntidade(mapa, e, vx * dt, vy * dt);
+  const bateu = moverEntidade(mapa, e, vx * dt * fLento, vy * dt * fLento);
   if (bateu && e.investida > 0) { e.investida = 0; tremor = 10; som(60, 0.3, 'square', 0.05); }
-  if (e.z < 20 && d < e.r + J.r - 4) danoJogador(e.dano * (e.investida > 0 ? 1.5 : 1), e.x, e.y);
+  if (e.z < 20 && d < e.r + J.r - 4) danoJogador(e.dano * (e.investida > 0 ? 1.5 : 1), e.x, e.y, e);
 }
 
 function separarInimigos() {
@@ -642,6 +808,16 @@ function atualizarProjeteis(dt) {
     if (p.vida <= 0 || solido(mapa, Math.floor(p.x / TILE), Math.floor(p.y / TILE))) {
       p.morto = true;
       explosao(p.x, p.y, p.cor, 3, 60, 3);
+      continue;
+    }
+    if (p.dono === 'jogador') {
+      for (const e of inimigos) {
+        if (e.morto || e.z > 20 || Math.hypot(p.x - e.x, p.y - e.y) > p.r + e.r) continue;
+        const l = Math.hypot(p.vx, p.vy) || 1;
+        danoInimigo(e, p.dano, false, p.vx / l, p.vy / l, true);
+        p.morto = true;
+        break;
+      }
       continue;
     }
     if (J.dashT <= 0 && Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r - 2) {
@@ -740,6 +916,10 @@ function loop(agora) {
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape')) estado = 'pausa';
     else atualizar(dt);
+    if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
+  } else if (estado === 'nivel') {
+    atualizarEscolha(dt);
+    atualizarEfeitos(dt);
   } else if (estado === 'pausa') {
     if (premiu('p', 'escape')) estado = 'jogo';
   } else if (estado === 'bau') {

@@ -20,6 +20,13 @@ function textoCentro(txt, x, y, tam, cor, contorno = true) {
   ctx.fillText(txt, x, y);
 }
 
+function textoCentroAjustado(txt, x, y, tamMax, cor, larguraMax) {
+  let tam = tamMax;
+  ctx.font = fonte(tam);
+  while (tam > 9 && ctx.measureText(txt).width > larguraMax) { tam--; ctx.font = fonte(tam); }
+  textoCentro(txt, x, y, tam, cor);
+}
+
 function textoEsq(txt, x, y, tam, cor, peso = 'bold') {
   ctx.font = fonte(tam, peso);
   ctx.textAlign = 'left';
@@ -153,6 +160,18 @@ function desenhar(t) {
   }
 
   for (const p of projeteis) desenharProjetil(p);
+  for (const r of raios) {
+    ctx.strokeStyle = `rgba(255,240,120,${r.t * 4})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(r.x1, r.y1);
+    for (let k = 1; k < 6; k++) {
+      const f = k / 6;
+      ctx.lineTo(r.x1 + (r.x2 - r.x1) * f + rand(-8, 8), r.y1 + (r.y2 - r.y1) * f + rand(-8, 8));
+    }
+    ctx.lineTo(r.x2, r.y2);
+    ctx.stroke();
+  }
   for (const p of particulas) {
     ctx.globalAlpha = clamp(p.t * 2, 0, 1);
     ctx.fillStyle = p.cor;
@@ -173,6 +192,7 @@ function desenhar(t) {
   desenharHUD(t);
 
   if (estado === 'bau') desenharRoleta(t);
+  else if (estado === 'nivel') desenharEscolha(t);
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'morto') desenharMorte();
 }
@@ -278,7 +298,16 @@ function desenharPerigo(p) {
 
 function desenharProjetil(p) {
   ctx.save();
-  if (p.tipo === 'flecha') {
+  if (p.tipo === 'lamina') {
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.vida * 25);
+    ctx.fillStyle = p.cor;
+    ctx.shadowColor = p.cor; ctx.shadowBlur = 10;
+    for (let k = 0; k < 3; k++) {
+      ctx.rotate(Math.PI * 2 / 3);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10, -3); ctx.lineTo(8, 3); ctx.fill();
+    }
+  } else if (p.tipo === 'flecha') {
     ctx.translate(p.x, p.y);
     ctx.rotate(Math.atan2(p.vy, p.vx));
     ctx.strokeStyle = '#d8c9a3'; ctx.lineWidth = 2;
@@ -304,12 +333,14 @@ function desenharJogador(t) {
   let ang = J.angArma;
   if (J.golpe) {
     const p = 1 - J.golpe.t / J.golpe.dur;
-    ang = J.golpe.ang - 1.2 + p * 2.4;
-    ctx.strokeStyle = cor;
+    const volta = J.golpe.giro ? Math.PI * 2 : 2.4;
+    const inicio = J.golpe.giro ? J.golpe.ang : J.golpe.ang - 1.2;
+    ang = inicio + p * volta;
+    ctx.strokeStyle = J.golpe.giro ? '#ffae00' : cor;
     ctx.globalAlpha *= 0.35 * (1 - p) + 0.1;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = J.golpe.giro ? 14 : 10;
     ctx.beginPath();
-    ctx.arc(J.x, J.y, J.golpe.alcance - 6, J.golpe.ang - 1.2, ang);
+    ctx.arc(J.x, J.y, J.golpe.alcance - 6, inicio, ang);
     ctx.stroke();
     ctx.globalAlpha = J.invuln > 0 && Math.floor(J.invuln * 20) % 2 === 0 ? 0.45 : 1;
   }
@@ -326,6 +357,12 @@ function desenharJogador(t) {
   ctx.moveTo(18, -2.5); ctx.lineTo(18 + comp, -2.5); ctx.lineTo(22 + comp, 0); ctx.lineTo(18 + comp, 2.5); ctx.lineTo(18, 2.5);
   ctx.fill();
   ctx.restore();
+
+  if (nPerk('escudo') > 0 && J.escudoCd <= 0) {
+    ctx.strokeStyle = `rgba(255,240,160,${0.45 + Math.sin(t * 5) * 0.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(J.x, J.y, J.r + 7, 0, Math.PI * 2); ctx.stroke();
+  }
 
   // corpo
   ctx.fillStyle = '#3a6ad4';
@@ -438,6 +475,14 @@ function desenharInimigo(e, t) {
   }
   ctx.restore();
 
+  if (e.lento > 0) {
+    ctx.fillStyle = 'rgba(127,216,255,0.28)';
+    ctx.beginPath(); ctx.arc(e.x, e.y - (e.z || 0), e.r + 3, 0, Math.PI * 2); ctx.fill();
+  }
+  if (e.queima > 0) {
+    ctx.fillStyle = 'rgba(255,123,37,0.22)';
+    ctx.beginPath(); ctx.arc(e.x, e.y - (e.z || 0), e.r + 2, 0, Math.PI * 2); ctx.fill();
+  }
   if (!e.boss && e.hp < e.maxHp) {
     barra(e.x - 16, e.y - e.r - 12, 32, 4, e.hp / e.maxHp, '#ff4d4d', '#300');
   }
@@ -533,6 +578,14 @@ function desenharHUD(t) {
   barra(22, 72, 246, 10, J.xp / xpProximo(J.nivel), '#3d9bff');
   textoEsq(`XP ${J.xp}/${xpProximo(J.nivel)}`, 22, 92, 11, '#9fc8ff', 'normal');
 
+  // Melhorias obtidas
+  const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
+  obtidas.forEach((p, i) => {
+    const x = 24 + (i % 10) * 26, y = 118 + Math.floor(i / 10) * 26;
+    iconePerk(p, x, y, 11);
+    if (nPerk(p.id) > 1) textoCentro(`${nPerk(p.id)}`, x + 9, y + 8, 10, '#fff');
+  });
+
   // Andar + minimapa
   desenharMinimapa();
 
@@ -601,7 +654,7 @@ function desenharHUD(t) {
   }
 
   // Banner
-  if (banner && estado !== 'morto') {
+  if (banner && (estado === 'jogo' || estado === 'pausa')) {
     const a = clamp(Math.min(banner.t, 3 - banner.t) * 2, 0, 1);
     ctx.globalAlpha = a;
     textoCentro(banner.titulo, LARGURA / 2, 170, 40, banner.cor);
@@ -641,10 +694,12 @@ function desenharMinimapa() {
 
 function tabelaChances(tipoBau, x, y, largura) {
   const tb = TIPOS_BAU[tipoBau];
+  const chances = chancesBau(tipoBau);
   let yy = y;
   for (const r of ORDEM_RARIDADES) {
     const info = RARIDADES[r];
-    const pct = tb.chances[r];
+    const v = chances[r];
+    const pct = Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(1);
     ctx.fillStyle = info.cor;
     ctx.fillRect(x, yy - 5, 10, 10);
     textoEsq(info.nome, x + 16, yy, 13, info.cor);
@@ -669,27 +724,30 @@ function tabelaChances(tipoBau, x, y, largura) {
 function desenharInfoBau(b) {
   const tb = TIPOS_BAU[b.tipo];
   let x = b.x - cam.x + 34, y = b.y - cam.y - 90;
-  const w = 180, h = tb.mimico > 0 ? 184 : 165;
+  const w = 180, h = (tb.mimico > 0 ? 184 : 165) + (S.sorte > 0 ? 16 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 110, ALTURA - h - 100);
   painel(x, y, w, h);
   textoCentro(tb.nome, x + w / 2, y + 16, 14, tb.aro);
-  const fim = tabelaChances(b.tipo, x + 14, y + 40, w - 28);
+  let y0 = y + 40;
+  if (S.sorte > 0) { textoCentro(`Sorte +${S.sorte} aplicada`, x + w / 2, y + 33, 11, '#3ddc84', false); y0 += 14; }
+  const fim = tabelaChances(b.tipo, x + 14, y0, w - 28);
   textoCentro('[E] Abrir', x + w / 2, fim + 4, 15, '#ffe680');
 }
 
 function desenharCartaItem(it, x, y, cabecalho) {
   const info = RARIDADES[it.r];
   const linhas = linhasItem(it);
-  const w = 220, h = 118 + linhas.length * 18;
+  const w = 220, h = 118 + linhas.length * 18 + (it.afixo ? 22 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 10, ALTURA - h - 10);
   painel(x, y, w, h, 'rgba(12,10,20,0.95)', info.cor);
   if (cabecalho) textoCentro(cabecalho, x + w / 2, y + 14, 11, '#999', false);
   desenharIcone(it, x + w / 2, y + 44, 40);
-  textoCentro(it.nome, x + w / 2, y + 78, 15, info.cor);
+  textoCentroAjustado(it.nome, x + w / 2, y + 78, 15, info.cor, w - 16);
   textoCentro(`${info.nome} · ${NOME_TIPO[it.tipo]}`, x + w / 2, y + 96, 11, '#bbb', false);
   linhas.forEach((l, i) => textoCentro(l, x + w / 2, y + 116 + i * 18, 13, '#eee', false));
+  if (it.afixo) textoCentroAjustado(`+ ${it.afixo.desc}`, x + w / 2, y + 120 + linhas.length * 18, 13, it.afixo.cor, w - 16);
   return h;
 }
 
@@ -731,7 +789,13 @@ function desenharRoleta(t) {
     ctx.font = fonte(11);
     ctx.textAlign = 'center';
     ctx.fillStyle = info.cor;
-    ctx.fillText(it.nome.length > 17 ? it.nome.slice(0, 16) + '…' : it.nome, x + L / 2, cy + 32);
+    const nb = it.nomeBase || it.nome;
+    ctx.fillText(nb.length > 17 ? nb.slice(0, 16) + '…' : nb, x + L / 2, cy + 32);
+    if (it.afixo) {
+      ctx.fillStyle = it.afixo.cor;
+      ctx.font = fonte(10);
+      ctx.fillText(it.afixo.nome, x + L / 2, cy + 46);
+    }
   }
   ctx.restore();
   // marcador central
@@ -744,7 +808,7 @@ function desenharRoleta(t) {
     // tabela de chances enquanto roda
     const w = 220, x = (LARGURA - w) / 2, y = 270;
     painel(x, y, w, tb.mimico > 0 ? 190 : 170);
-    textoCentro('Probabilidades', x + w / 2, y + 18, 14, '#ddd');
+    textoCentro(S.sorte > 0 ? `Probabilidades (Sorte +${S.sorte})` : 'Probabilidades', x + w / 2, y + 18, 14, S.sorte > 0 ? '#3ddc84' : '#ddd');
     tabelaChances(R.tipoBau, x + 18, y + 44, w - 36);
     textoCentro('[E] Saltar animação', LARGURA / 2, ALTURA - 40, 14, '#888', false);
     return;
@@ -842,11 +906,68 @@ function desenharTitulo(t) {
   if (Math.floor(t * 2) % 2 === 0) textoCentro('Carrega ENTER para começar', LARGURA / 2, 594, 24, '#fff');
 }
 
-function desenharPausa() {
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+function iconePerk(p, x, y, r) {
+  ctx.fillStyle = p.cor;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = p.unica ? '#ffe14d' : 'rgba(0,0,0,0.5)';
+  ctx.lineWidth = p.unica ? 2 : 1.5;
+  ctx.stroke();
+  ctx.font = fonte(Math.round(r * 1.1));
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#15101e';
+  ctx.fillText(p.letra, x, y + 1);
+}
+
+function desenharEscolha(t) {
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
-  textoCentro('PAUSA', LARGURA / 2, ALTURA / 2 - 20, 48, '#fff');
-  textoCentro('P / Esc para continuar', LARGURA / 2, ALTURA / 2 + 30, 18, '#bbb', false);
+  textoCentro('SUBISTE DE NÍVEL!', LARGURA / 2, 90, 40, '#ffe14d');
+  textoCentro(`Nível ${J.nivel} · Escolhe uma melhoria`, LARGURA / 2, 135, 18, '#ddd', false);
+  const n = escolha.opcoes.length;
+  escolha.opcoes.forEach((p, i) => {
+    const r = retCartaPerk(i, n);
+    const sobre = rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
+    const entrada = clamp(escolha.t * 4 - i * 0.3, 0, 1);
+    const y = r.y + (1 - entrada) * 40 - (sobre ? 6 : 0);
+    ctx.globalAlpha = entrada;
+    painel(r.x, y, r.w, r.h, 'rgba(18,14,28,0.96)', sobre ? '#ffffff' : p.cor);
+    textoCentro(`${i + 1}`, r.x + 22, y + 22, 18, '#888', false);
+    if (p.unica) textoCentro('ÚNICA', r.x + r.w - 34, y + 22, 11, '#ffe14d', false);
+    iconePerk(p, r.x + r.w / 2, y + 80, 34);
+    textoCentroAjustado(p.nome, r.x + r.w / 2, y + 145, 20, p.cor, r.w - 20);
+    // descrição com quebra de linha
+    ctx.font = fonte(14, 'normal');
+    const palavras = p.desc.split(' ');
+    const linhas = [];
+    let linha = '';
+    for (const w of palavras) {
+      const tentativa = linha ? linha + ' ' + w : w;
+      if (ctx.measureText(tentativa).width > r.w - 30 && linha) { linhas.push(linha); linha = w; } else linha = tentativa;
+    }
+    if (linha) linhas.push(linha);
+    linhas.forEach((l, k) => textoCentro(l, r.x + r.w / 2, y + 180 + k * 20, 14, '#e6e0f0', false));
+    const atual = nPerk(p.id);
+    if (p.max > 1) textoCentro(`${atual} / ${p.max}`, r.x + r.w / 2, y + r.h - 24, 13, '#999', false);
+    ctx.globalAlpha = 1;
+  });
+  textoCentro('Carrega 1, 2 ou 3 (ou clica numa carta)', LARGURA / 2, 520, 16, '#aaa', false);
+}
+
+function desenharPausa() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  textoCentro('PAUSA', LARGURA / 2, 110, 48, '#fff');
+  textoCentro('P / Esc para continuar', LARGURA / 2, 155, 18, '#bbb', false);
+  const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
+  textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 215, 18, '#ffe14d');
+  obtidas.forEach((p, i) => {
+    const col = i % 2, lin = Math.floor(i / 2);
+    const x = LARGURA / 2 - 330 + col * 340, y = 255 + lin * 36;
+    iconePerk(p, x + 14, y, 13);
+    textoEsq(`${p.nome}${p.max > 1 ? ` (${nPerk(p.id)}/${p.max})` : ''}`, x + 36, y - 7, 14, p.cor);
+    textoEsq(p.desc, x + 36, y + 9, 12, '#ccc', 'normal');
+  });
 }
 
 function desenharMorte() {
