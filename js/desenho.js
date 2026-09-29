@@ -126,14 +126,18 @@ function linhasItem(it) {
   const l = [];
   if (it.tipo === 'arma') {
     l.push(`Dano: ${it.dano}`, `Velocidade: ${it.vel}x`, `Alcance: ${it.alcance}`, `Crítico: +${pct(it.crit)}`);
+    if (it.magia) l.push(`Poder mágico: +${pct(it.magia)}`);
   } else if (it.tipo === 'armadura') {
     l.push(`Defesa: ${it.def}`, `Vida: ${it.hp >= 0 ? '+' : ''}${it.hp}`);
+    if (it.mana) l.push(`Mana: +${it.mana}`);
   } else {
     if (it.crit) l.push(`Crítico: +${pct(it.crit)}`);
     if (it.velMov) l.push(`Velocidade: ${it.velMov > 0 ? '+' : ''}${pct(it.velMov)}`);
     if (it.roubo) l.push(`Roubo de vida: ${pct(it.roubo)}`);
-    if (it.regen) l.push(`Regeneração: ${it.regen}/s`);
+    if (it.regen) l.push(`Regeneração: ${(+it.regen).toFixed(1)}/s`);
     if (it.danoPct) l.push(`Dano: +${pct(it.danoPct)}`);
+    if (it.magia) l.push(`Poder mágico: +${pct(it.magia)}`);
+    if (it.mana) l.push(`Mana: +${it.mana}`);
     if (!l.length) l.push('Não faz absolutamente nada.');
   }
   return l;
@@ -201,6 +205,7 @@ function desenhar(t) {
   ctxTela.fillRect(0, 0, LARGURA, ALTURA);
   ctx = ctxTela;
   if (estado === 'titulo') { desenharTitulo(t); return; }
+  if (estado === 'criar') { desenharCriacao(t); return; }
 
   const sx = tremor > 0 ? rand(-tremor, tremor) : 0;
   const sy = tremor > 0 ? rand(-tremor, tremor) : 0;
@@ -225,6 +230,7 @@ function desenhar(t) {
   if (estado === 'bau') desenharRoleta(t);
   else if (estado === 'nivel') desenharEscolha(t);
   else if (estado === 'loja') desenharLoja(t);
+  else if (estado === 'encantar') desenharMesa(t);
   else if (estado === 'personagem') desenharPersonagem();
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'morto') desenharMorte();
@@ -248,6 +254,14 @@ function desenharMundo(t) {
   lista.sort((a, b) => a.y - b.y);
   for (const it of lista) it.f();
 
+  for (const o of ondas) {
+    const f = 1 - o.t / o.dur;
+    ctx.globalAlpha = 0.8 * (1 - f);
+    aro(o.x, o.y, alinhar(o.r * (0.3 + f * 0.7)), o.cor, 6);
+    ctx.globalAlpha = 0.15 * (1 - f);
+    circulo(o.x, o.y, alinhar(o.r * (0.3 + f * 0.7)), o.cor);
+    ctx.globalAlpha = 1;
+  }
   for (const p of projeteis) desenharProjetil(p, t);
   for (const r of raios) {
     ctx.strokeStyle = `rgba(255,240,120,${Math.min(1, r.t * 4)})`;
@@ -295,9 +309,12 @@ function desenharLuz(t) {
     if (o.tipo === 'cristal') luz(o.x, o.y, 110, o.fase === 'feito' ? 0.3 : 0.8);
     else if (o.tipo === 'altar' && !o.usado) luz(o.x, o.y, 110, 0.7);
     else if (o.tipo === 'mercador') luz(o.x, o.y, 130, 0.8);
+    else if (o.tipo === 'mesa') luz(o.x, o.y, 120, 0.8);
   }
   for (const b of baus) if (b.tipo === 'ouro') luz(b.x, b.y, 90, 0.7);
-  for (const p of projeteis) if (p.tipo === 'fogo' || p.dono === 'jogador') luz(p.x, p.y, 50, 0.5);
+  for (const p of projeteis) if (p.tipo === 'fogo' || p.dono === 'jogador') luz(p.x, p.y, p.explode ? 110 : 50, p.explode ? 0.8 : 0.5);
+  for (const o of ondas) luz(o.x, o.y, o.r * 1.4, 0.6 * (o.t / o.dur));
+  for (const d of drops) if (d.tipo === 'livro') luz(d.x, d.y, 70, 0.6);
   if (mapa.escada.ativa) luz(mapa.escada.x, mapa.escada.y, 80, 0.5);
   L.globalCompositeOperation = 'source-over';
   ctxMundo.drawImage(bufLuz, 0, 0);
@@ -396,6 +413,12 @@ function desenharPerigo(p) {
 function desenharDrop(d) {
   const bob = Math.sin(d.t * 4) * 3;
   if (d.tipo === 'pocao') { sombra(d.x, d.y + 10, 7); spr(SPR.pocao, d.x, d.y + bob); return; }
+  if (d.tipo === 'livro') {
+    sombra(d.x, d.y + 14, 9);
+    spr(SPR.livro[d.feitico], d.x, d.y + bob * 1.5 - 4);
+    if (Math.floor(d.t * 4) % 2) { ctx.fillStyle = FEITICOS[d.feitico].cor; ctx.fillRect(alinhar(d.x + 12), alinhar(d.y - 18 + bob), 4, 4); }
+    return;
+  }
   const n = d.valor >= 10 ? 3 : d.valor >= 4 ? 2 : 1;
   for (let i = 0; i < n; i++) spr(SPR.moeda, d.x + (i - (n - 1) / 2) * 8, d.y - i * 4 + bob);
 }
@@ -423,6 +446,11 @@ function desenharObjeto(o, t) {
       ctx.fillRect(alinhar(o.x - 30), alinhar(o.y - 16), 2, 2);
       ctx.fillRect(alinhar(o.x + 28), alinhar(o.y - 16), 2, 2);
     }
+  } else if (o.tipo === 'mesa') {
+    sombra(o.x, o.y + 14, 16);
+    spr(SPR.mesa, o.x, o.y);
+    ctx.fillStyle = ['#d9a6ff', '#b44dff', '#ffffff'][Math.floor(t * 5) % 3];
+    ctx.fillRect(alinhar(o.x - 4 + Math.sin(t * 3) * 8), alinhar(o.y - 24 - (t * 20) % 16), 2, 2);
   } else if (o.tipo === 'cristal') {
     const bob = o.fase === 'feito' ? 0 : Math.sin(t * 2) * 3;
     spr(SPR.cristal[o.fase], o.x, o.y - 8 + bob);
@@ -452,7 +480,7 @@ function desenharJogador(t) {
   const armaAtras = Math.sin(ang) < -0.3;
   if (armaAtras) desenharArma(ang);
   if (piscar) ctx.globalAlpha = 0.4;
-  const c = SPR.heroi[frame];
+  const c = framesHeroi(J.raca, J.skin)[frame];
   spr(c, J.x, J.y - 4, olhaEsq);
   if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
   if (J.lentoT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.4);
@@ -532,6 +560,7 @@ function desenharInimigo(e, t) {
   if (e.tipo === 'dragao' && e.investida > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.35);
   if (e.tipo === 'demonio' && e.aparecer > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.5);
   if (e.flash > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.85);
+  else if (e.congelado > 0) sprCor(s.c, x, y, flip, '#bfe6ff', 0.65);
   else if (e.lento > 0) sprCor(s.c, x, y, flip, '#7fd8ff', 0.4);
   else if (e.queima > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.3);
 
@@ -608,19 +637,21 @@ function desenharTextosMundo() {
 //  HUD
 // ---------------------------------------------------------------------
 function desenharHUD(t) {
-  painel(10, 10, 280, 96);
+  painel(10, 10, 280, 112);
   textoEsq(`Nv ${J.nivel}`, 22, 28, 20, '#ffe14d');
   textoEsq(`ATK ${S.dano}  DEF ${S.def}  CRIT ${Math.round(S.crit * 100)}%`, 84, 28, 13, '#cfc6e0');
   barra(22, 44, 256, 18, J.hp / S.maxHp, J.hp / S.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
   textoCentro(`${Math.ceil(J.hp)} / ${S.maxHp}`, 150, 53, 13, '#fff');
-  barra(22, 72, 256, 8, J.xp / xpProximo(J.nivel), '#3d9bff');
-  textoEsq(`XP ${J.xp}/${xpProximo(J.nivel)}`, 22, 94, 12, '#9fc8ff', 'normal');
-  sprEcra(SPR.moeda, 200, 94, 3);
-  textoEsq(`${J.ouro}`, 214, 94, 15, '#ffd23f');
+  barra(22, 70, 256, 12, J.mana / S.maxMana, '#8a4dff', '#1e1438');
+  textoCentro(`${Math.floor(J.mana)} / ${S.maxMana}`, 150, 76, 11, '#e8dcff');
+  barra(22, 90, 256, 6, J.xp / xpProximo(J.nivel), '#3d9bff');
+  textoEsq(`XP ${J.xp}/${xpProximo(J.nivel)}`, 22, 110, 12, '#9fc8ff', 'normal');
+  sprEcra(SPR.moeda, 200, 110, 3);
+  textoEsq(`${J.ouro}`, 214, 110, 15, '#ffd23f');
 
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
   obtidas.forEach((p, i) => {
-    const x = 26 + (i % 10) * 28, y = 126 + Math.floor(i / 10) * 28;
+    const x = 26 + (i % 10) * 28, y = 142 + Math.floor(i / 10) * 28;
     iconePerk(p, x, y, 12);
     if (nPerk(p.id) > 1) textoCentro(`${nPerk(p.id)}`, x + 10, y + 9, 11, '#fff');
   });
@@ -660,9 +691,51 @@ function desenharHUD(t) {
   textoCentro('»»', dx + 29, by + 28, 24, pronto ? '#78aaff' : '#556');
   textoCentro('[Shift] Dash', dx + 29, by + 68, 11, '#aaa', false);
 
-  slots.forEach(([k], i) => {
+  // feitiços
+  const fx0 = 378;
+  painel(fx0 - 10, by - 10, ORDEM_FEITICOS.length * 66 + 12, 86);
+  ORDEM_FEITICOS.forEach((id, i) => {
+    const x = fx0 + i * 66, f = FEITICOS[id], nv = J.feiticos[id] || 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(x, by, 58, 58);
+    if (!nv) {
+      ctx.globalAlpha = 0.25;
+      sprEcra(silhueta(SPR.feitico[id], '#888888'), x + 29, by + 29, 3);
+      ctx.globalAlpha = 1;
+      textoCentro('?', x + 29, by + 29, 18, '#777', false);
+    } else {
+      const semMana = J.mana < custoMana(id);
+      if (semMana) ctx.globalAlpha = 0.4;
+      sprEcra(SPR.feitico[id], x + 29, by + 29, 3);
+      ctx.globalAlpha = 1;
+      const cd = J.cdFeitico[id] || 0;
+      if (cd > 0) {
+        const fr = clamp(cd / f.cd, 0, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(x, by + Math.round(58 * (1 - fr)), 58, Math.round(58 * fr));
+      }
+      ctx.fillStyle = f.cor;
+      ctx.fillRect(x, by, 58, 2); ctx.fillRect(x, by + 56, 58, 2); ctx.fillRect(x, by, 2, 58); ctx.fillRect(x + 56, by, 2, 58);
+      textoCentro(`${custoMana(id)}`, x + 46, by + 49, 11, semMana ? '#ff8080' : '#c9b0ff');
+      if (nv > 1) textoCentro('I'.repeat(nv), x + 10, by + 49, 11, f.cor);
+    }
+    textoCentro(`${i + 1}`, x + 8, by + 9, 12, '#fff');
+    textoCentro(f.nome, x + 29, by + 68, 10, nv ? '#aaa' : '#555', false);
+  });
+
+  if (estado === 'jogo') slots.forEach(([k], i) => {
     const x = 20 + i * 66;
     if (J[k] && rato.x > x && rato.x < x + 58 && rato.y > by && rato.y < by + 58) desenharCartaItem(J[k], x, by - 200, 'Equipado');
+  });
+  if (estado === 'jogo') ORDEM_FEITICOS.forEach((id, i) => {
+    const x = fx0 + i * 66;
+    if (!(rato.x > x && rato.x < x + 58 && rato.y > by && rato.y < by + 58)) return;
+    const f = FEITICOS[id], nv = J.feiticos[id] || 0;
+    const px = clamp(x - 90, 10, LARGURA - 250);
+    painel(px, by - 104, 240, 90, 'rgba(12,10,20,0.96)', f.cor);
+    textoCentro(nv ? `${f.nome} (nível ${nv})` : `${f.nome} (por aprender)`, px + 120, by - 86, 14, f.cor);
+    textoCentroAjustado(f.desc, px + 120, by - 64, 12, '#ddd', 224, false);
+    textoCentro(nv ? `Mana ${custoMana(id)} · Recarga ${f.cd}s` : 'Encontra um Livro de Feitiço', px + 120, by - 42, 12, '#aaa', false);
   });
 
   if (boss && !boss.morto) {
@@ -717,7 +790,8 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, o.tipo === 'mercador' ? '#3ddc84' : o.tipo === 'altar' ? '#ff3b3b' : '#b44dff', 6);
+  const corObj = { mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff' };
+  for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
 }
@@ -771,6 +845,9 @@ function desenharInfoObjeto(o) {
       textoCentro(`[E] Sacrificar ${Math.round(S.maxHp * 0.35)} de vida`, sx, sy - 18, 15, '#ff8080');
       textoCentro('e receber um Baú Dourado', sx, sy, 13, '#ffd23f');
     }
+  } else if (o.tipo === 'mesa') {
+    textoCentro('Mesa de Encantamentos', sx, sy - 18, 14, '#d9a6ff');
+    textoCentro('[E] Encantar equipamento', sx, sy, 15, '#ffe680');
   } else if (o.tipo === 'cristal') {
     if (o.fase === 'inativo') {
       textoCentro('[E] Começar o desafio', sx, sy - 18, 15, '#ffe680');
@@ -928,6 +1005,7 @@ function iconeOferta(of, x, y) {
     if (of.id === 'cura') textoCentro('+', x + 14, y - 14, 18, '#5dff7a');
   } else if (of.id === 'madeira' || of.id === 'ouro') sprEcra(SPR.bau[of.id], x, y, 3);
   else if (of.id === 'item') desenharIcone(of.item, x, y, 48);
+  else if (of.id === 'livro') sprEcra(SPR.livro[of.feitico], x, y, 3);
   else iconePerk({ cor: '#ffae00', letra: '?', unica: false }, x, y, 18);
 }
 
@@ -951,8 +1029,8 @@ function desenharLoja(t) {
     ctx.globalAlpha = esgotado ? 0.35 : 1;
     iconeOferta(of, r.x + 62, r.y + r.h / 2);
     const cor = of.id === 'item' ? RARIDADES[of.item.r].cor : '#ffffff';
-    textoEsq(of.nome.length > 30 ? of.nome.slice(0, 29) + '…' : of.nome, r.x + 100, r.y + 22, 16, cor);
-    textoEsq(of.id === 'pocao' ? `Cura ${Math.round(S.curaPocao * 100)}% da vida` : of.desc, r.x + 100, r.y + 42, 12, '#aaa', 'normal');
+    textoEsq(of.nome.length > 30 ? of.nome.slice(0, 29) + '…' : of.nome, r.x + 100, r.y + 20, 16, of.id === 'livro' ? FEITICOS[of.feitico].cor : cor);
+    textoEsq(of.id === 'pocao' ? `Cura ${Math.round(S.curaPocao * 100)}% da vida e 40% da mana` : of.desc, r.x + 100, r.y + 40, 12, '#aaa', 'normal');
     ctx.globalAlpha = 1;
     if (esgotado) textoDir('ESGOTADO', r.x + r.w - 14, r.y + r.h / 2, 14, '#777');
     else {
@@ -982,8 +1060,8 @@ function desenharLoja(t) {
       TIPOS_BAU[of.id].mimico = antes;
     }
   }
-  if (loja.msg) textoCentro(loja.msg.txt, LARGURA / 2, 572, 18, loja.msg.cor);
-  textoCentro('1-6 ou clique: comprar    ·    E / Esc: sair', LARGURA / 2, ALTURA - 26, 15, '#aaa', false);
+  if (loja.msg) textoCentro(loja.msg.txt, LARGURA / 2, 592, 18, loja.msg.cor);
+  textoCentro(`1-${stock.length} ou clique: comprar    ·    E / Esc: sair`, LARGURA / 2, ALTURA - 20, 15, '#aaa', false);
 }
 
 // ---------------------------------------------------------------------
@@ -996,8 +1074,9 @@ function desenharPersonagem() {
 
   // coluna de stats
   painel(20, 64, 300, 540);
-  sprEcra(SPR.heroi[0], 62, 112, 4);
-  textoEsq(`Nível ${J.nivel}`, 110, 94, 22, '#ffe14d');
+  sprEcra(framesHeroi(J.raca, J.skin)[0], 62, 112, 4);
+  textoEsq(`Nível ${J.nivel}`, 110, 90, 22, '#ffe14d');
+  textoEsq(RACAS[J.raca].nome, 210, 90, 16, RACAS[J.raca].cor);
   textoEsq(`XP ${J.xp} / ${xpProximo(J.nivel)}`, 110, 118, 13, '#9fc8ff', 'normal');
   sprEcra(SPR.moeda, 116, 140, 3);
   textoEsq(`${J.ouro} ouro`, 130, 140, 14, '#ffd23f');
@@ -1005,7 +1084,9 @@ function desenharPersonagem() {
   const reducao = 1 - 60 / (60 + S.def * 5);
   const linhas = [
     ['Vida', `${Math.ceil(J.hp)} / ${S.maxHp}`],
+    ['Mana', `${Math.floor(J.mana)} / ${S.maxMana} (+${S.manaRegen}/s)`],
     ['Dano', `${Math.round(S.dano * (1 + S.danoPct))}`],
+    ['Poder mágico', `${S.poder} (${S.magia >= 0 ? '+' : ''}${pct(S.magia)})`],
     ['Crítico', `${pct(Math.min(1, S.crit))} (dano x2)`],
     ['Ataques/segundo', (1 / S.cdAtaque).toFixed(2)],
     ['Alcance', `${S.alcance}`],
@@ -1020,14 +1101,14 @@ function desenharPersonagem() {
     ['Recarga do dash', `${S.cdDash.toFixed(2)}s`],
   ];
   linhas.forEach(([k, v], i) => {
-    const y = 176 + i * 22;
-    if (i % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(28, y - 10, 284, 21); }
+    const y = 170 + i * 20;
+    if (i % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(28, y - 10, 284, 19); }
     textoEsq(k, 36, y, 14, '#bdb4d0', 'normal');
     textoDir(v, 304, y, 14, '#ffffff');
   });
   const seg = Math.floor(tempoJogo);
   const est = [`Andar ${andar}`, `Inimigos: ${J.kills}`, `Baús: ${J.bausAbertos}`, `Tempo: ${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`];
-  est.forEach((l, i) => textoEsq(l, 36 + (i % 2) * 140, 504 + Math.floor(i / 2) * 22, 13, '#888', 'normal'));
+  est.forEach((l, i) => textoEsq(l, 36 + (i % 2) * 140, 510 + Math.floor(i / 2) * 20, 13, '#888', 'normal'));
   if (J.melhorItem) {
     textoEsq('Melhor item:', 36, 562, 13, '#888', 'normal');
     textoEsq(J.melhorItem.nome.length > 26 ? J.melhorItem.nome.slice(0, 25) + '…' : J.melhorItem.nome, 36, 582, 14, RARIDADES[J.melhorItem.r].cor);
@@ -1065,7 +1146,126 @@ function desenharPersonagem() {
     textoEsq(`${p.nome}${p.max > 1 ? ` ${nPerk(p.id)}/${p.max}` : ''}`, x + 32, y - 7, 13, p.cor);
     textoEsq(p.desc, x + 32, y + 9, 11, '#bbb', 'normal');
   });
+  // feitiços
+  ORDEM_FEITICOS.forEach((id, i) => {
+    const nv = J.feiticos[id] || 0, x = 356 + i * 146, y = 578;
+    ctx.globalAlpha = nv ? 1 : 0.3;
+    sprEcra(SPR.feitico[id], x + 12, y, 2);
+    textoEsq(nv ? `${FEITICOS[id].nome} ${'I'.repeat(nv)}` : '???', x + 30, y, 12, nv ? FEITICOS[id].cor : '#777');
+    ctx.globalAlpha = 1;
+  });
   textoCentro('C / Esc para voltar', LARGURA / 2, ALTURA - 18, 13, '#888', false);
+}
+
+// ---------------------------------------------------------------------
+//  Mesa de Encantamentos
+// ---------------------------------------------------------------------
+function desenharMesa(t) {
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  sprEcra(SPR.mesa, 70, 56, 3);
+  textoEsq('Mesa de Encantamentos', 118, 46, 28, '#d9a6ff');
+  textoEsq('Reforça um item (+1 até +5) ou dá-lhe um encantamento novo', 118, 76, 13, '#aaa', 'normal');
+  sprEcra(SPR.moeda, LARGURA - 190, 58, 5);
+  textoEsq(`${J.ouro} ouro`, LARGURA - 168, 58, 24, '#ffd23f');
+
+  SLOTS_EQUIP.forEach((k, i) => {
+    const r = retSlotMesa(i), it = J[k];
+    const sel = mesa.slot === k;
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,30,62,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#d9a6ff' : '#4a4060');
+    textoCentro(`${i + 1}`, r.x + 18, r.y + r.h / 2, 16, '#777', false);
+    if (!it) { textoEsq(`${NOME_TIPO[k]}: nada equipado`, r.x + 44, r.y + r.h / 2, 14, '#666'); return; }
+    desenharIcone(it, r.x + 70, r.y + r.h / 2, 48);
+    textoEsq(it.nome.length > 32 ? it.nome.slice(0, 31) + '…' : it.nome, r.x + 108, r.y + 28, 15, RARIDADES[it.r].cor);
+    const nv = it.enc || 0;
+    for (let s2 = 0; s2 < 5; s2++) {
+      ctx.fillStyle = s2 < nv ? '#d9a6ff' : '#2e2640';
+      ctx.fillRect(r.x + 108 + s2 * 16, r.y + 46, 12, 12);
+    }
+    textoEsq(it.afixo ? `${it.afixo.nome}: ${it.afixo.desc}` : 'Sem encantamento', r.x + 196, r.y + 52, 12, it.afixo ? it.afixo.cor : '#777', 'normal');
+  });
+
+  const it = J[mesa.slot];
+  if (it) {
+    const nv = it.enc || 0;
+    const r1 = BOTAO_REFORCAR, r2 = BOTAO_ENCANTO;
+    const podeReforcar = nv < 5;
+    painel(r1.x, r1.y, r1.w, r1.h, dentro(r1) ? 'rgba(40,30,62,0.97)' : 'rgba(18,14,28,0.95)', podeReforcar ? '#5dff7a' : '#444');
+    textoEsq(podeReforcar ? `[E] Reforçar para +${nv + 1}` : 'Reforço máximo (+5)', r1.x + 16, r1.y + 22, 17, podeReforcar ? '#5dff7a' : '#777');
+    if (podeReforcar) {
+      textoEsq(`Chance de sucesso: ${Math.round(CHANCE_REFORCO[nv] * 100)}%  ·  Se falhar perdes o ouro`, r1.x + 16, r1.y + 44, 12, '#bbb', 'normal');
+      sprEcra(SPR.moeda, r1.x + r1.w - 80, r1.y + r1.h / 2, 3);
+      textoDir(`${custoReforco(it)}`, r1.x + r1.w - 14, r1.y + r1.h / 2, 18, J.ouro < custoReforco(it) ? '#ff6060' : '#ffd23f');
+    }
+    painel(r2.x, r2.y, r2.w, r2.h, dentro(r2) ? 'rgba(40,30,62,0.97)' : 'rgba(18,14,28,0.95)', '#b44dff');
+    textoEsq(it.afixo ? '[R] Trocar o encantamento' : '[R] Encantar (afixo aleatório)', r2.x + 16, r2.y + 22, 17, '#d9a6ff');
+    textoEsq('Ex.: de Fogo, do Trovão, de Espinhos, Arcano...', r2.x + 16, r2.y + 44, 12, '#bbb', 'normal');
+    sprEcra(SPR.moeda, r2.x + r2.w - 80, r2.y + r2.h / 2, 3);
+    textoDir(`${custoEncanto(it)}`, r2.x + r2.w - 14, r2.y + r2.h / 2, 18, J.ouro < custoEncanto(it) ? '#ff6060' : '#ffd23f');
+
+    if (mesa.brilho) {
+      ctx.save();
+      ctx.globalAlpha = mesa.brilho * 0.5;
+      ctx.shadowColor = '#d9a6ff'; ctx.shadowBlur = 40;
+      ctx.fillStyle = '#d9a6ff';
+      ctx.fillRect(560, 100, 260, 300);
+      ctx.restore();
+    }
+    desenharCartaItem(it, 570, 110, nv ? `ENCANTADO +${nv}` : 'ITEM');
+  }
+  if (mesa.msg) textoCentro(mesa.msg.txt, LARGURA / 2, 590, 16, mesa.msg.cor);
+  textoCentro('1-3: escolher item  ·  E: reforçar  ·  R: encantar  ·  Esc: sair', LARGURA / 2, ALTURA - 20, 14, '#aaa', false);
+}
+
+// ---------------------------------------------------------------------
+//  Criação de personagem
+// ---------------------------------------------------------------------
+function desenharCriacao(t) {
+  textoCentro('CRIA A TUA PERSONAGEM', LARGURA / 2, 40, 30, '#ffae00');
+  // raças
+  ORDEM_RACAS.forEach((id, i) => {
+    const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? R.cor : '#3a3150');
+    sprEcra(framesHeroi(id, escolhaSkin)[0], r.x + 40, r.y + r.h / 2, 3);
+    textoEsq(R.nome, r.x + 80, r.y + 20, 20, R.cor);
+    textoEsq(R.desc, r.x + 170, r.y + 21, 12, '#999', 'normal');
+    ctx.font = fonte(12);
+    const bonus = R.bonus.join('  ·  ');
+    textoEsq(bonus, r.x + 80, r.y + 46, ctx.measureText(bonus).width > 350 ? 11 : 12, '#7dff9a');
+    if (R.contra.length) textoEsq(R.contra.join('  ·  '), r.x + 80, r.y + 66, 12, '#ff8080');
+  });
+  // pré-visualização
+  const R = RACAS[escolhaRaca];
+  painel(500, 84, 440, 262, 'rgba(14,11,22,0.95)', R.cor);
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.fillRect(520, 104, 150, 222);
+  const frames = framesHeroi(escolhaRaca, escolhaSkin);
+  sprEcra(frames[[0, 1, 0, 2][Math.floor(t * 6) % 4]], 595, 200, 8);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(555, 270, 80, 8);
+  textoEsq(R.nome, 690, 112, 26, R.cor);
+  textoEsq(SKINS[escolhaSkin].nome, 690, 140, 14, '#ccc', 'normal');
+  R.bonus.forEach((b, i) => textoEsq(`+ ${b.replace(/^\+/, '')}`, 690, 172 + i * 22, 14, '#7dff9a'));
+  R.contra.forEach((c, i) => textoEsq(`- ${c.replace(/^-/, '')}`, 690, 172 + (R.bonus.length + i) * 22, 14, '#ff8080'));
+  textoEsq('Todas começam com a Bola de Fogo', 690, 318, 11, '#8a7fa8', 'normal');
+  // skins
+  textoEsq('Skin', 506, 360, 16, '#ffe14d');
+  ORDEM_SKINS.forEach((id, i) => {
+    const r = retSkin(i), livre = skinLivre(id), sel = escolhaSkin === id;
+    painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffe680' : '#3a3150');
+    const c = framesHeroi(escolhaRaca, id)[0];
+    if (livre) sprEcra(c, r.x + r.w / 2, r.y + 38, 3);
+    else {
+      sprEcra(silhueta(c, '#2a2438'), r.x + r.w / 2, r.y + 38, 3);
+      textoCentro(`Andar ${SKINS[id].recorde}`, r.x + r.w / 2, r.y + 40, 12, '#ff8080');
+    }
+    textoCentroAjustado(SKINS[id].nome, r.x + r.w / 2, r.y + r.h - 14, 12, livre ? '#ddd' : '#666', r.w - 8, false);
+  });
+  if (criacao.msg) textoCentro(criacao.msg.txt, 480, 562, 14, criacao.msg.cor);
+  const b = BOTAO_COMECAR;
+  painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
+  textoCentro('ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
+  textoEsq('W/S: raça   A/D: skin   Esc: voltar', 30, 606, 13, '#888', 'normal');
 }
 
 // ---------------------------------------------------------------------
@@ -1085,7 +1285,7 @@ function desenharTitulo(t) {
   ctx.fillStyle = '#1a1522';
   ctx.fillRect(0, chao + 34, LARGURA, 4);
   sprEcra(SPR.dragao[0], 866, chao - 16, 3);
-  sprEcra(SPR.heroi[Math.floor(t * 8) % 3], 150, chao, 4);
+  sprEcra(framesHeroi(escolhaRaca, escolhaSkin)[Math.floor(t * 8) % 3], 150, chao, 4);
   sprEcra(SPR.slime[Math.floor(t * 3) % 2], 260, chao + 8, 3);
   sprEcra(SPR.esqueleto[0], 340, chao, 3);
   sprEcra(SPR.bau.ouro, 620, chao + 12, 3);
@@ -1114,21 +1314,23 @@ function desenharTitulo(t) {
     ['Clique / Espaço', 'Atacar'],
     ['Shift', 'Dash (esquiva)'],
     ['E', 'Abrir / Usar / Descer'],
+    ['1 2 3 4', 'Feitiços (usam mana)'],
     ['Q', 'Beber poção'],
     ['C', 'Personagem'],
     ['P / Esc', 'Pausa (G para guardar e sair)'],
   ];
-  painel(LARGURA / 2 - 240, 324, 480, 170);
+  painel(LARGURA / 2 - 240, 322, 480, 188);
   controlos.forEach(([k, d], i) => {
-    textoEsq(k, LARGURA / 2 - 214, 344 + i * 22, 14, '#ffe680');
-    textoEsq(d, LARGURA / 2 - 50, 344 + i * 22, 14, '#ddd', 'normal');
+    textoEsq(k, LARGURA / 2 - 214, 340 + i * 21, 14, '#ffe680');
+    textoEsq(d, LARGURA / 2 - 50, 340 + i * 21, 14, '#ddd', 'normal');
   });
-  textoCentro('Boss a cada 5 andares · Lojas, altares, desafios e armadilhas', LARGURA / 2, 514, 14, '#aaa', false);
-  if (recorde > 0) textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 536, 14, '#7ec8ff', false);
+  textoCentro('Raças · Skins · Magia · Encantamentos · Lojas · Bosses a cada 5 andares', LARGURA / 2, 528, 13, '#aaa', false);
+  if (recorde > 0) textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 548, 14, '#7ec8ff', false);
   const piscar = Math.floor(t * 2) % 2 === 0;
   if (saveInfo) {
-    if (piscar) textoCentro(`ENTER: Continuar (Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel})`, LARGURA / 2, 574, 22, '#ffffff');
-    textoCentro('N: Novo jogo (apaga a partida guardada)', LARGURA / 2, 606, 14, '#aaa', false);
+    const rs = RACAS[saveInfo.J.raca] ? ` · ${RACAS[saveInfo.J.raca].nome}` : '';
+    if (piscar) textoCentro(`ENTER: Continuar (Andar ${saveInfo.andar} · Nível ${saveInfo.J.nivel}${rs})`, LARGURA / 2, 580, 22, '#ffffff');
+    textoCentro('N: Novo jogo (apaga a partida guardada)', LARGURA / 2, 610, 14, '#aaa', false);
   } else if (piscar) textoCentro('Carrega ENTER para começar', LARGURA / 2, 584, 24, '#fff');
 }
 

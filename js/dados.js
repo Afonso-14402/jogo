@@ -46,6 +46,7 @@ const ITENS = [
   { tipo: 'arma', r: 'lixo', nome: 'Peixe Morto', dano: 3, vel: 1.0, alcance: 34, crit: 0.02, desc: 'Cheira muito mal.' },
 
   { tipo: 'arma', r: 'comum', nome: 'Adaga', dano: 5, vel: 1.4, alcance: 36, crit: 0.08, desc: 'Rápida e leve.' },
+  { tipo: 'arma', r: 'comum', nome: 'Cajado de Aprendiz', dano: 5, vel: 1.0, alcance: 42, crit: 0.03, magia: 0.2, desc: 'Cheira a livros velhos.' },
   { tipo: 'arma', r: 'comum', nome: 'Espada Curta', dano: 7, vel: 1.1, alcance: 44, crit: 0.05, desc: 'Fiável.' },
   { tipo: 'arma', r: 'comum', nome: 'Machadinha', dano: 9, vel: 0.9, alcance: 42, crit: 0.05, desc: 'Para lenha e monstros.' },
 
@@ -53,9 +54,11 @@ const ITENS = [
   { tipo: 'arma', r: 'raro', nome: 'Lança de Ferro', dano: 11, vel: 1.0, alcance: 68, crit: 0.05, desc: 'Mantém-nos à distância.' },
   { tipo: 'arma', r: 'raro', nome: 'Martelo de Guerra', dano: 17, vel: 0.7, alcance: 50, crit: 0.08, desc: 'Lento mas esmagador.' },
 
+  { tipo: 'arma', r: 'epico', nome: 'Cajado Arcano', dano: 13, vel: 1.0, alcance: 50, crit: 0.06, magia: 0.5, desc: 'Zumbe com energia.' },
   { tipo: 'arma', r: 'epico', nome: 'Lâmina Sombria', dano: 19, vel: 1.25, alcance: 52, crit: 0.18, desc: 'Sussurra no escuro.' },
   { tipo: 'arma', r: 'epico', nome: 'Machado Rúnico', dano: 25, vel: 0.85, alcance: 56, crit: 0.10, desc: 'As runas brilham ao golpear.' },
 
+  { tipo: 'arma', r: 'lendario', nome: 'Cetro do Arquimago', dano: 20, vel: 1.05, alcance: 56, crit: 0.1, magia: 0.9, desc: 'Os feitiços obedecem-lhe.' },
   { tipo: 'arma', r: 'lendario', nome: 'Excalibur', dano: 32, vel: 1.15, alcance: 62, crit: 0.15, desc: 'Arrancada da pedra.' },
   { tipo: 'arma', r: 'lendario', nome: 'Foice do Ceifador', dano: 29, vel: 1.0, alcance: 76, crit: 0.25, desc: 'Colhe almas.' },
 
@@ -70,7 +73,7 @@ const ITENS = [
   { tipo: 'armadura', r: 'comum', nome: 'Cota de Malha', def: 3, hp: 15, desc: 'Faz barulho a andar.' },
 
   { tipo: 'armadura', r: 'raro', nome: 'Armadura de Ferro', def: 5, hp: 25, desc: 'Sólida.' },
-  { tipo: 'armadura', r: 'raro', nome: 'Manto do Mago', def: 3, hp: 45, desc: 'Tecido encantado.' },
+  { tipo: 'armadura', r: 'raro', nome: 'Manto do Mago', def: 3, hp: 45, mana: 30, desc: 'Tecido encantado.' },
 
   { tipo: 'armadura', r: 'epico', nome: 'Escamas de Dragão', def: 8, hp: 45, desc: 'Quente ao toque.' },
 
@@ -90,6 +93,7 @@ const ITENS = [
 
   { tipo: 'amuleto', r: 'epico', nome: 'Anel do Vento', velMov: 0.22, crit: 0.06, desc: 'Leve como o ar.' },
   { tipo: 'amuleto', r: 'epico', nome: 'Talismã Vital', regen: 2, desc: 'Regenera vida.' },
+  { tipo: 'amuleto', r: 'raro', nome: 'Amuleto de Safira', magia: 0.25, mana: 20, desc: 'Guarda energia mágica.' },
 
   { tipo: 'amuleto', r: 'lendario', nome: 'Coração da Fénix', regen: 4, danoPct: 0.2, desc: 'Renasce das cinzas.' },
 
@@ -131,6 +135,7 @@ const SALAS_ESPECIAIS = {
   tesouro: { nome: 'Sala do Tesouro',     desc: 'Guardada por um inimigo de elite',         cor: '#ffd23f' },
   altar:   { nome: 'Altar de Sacrifício', desc: 'Troca vida por um Baú Dourado',            cor: '#ff3b3b' },
   desafio: { nome: 'Sala de Desafio',     desc: 'Sobrevive a 3 ondas e ganha um Baú Dourado', cor: '#b44dff' },
+  encantamento: { nome: 'Sala de Encantamentos', desc: 'Reforça e encanta o teu equipamento', cor: '#9b5cff' },
 };
 
 // Ouro que recebes ao vender um item (multiplicado pelo andar)
@@ -158,10 +163,12 @@ const AFIXOS = {
     { id: 'vida',     nome: 'da Vida',         desc: '+30% vida', multHp: 1.3, cor: '#ff4d6d' },
     { id: 'vento',    nome: 'do Vento',        desc: '+10% velocidade', velMov: 0.1, cor: '#9dff7a' },
     { id: 'regen',    nome: 'da Regeneração',  desc: '+1.5 vida/s', regen: 1.5, cor: '#5dff7a' },
+    { id: 'feiticeiro', nome: 'do Feiticeiro', desc: '+30 mana máxima', manaMax: 30, cor: '#9b5cff' },
   ],
   amuleto: [
     { id: 'sorte',     nome: 'da Sorte',      desc: 'Baús dão itens melhores', sorte: 1, cor: '#3ddc84' },
     { id: 'sabio',     nome: 'do Sábio',      desc: '+25% XP', xp: 0.25, cor: '#7ec8ff' },
+    { id: 'arcano',    nome: 'Arcano',        desc: '+25% poder mágico', magia: 0.25, cor: '#b44dff' },
     { id: 'crueldade', nome: 'da Crueldade',  desc: '+10% crítico', crit: 0.1, cor: '#ffe14d' },
   ],
 };
@@ -187,9 +194,64 @@ const PERKS = [
   { id: 'sorte',      nome: 'Trevo da Sorte',   desc: 'Baús dão itens melhores',          max: 3, cor: '#3ddc84', letra: 'T' },
   { id: 'esquiva',    nome: 'Esquiva Veloz',    desc: 'Dash recarrega 25% mais rápido',   max: 2, cor: '#78aaff', letra: 'E' },
   { id: 'pocoes',     nome: 'Alquimista',       desc: '+2 poções e curam +15%',           max: 2, cor: '#ff3d6b', letra: 'Q' },
+  { id: 'arcano',     nome: 'Mente Arcana',     desc: '+20% poder mágico',                max: 5, cor: '#b44dff', letra: 'M' },
+  { id: 'mana',       nome: 'Poço de Mana',     desc: '+25 mana máxima',                  max: 3, cor: '#6a7bff', letra: 'N' },
+  { id: 'canal',      nome: 'Canalizador',      desc: '+2 mana por segundo',              max: 3, cor: '#4dd0ff', letra: 'K' },
   // Únicas (aparecem menos vezes)
   { id: 'remoinho',   nome: 'Remoinho',         desc: 'Cada 4.º ataque atinge tudo à tua volta', max: 1, cor: '#ffae00', letra: 'O', unica: true },
   { id: 'laminas',    nome: 'Lâminas Voadoras', desc: 'Cada ataque lança uma lâmina (50% dano)', max: 1, cor: '#b44dff', letra: '>', unica: true },
   { id: 'escudo',     nome: 'Escudo Divino',    desc: 'Bloqueia 1 golpe a cada 10 segundos',     max: 1, cor: '#fff0a0', letra: 'U', unica: true },
   { id: 'explosao',   nome: 'Morte Explosiva',  desc: 'Inimigos explodem ao morrer',             max: 1, cor: '#ff7b25', letra: '*', unica: true },
 ];
+
+// ---------------------------------------------------------------------
+//  RAÇAS: escolhes uma ao criar a personagem. Muda os bónus e o aspeto.
+//  Valores: hp/def/mana (somam), dano/velMov/velAtaque/crit/roubo/xp/magia/ouro/cura (percentagens),
+//  sorte (pontos), pocoes/ouroInicial (ao começar)
+// ---------------------------------------------------------------------
+const RACAS = {
+  humano:  { nome: 'Humano',  cor: '#f1c8a0', desc: 'Versátil e com sorte.',
+             bonus: ['+20% XP', '+1 poção ao começar', 'Começa com 40 ouro'], contra: [],
+             xp: 0.2, pocoes: 1, ouroInicial: 40 },
+  elfo:    { nome: 'Elfo',    cor: '#9dff7a', desc: 'Rápido e nascido para a magia.',
+             bonus: ['+15% velocidade', '+30% poder mágico', '+20 mana'], contra: ['-15 vida'],
+             velMov: 0.15, magia: 0.3, mana: 20, hp: -15 },
+  anao:    { nome: 'Anão',    cor: '#ff9f43', desc: 'Duro como pedra e adora ouro.',
+             bonus: ['+40 vida', '+4 defesa', '+30% ouro'], contra: ['-10% velocidade'],
+             hp: 40, def: 4, ouro: 0.3, velMov: -0.1 },
+  orc:     { nome: 'Orc',     cor: '#8fb33a', desc: 'Força bruta, pouca paciência para livros.',
+             bonus: ['+25% dano', '+20 vida'], contra: ['-30% poder mágico'],
+             dano: 0.25, hp: 20, magia: -0.3 },
+  vampiro: { nome: 'Vampiro', cor: '#ff4d6d', desc: 'Vive do sangue dos inimigos.',
+             bonus: ['+6% roubo de vida', '+10% crítico', '+1 sorte nos baús'], contra: ['-20 vida', 'Poções curam -15%'],
+             roubo: 0.06, crit: 0.1, sorte: 1, hp: -20, cura: -0.15 },
+};
+const ORDEM_RACAS = ['humano', 'elfo', 'anao', 'orc', 'vampiro'];
+
+// ---------------------------------------------------------------------
+//  SKINS: cores da armadura do herói. 'recorde' = andar que tens de alcançar para desbloquear.
+//  Letras: s/m/d capacete, b/B/l túnica, r pluma, w olhos, y fivela, p calças
+// ---------------------------------------------------------------------
+const SKINS = {
+  azul:     { nome: 'Cavaleiro Azul', pal: {} },
+  carmesim: { nome: 'Carmesim',       pal: { b: '#c0392b', B: '#8a2219', l: '#ff6b5b', r: '#ffd23f' } },
+  floresta: { nome: 'Floresta',       pal: { b: '#2f8f5b', B: '#1f6040', l: '#4fc07f', s: '#d8c9a3', m: '#a89060', d: '#6b5a3a', r: '#8b5a2b' } },
+  sombra:   { nome: 'Sombra',         pal: { b: '#3a2a4a', B: '#221830', l: '#5a4470', s: '#5b6480', m: '#3e4458', d: '#262a38', r: '#b44dff', w: '#b44dff' } },
+  real:     { nome: 'Real',           pal: { b: '#6a3fb5', B: '#4a2a80', l: '#9a6fe0', s: '#ffe38a', m: '#d9a400', d: '#8a6a00', r: '#ffffff' } },
+  gelo:     { nome: 'Gelo',           pal: { b: '#7fd8ff', B: '#3a9ac0', l: '#d0f4ff', s: '#ffffff', m: '#bfe6ff', d: '#7aa8c8', r: '#3d9bff' } },
+  dourado:  { nome: 'Dourado',        pal: { s: '#fff0a0', m: '#ffd23f', d: '#b88a00', b: '#e0b000', B: '#a07800', l: '#fff6c8', r: '#ff3355', p: '#8a6a30' }, recorde: 10 },
+  infinito: { nome: 'Infinito',       pal: { s: '#2a2030', m: '#1a1422', d: '#0e0a14', b: '#ff3355', B: '#a01830', l: '#ff8095', r: '#ff3355', w: '#ff3355' }, recorde: 20 },
+};
+const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito'];
+
+// ---------------------------------------------------------------------
+//  FEITIÇOS (teclas 1-4). Aprendem-se e sobem de nível (máx. 3) com Livros de Feitiço.
+//  O dano usa o "poder mágico" da personagem.
+// ---------------------------------------------------------------------
+const FEITICOS = {
+  fogo:  { nome: 'Bola de Fogo',  mana: 18, cd: 1.0, cor: '#ff7b25', desc: 'Explode e queima os inimigos à volta' },
+  raio:  { nome: 'Relâmpago',     mana: 24, cd: 2.2, cor: '#ffe14d', desc: 'Atinge o inimigo mais próximo e salta para outros' },
+  gelo:  { nome: 'Nova de Gelo',  mana: 30, cd: 5,   cor: '#7fd8ff', desc: 'Fere e congela tudo à tua volta' },
+  cura:  { nome: 'Cura Divina',   mana: 35, cd: 8,   cor: '#5dff7a', desc: 'Recupera muita vida' },
+};
+const ORDEM_FEITICOS = ['fogo', 'raio', 'gelo', 'cura'];

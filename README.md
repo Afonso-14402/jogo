@@ -10,6 +10,7 @@ Abre o ficheiro `index.html` no browser (Chrome, Firefox, Edge…) com duplo cli
 |---|---|
 | WASD / Setas | Mover |
 | Clique do rato / Espaço | Atacar (o rato aponta o golpe) |
+| 1 2 3 4 | Feitiços: Bola de Fogo, Relâmpago, Nova de Gelo, Cura Divina (gastam mana) |
 | Shift | Dash: esquiva rápida, ficas invencível durante o dash |
 | E | Abrir baú, falar com o mercador, usar altar/cristal, descer a escada |
 | Q | Beber poção (cura 40%) |
@@ -23,6 +24,26 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 
 ## O que há no jogo
 
+- **Criação de personagem**: ao começar um jogo novo escolhes a **raça** e a **skin**.
+
+  | Raça | Bónus | Desvantagem |
+  |---|---|---|
+  | Humano | +20% XP, +1 poção, começa com 40 ouro | — |
+  | Elfo | +15% velocidade, +30% poder mágico, +20 mana | -15 vida |
+  | Anão | +40 vida, +4 defesa, +30% ouro | -10% velocidade |
+  | Orc | +25% dano, +20 vida | -30% poder mágico |
+  | Vampiro | +6% roubo de vida, +10% crítico, +1 sorte nos baús | -20 vida, poções curam -15% |
+
+  Cada raça muda também o aspeto (orelhas de elfo, barba de anão, dentes de orc, capa de vampiro). Há 8 skins; **Dourado** desbloqueia ao chegar ao andar 10 e **Infinito** ao andar 20. Os bónus e as cores estão em `js/dados.js` (`RACAS` e `SKINS`).
+- **Magia**: tens uma barra de mana (roxa) que se regenera sozinha; as poções também recuperam 40% da mana. Todos começam com a **Bola de Fogo**. Os outros feitiços aprendem-se com **Livros de Feitiço** (largados pelos bosses, na Sala de Desafio e à venda na loja); um livro repetido sobe o feitiço de nível (até 3).
+  - **Bola de Fogo**: explode e queima os inimigos à volta.
+  - **Relâmpago**: atinge o inimigo mais próximo e salta para outros.
+  - **Nova de Gelo**: fere e congela tudo à tua volta.
+  - **Cura Divina**: recupera muita vida.
+  - O dano mágico usa o **poder mágico**, que sobe com o nível, com os **cajados** (Cajado de Aprendiz, Cajado Arcano, Cetro do Arquimago), com o Amuleto de Safira, com a melhoria **Mente Arcana** e com o afixo **Arcano**.
+- **Encantamentos**: na **Sala de Encantamentos** (sempre nos andares 2, 7, 12… e às vezes noutros) há uma Mesa de Encantamentos onde gastas ouro para:
+  - **Reforçar** um item de +1 até +5. Cada nível dá mais stats, mas a chance de sucesso vai baixando (95%, 85%, 70%, 55%, 40%) e se falhar perdes o ouro.
+  - **Encantar** um item com um afixo aleatório (ou trocar o que tem).
 - **Andares infinitos** gerados aleatoriamente. Encontra a escada para descer.
 - **Inimigos**: Slime, Morcego, Esqueleto Arqueiro, Orc (faz investidas), Fantasma (atravessa paredes) e Mímico.
 - **Inimigos de elite**: maiores, com uma aura colorida e um modificador (Veloz, Blindado, Explosivo ou Vampírico). Largam mais ouro e às vezes um baú.
@@ -67,8 +88,8 @@ Os itens podem sair com um atributo extra: *Excalibur **do Trovão***, *Armadura
 | Tipo | Afixos |
 |---|---|
 | Arma | de Fogo (queima), de Gelo (abranda), do Trovão (relâmpago em cadeia), do Vampiro, da Fúria, da Rapidez |
-| Armadura | de Espinhos (devolve dano), da Muralha, da Vida, do Vento, da Regeneração |
-| Amuleto | da Sorte, do Sábio (+XP), da Crueldade (+crítico) |
+| Armadura | de Espinhos (devolve dano), da Muralha, da Vida, do Vento, da Regeneração, do Feiticeiro (+mana) |
+| Amuleto | da Sorte, do Sábio (+XP), da Crueldade (+crítico), Arcano (+poder mágico) |
 
 Existem 3 tipos de equipamento: **arma**, **armadura** e **amuleto**. Quando sai um item podes **equipá-lo** (E) ou **reciclá-lo** para ganhar XP (X).
 

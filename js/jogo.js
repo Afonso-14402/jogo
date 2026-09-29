@@ -9,13 +9,13 @@ let ctx = ctxTela; // durante o desenho do mundo aponta para o buffer de pixel a
 canvas.width = LARGURA;
 canvas.height = ALTURA;
 
-let estado = 'titulo'; // titulo | jogo | pausa | bau | nivel | loja | personagem | morto
+let estado = 'titulo'; // titulo | criar | jogo | pausa | bau | nivel | loja | encantar | personagem | morto
 let andar = 0;
 let mapa, mapaImg, J, S;
 let inimigos = [], projeteis = [], baus = [], drops = [], particulas = [], textos = [], perigos = [];
 let boss = null, roleta = null, banner = null, escolha = null;
-let raios = [], objetos = [], armadilhas = [];
-let loja = null;
+let raios = [], objetos = [], armadilhas = [], ondas = [];
+let loja = null, mesa = null, criacao = null;
 let cam = { x: 0, y: 0 };
 let tremor = 0;
 let tempoJogo = 0;
@@ -29,7 +29,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos'];
 
 function lerSave() {
   try {
@@ -56,6 +56,19 @@ function guardarSeAJogar() {
   if (J && J.hp > 0 && ['jogo', 'pausa', 'bau', 'nivel', 'loja', 'personagem'].includes(estado)) guardarJogo();
 }
 addEventListener('pagehide', guardarSeAJogar);
+
+// Raça e skin escolhidas (lembradas entre partidas)
+let escolhaRaca = 'humano', escolhaSkin = 'azul';
+try {
+  const e = JSON.parse(localStorage.getItem('masmorra_personagem') || 'null');
+  if (e && RACAS[e.raca]) escolhaRaca = e.raca;
+  if (e && SKINS[e.skin]) escolhaSkin = e.skin;
+} catch (e) { /* sem storage */ }
+const skinLivre = id => !SKINS[id].recorde || recorde >= SKINS[id].recorde;
+if (!skinLivre(escolhaSkin)) escolhaSkin = 'azul';
+function guardarEscolha() {
+  try { localStorage.setItem('masmorra_personagem', JSON.stringify({ raca: escolhaRaca, skin: escolhaSkin })); } catch (e) { /* sem storage */ }
+}
 document.addEventListener('visibilitychange', () => { if (document.hidden) guardarSeAJogar(); });
 
 // ---------------------------------------------------------------------
@@ -87,7 +100,7 @@ function fanfarra(notas, vol = 0.05) {
 // ---------------------------------------------------------------------
 const teclas = {};
 const premidas = {};
-const rato = { x: LARGURA / 2, y: ALTURA / 2, baixo: false };
+const rato = { x: LARGURA / 2, y: ALTURA / 2, baixo: false, movido: -1e9 };
 
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
@@ -101,6 +114,7 @@ canvas.addEventListener('mousemove', e => {
   const b = canvas.getBoundingClientRect();
   rato.x = (e.clientX - b.left) * LARGURA / b.width;
   rato.y = (e.clientY - b.top) * ALTURA / b.height;
+  rato.movido = performance.now();
 });
 canvas.addEventListener('mousedown', e => { rato.baixo = true; premidas['rato'] = true; e.preventDefault(); });
 addEventListener('mouseup', () => { rato.baixo = false; });
@@ -161,22 +175,29 @@ const nPerk = id => J.perks[id] || 0;
 
 function stats() {
   const a = J.arma, ar = J.armadura, am = J.amuleto || {};
+  const R = RACAS[J.raca] || RACAS.humano;
+  const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0);
   return {
-    maxHp: Math.max(10, J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade')),
-    def: J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra'),
-    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca'))),
-    crit: 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho'),
-    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes')),
-    roubo: (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue'),
+    maxHp: Math.max(10, J.hpBase + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0)),
+    def: J.defBase + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0))),
+    crit: 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0)),
+    roubo: (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0),
     regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen'),
     danoPct: am.danoPct || 0,
-    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia'))),
+    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0))),
     alcance: a.alcance,
-    xpMult: 1 + somaAfixos('xp') + 0.2 * nPerk('iman'),
-    sorte: somaAfixos('sorte') + nPerk('sorte'),
+    xpMult: 1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0),
+    sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0),
     espinhos: somaAfixos('espinhos'),
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')),
-    curaPocao: 0.4 + 0.15 * nPerk('pocoes'),
+    curaPocao: 0.4 + 0.15 * nPerk('pocoes') + (R.cura || 0),
+    ouroMult: 1 + (R.ouro || 0),
+    magia,
+    poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
+    maxMana: 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana'),
+    manaRegen: 3 + 2 * nPerk('canal'),
   };
 }
 
@@ -250,15 +271,21 @@ function criarJogador() {
     kbx: 0, kby: 0, dirX: 1, dirY: 0, angArma: 0, golpe: null,
     kills: 0, bausAbertos: 0, melhorItem: null,
     perks: {}, escolhasPendentes: 0, contaGolpes: 0, escudoCd: 0, ouro: 0, lentoT: 0,
+    raca: escolhaRaca, skin: escolhaSkin, mana: 50, feiticos: { fogo: 1 }, cdFeitico: {},
   };
 }
 
 function novoJogo() {
   apagarSave();
   J = criarJogador();
+  const R = RACAS[J.raca];
+  J.pocoes += R.pocoes || 0;
+  J.ouro += R.ouroInicial || 0;
   andar = 0;
   tempoJogo = 0;
   S = stats();
+  J.hp = S.maxHp;
+  J.mana = S.maxMana;
   proximoAndar();
   estado = 'jogo';
 }
@@ -267,6 +294,7 @@ function continuarJogo() {
   const d = lerSave();
   if (!d) { novoJogo(); return; }
   J = Object.assign(criarJogador(), d.J);
+  J.cdFeitico = {};
   andar = d.andar - 1;
   tempoJogo = d.tempoJogo || 0;
   S = stats();
@@ -279,7 +307,7 @@ function proximoAndar() {
   mapa = gerarMapa(andar);
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
-  objetos = []; armadilhas = [];
+  objetos = []; armadilhas = []; ondas = [];
   boss = null;
   reiniciarCampo();
   J.x = mapa.inicio.x; J.y = mapa.inicio.y;
@@ -322,6 +350,8 @@ function popularAndar() {
   const salaTesouro = Math.random() < 0.3 ? marcar('tesouro') : null;
   const salaAltar = andar >= 2 && Math.random() < 0.25 ? marcar('altar') : null;
   const salaDesafio = andar >= 2 && Math.random() < 0.3 ? marcar('desafio') : null;
+  const salaEnc = (andar % 5 === 2 || (andar >= 2 && Math.random() < 0.2)) ? marcar('encantamento') : null;
+  if (salaEnc) objetos.push(Object.assign(centroPx(salaEnc), { tipo: 'mesa', sala: salaEnc }));
   if (salaLoja) objetos.push(Object.assign(centroPx(salaLoja), { tipo: 'mercador', sala: salaLoja, stock: null }));
   if (salaAltar) objetos.push(Object.assign(centroPx(salaAltar), { tipo: 'altar', sala: salaAltar, usado: false }));
   if (salaDesafio) objetos.push(Object.assign(centroPx(salaDesafio), { tipo: 'cristal', sala: salaDesafio, fase: 'inativo', onda: 0 }));
@@ -468,6 +498,8 @@ function atualizarEfeitos(dt) {
   particulas = particulas.filter(p => p.t > 0);
   for (const t of textos) { t.y += t.vy * dt; t.vy *= 1 - dt * 2; t.t -= dt; }
   textos = textos.filter(t => t.t > 0);
+  for (const o of ondas) o.t -= dt;
+  ondas = ondas.filter(o => o.t > 0);
   if (banner) { banner.t -= dt; if (banner.t <= 0) banner = null; }
   tremor = Math.max(0, tremor - dt * 30);
 }
@@ -546,10 +578,10 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
 }
 
 // Relâmpago salta do inimigo atingido para até 3 inimigos próximos
-function relampago(origem, dano) {
+function relampago(origem, dano, saltos = 3, fator = 0.6) {
   let atual = origem;
   const atingidos = [origem];
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < saltos; k++) {
     let prox = null, md = 170;
     for (const o of inimigos) {
       if (o.morto || atingidos.includes(o)) continue;
@@ -559,7 +591,7 @@ function relampago(origem, dano) {
     if (!prox) break;
     raios.push({ x1: atual.x, y1: atual.y, x2: prox.x, y2: prox.y, t: 0.25 });
     atingidos.push(prox);
-    danoInimigo(prox, Math.max(1, Math.round(dano * 0.6)), false, 0, 0);
+    danoInimigo(prox, Math.max(1, Math.round(dano * fator)), false, 0, 0);
     atual = prox;
   }
   if (atingidos.length > 1) som(1200, 0.15, 'sawtooth', 0.03, -900);
@@ -580,6 +612,8 @@ function matarInimigo(e) {
     baus.push({ x: ex + 70, y: ey, tipo: 'madeira', semMimico: true, t: 0 });
     J.pocoes += 1;
     soltarOuro(e.x, e.y, Math.round(40 * (1 + (andar - 1) * 0.25)), 8);
+    const livro = sortearLivro();
+    if (livro) drops.push({ tipo: 'livro', feitico: livro, x: ex, y: ey + 64, t: 0 });
     mostrarBanner('BOSS DERROTADO!', 'Abre os baús e desce a escada', '#ffae00');
     fanfarra([392, 523, 659, 784, 1046, 1318], 0.05);
     projeteis = []; perigos = [];
@@ -649,6 +683,7 @@ function beberPocao() {
   J.pocoes--;
   const cura = Math.round(S.maxHp * S.curaPocao);
   J.hp = Math.min(S.maxHp, J.hp + cura);
+  J.mana = Math.min(S.maxMana, J.mana + S.maxMana * 0.4);
   texto(J.x, J.y - 24, `+${cura}`, '#5dff7a', 20);
   explosao(J.x, J.y, '#5dff7a', 14, 120, 4);
   som(440, 0.25, 'sine', 0.06, 400);
@@ -699,9 +734,12 @@ function atualizar(dt) {
     if (dd < J.r + 12) {
       d.morto = true;
       if (d.tipo === 'ouro') {
-        J.ouro += d.valor;
-        texto(d.x, d.y - 10, `+${d.valor} ouro`, '#ffd23f', 13);
+        const v = Math.max(1, Math.round(d.valor * S.ouroMult));
+        J.ouro += v;
+        texto(d.x, d.y - 10, `+${v} ouro`, '#ffd23f', 13);
         som(1300, 0.05, 'square', 0.02, 300);
+      } else if (d.tipo === 'livro') {
+        aprenderFeitico(d.feitico);
       } else {
         J.pocoes++;
         texto(d.x, d.y - 10, '+1 Poção', '#ff6b8a', 15);
@@ -720,6 +758,8 @@ function atualizar(dt) {
       o.fase = 'feito';
       baus.push({ x: o.x, y: o.y + 44, tipo: 'ouro', semMimico: true, t: 0 });
       soltarOuro(o.x, o.y, Math.round(20 * (1 + (andar - 1) * 0.25)), 4);
+      const livro = Math.random() < 0.6 ? sortearLivro() : null;
+      if (livro) drops.push({ tipo: 'livro', feitico: livro, x: o.x + 50, y: o.y + 44, t: 0 });
       mostrarBanner('DESAFIO CONCLUÍDO!', 'Ganhaste um Baú Dourado', '#b44dff');
       fanfarra([392, 523, 659, 784, 1046], 0.05);
     } else {
@@ -794,6 +834,7 @@ function atualizarArmadilhas(dt) {
 // ---------------------------------------------------------------------
 function usarObjeto(o) {
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
+  if (o.tipo === 'mesa') { abrirMesa(o); return; }
   if (o.tipo === 'altar') {
     if (o.usado) { texto(o.x, o.y - 30, 'O altar já foi usado', '#aaa', 14); return; }
     const custo = Math.round(S.maxHp * 0.35);
@@ -841,7 +882,7 @@ function lancarOnda(o) {
 function gerarStock() {
   const r = escolherPeso({ raro: 60, epico: 30, lendario: 9, mitico: 1 });
   const item = criarItem(escolher(ITENS.filter(i => i.r === r && !i.inicial)), andar);
-  return [
+  const stock = [
     { id: 'pocao', nome: 'Poção de Vida', desc: 'Cura parte da tua vida', preco: 15 + andar * 2, qtd: 99 },
     { id: 'cura', nome: 'Cura Completa', desc: 'Recupera toda a vida', preco: 10 + andar * 3, qtd: 1 },
     { id: 'madeira', nome: 'Baú de Madeira', desc: 'Roda a roleta (nunca é Mímico)', preco: 40 + andar * 6, qtd: 2 },
@@ -849,6 +890,12 @@ function gerarStock() {
     { id: 'item', nome: item.nome, desc: `${RARIDADES[item.r].nome} · equipa logo`, item, preco: Math.round(PRECO_ITEM_LOJA[item.r] * (1 + andar * 0.1)), qtd: 1 },
     { id: 'perk', nome: 'Pergaminho de Poder', desc: 'Escolhe 1 de 3 melhorias', preco: 100 + andar * 14, qtd: 1 },
   ];
+  const livro = sortearLivro();
+  if (livro) {
+    const nv = J.feiticos[livro] || 0;
+    stock.push({ id: 'livro', feitico: livro, nome: `Livro: ${FEITICOS[livro].nome}`, desc: nv ? `Sobe o feitiço para nível ${nv + 1}` : 'Aprende um feitiço novo', preco: 90 + andar * 12, qtd: 1 });
+  }
+  return stock;
 }
 
 function abrirLoja(o) {
@@ -858,7 +905,7 @@ function abrirLoja(o) {
   som(880, 0.1, 'triangle', 0.04, 200);
 }
 
-function retLinhaLoja(i) { return { x: 40, y: 120 + i * 72, w: 500, h: 62 }; }
+function retLinhaLoja(i) { return { x: 40, y: 108 + i * 66, w: 500, h: 58 }; }
 
 function atualizarLoja(dt) {
   loja.t += dt;
@@ -899,6 +946,7 @@ function comprar(i) {
   else if (of.id === 'item') { equipar(of.item); loja.msg = { txt: `Equipaste ${of.item.nome}`, cor: RARIDADES[of.item.r].cor, t: 2 }; }
   else if (of.id === 'madeira' || of.id === 'ouro') { J.bausAbertos++; iniciarRoleta(of.id, 'loja'); }
   else if (of.id === 'perk') { J.escolhasPendentes++; abrirEscolha(); if (escolha) escolha.voltar = 'loja'; }
+  else if (of.id === 'livro') { aprenderFeitico(of.feitico); loja.msg = { txt: `${FEITICOS[of.feitico].nome}: nível ${J.feiticos[of.feitico]}`, cor: FEITICOS[of.feitico].cor, t: 2 }; }
 }
 
 function atualizarJogador(dt) {
@@ -936,6 +984,9 @@ function atualizarJogador(dt) {
   if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
   else if (teclas[' '] || teclas['j']) atacar(J.dirX, J.dirY);
   if (premiu('q')) beberPocao();
+  for (let i = 0; i < ORDEM_FEITICOS.length; i++) if (premiu(String(i + 1))) lancarFeitico(ORDEM_FEITICOS[i]);
+  for (const k in J.cdFeitico) J.cdFeitico[k] -= dt;
+  J.mana = Math.min(S.maxMana, J.mana + S.manaRegen * dt);
 
   J.hp = Math.min(S.maxHp, J.hp + S.regen * dt);
   if (J.golpe) { J.golpe.t -= dt; if (J.golpe.t <= 0) J.golpe = null; }
@@ -959,8 +1010,15 @@ function atualizarInimigo(e, dt) {
     if (e.hp <= 0) { matarInimigo(e); return; }
   }
   if (e.lento > 0) e.lento -= dt;
-  const fLento = e.lento > 0 ? 0.6 : 1;
+  if (e.congelado > 0) e.congelado -= dt;
+  const fLento = e.congelado > 0 ? 0.1 : e.lento > 0 ? 0.6 : 1;
   if (e.boss) { atualizarBoss(e, dt, d, ux, uy, fLento); return; }
+  if (e.congelado > 0) { // congelado: não ataca nem se mexe (só é empurrado)
+    moverEntidade(mapa, e, e.kbx * dt, e.kby * dt);
+    e.kbx *= Math.max(0, 1 - dt * 10);
+    e.kby *= Math.max(0, 1 - dt * 10);
+    return;
+  }
   if (!e.acordado && d < 300) {
     const dc = distCampo(mapa, e.x, e.y);
     if (e.tipo === 'fantasma' || (dc >= 0 && dc <= 12)) e.acordado = true;
@@ -1283,14 +1341,16 @@ function atualizarProjeteis(dt) {
     p.vida -= dt;
     if (p.vida <= 0 || solido(mapa, Math.floor(p.x / TILE), Math.floor(p.y / TILE))) {
       p.morto = true;
-      explosao(p.x, p.y, p.cor, 3, 60, 3);
+      if (p.explode) explodirFogo(p);
+      else explosao(p.x, p.y, p.cor, 3, 60, 3);
       continue;
     }
     if (p.dono === 'jogador') {
       for (const e of inimigos) {
         if (e.morto || e.z > 20 || Math.hypot(p.x - e.x, p.y - e.y) > p.r + e.r) continue;
         const l = Math.hypot(p.vx, p.vy) || 1;
-        danoInimigo(e, p.dano, false, p.vx / l, p.vy / l, true);
+        if (p.explode) explodirFogo(p);
+        else danoInimigo(e, p.dano, false, p.vx / l, p.vy / l, true);
         p.morto = true;
         break;
       }
@@ -1320,6 +1380,247 @@ function atualizarPerigos(dt) {
     }
   }
   perigos = perigos.filter(p => !p.morto);
+}
+
+// ---------------------------------------------------------------------
+//  Magia
+// ---------------------------------------------------------------------
+function mira() {
+  if (performance.now() - rato.movido < 4000) {
+    const dx = rato.x + cam.x - J.x, dy = rato.y + cam.y - J.y, l = Math.hypot(dx, dy) || 1;
+    return [dx / l, dy / l];
+  }
+  return [J.dirX, J.dirY];
+}
+
+const custoMana = id => Math.round(FEITICOS[id].mana * (1 - 0.1 * ((J.feiticos[id] || 1) - 1)));
+
+function lancarFeitico(id) {
+  const nv = J.feiticos[id] || 0;
+  const f = FEITICOS[id];
+  if (!nv) { texto(J.x, J.y - 30, 'Ainda não sabes este feitiço', '#aaaaaa', 13); return; }
+  if ((J.cdFeitico[id] || 0) > 0) return;
+  const custo = custoMana(id);
+  if (J.mana < custo) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
+  const poder = S.poder * (1 + 0.35 * (nv - 1));
+  if (id === 'fogo') {
+    const [ux, uy] = mira();
+    projeteis.push({ x: J.x + ux * 16, y: J.y + uy * 16, vx: ux * 420, vy: uy * 420, r: 9, vida: 1.1, cor: '#ff7b25', tipo: 'fogo', dono: 'jogador', dano: Math.round(poder * 1.3), explode: 60 + nv * 10 });
+    som(300, 0.25, 'sawtooth', 0.04, -200);
+  } else if (id === 'raio') {
+    let alvo = null, md = 340;
+    for (const e of inimigos) {
+      if (e.morto) continue;
+      const d = Math.hypot(e.x - J.x, e.y - J.y);
+      if (d < md && linhaDeVista(mapa, J.x, J.y, e.x, e.y, 2)) { md = d; alvo = e; }
+    }
+    if (!alvo) { texto(J.x, J.y - 30, 'Nenhum inimigo à vista', '#aaaaaa', 13); return; }
+    const dano = Math.round(poder * 1.1);
+    raios.push({ x1: J.x, y1: J.y, x2: alvo.x, y2: alvo.y, t: 0.3 });
+    danoInimigo(alvo, dano, false, 0, 0);
+    relampago(alvo, dano, 2 + nv, 0.8);
+    tremor = Math.max(tremor, 3);
+    som(1400, 0.2, 'sawtooth', 0.05, -1000);
+  } else if (id === 'gelo') {
+    const raio = 150 + nv * 20;
+    ondas.push({ x: J.x, y: J.y, r: raio, t: 0.4, dur: 0.4, cor: '#bfe6ff' });
+    for (const e of inimigos) {
+      if (e.morto) continue;
+      const d = Math.hypot(e.x - J.x, e.y - J.y);
+      if (d > raio + e.r) continue;
+      e.lento = 3 + nv;
+      e.congelado = 1 + nv * 0.5;
+      danoInimigo(e, Math.round(poder * 0.7), false, (e.x - J.x) / (d || 1), (e.y - J.y) / (d || 1));
+    }
+    som(900, 0.4, 'sine', 0.05, -600);
+  } else if (id === 'cura') {
+    const cura = Math.round(S.maxHp * 0.3 + poder * 0.6);
+    J.hp = Math.min(S.maxHp, J.hp + cura);
+    texto(J.x, J.y - 30, `+${cura}`, '#5dff7a', 22);
+    ondas.push({ x: J.x, y: J.y, r: 60, t: 0.5, dur: 0.5, cor: '#5dff7a' });
+    fanfarra([659, 784, 1046], 0.03);
+  }
+  J.mana -= custo;
+  J.cdFeitico[id] = f.cd;
+  explosao(J.x, J.y, f.cor, 10, 120, 3);
+}
+
+function explodirFogo(p) {
+  explosao(p.x, p.y, '#ff7b25', 30, 260, 6);
+  explosao(p.x, p.y, '#ffe14d', 14, 160, 4);
+  ondas.push({ x: p.x, y: p.y, r: p.explode, t: 0.3, dur: 0.3, cor: '#ff9b45' });
+  tremor = Math.max(tremor, 5);
+  som(80, 0.3, 'sawtooth', 0.06, -30);
+  for (const e of inimigos) {
+    if (e.morto) continue;
+    const d = Math.hypot(e.x - p.x, e.y - p.y);
+    if (d > p.explode + e.r) continue;
+    danoInimigo(e, p.dano, false, (e.x - p.x) / (d || 1), (e.y - p.y) / (d || 1));
+    e.queima = 3;
+    e.queimaDps = Math.max(1, p.dano * 0.15);
+  }
+}
+
+// Escolhe um livro: prefere feitiços que ainda não sabes
+function sortearLivro() {
+  const pesos = {};
+  for (const id of ORDEM_FEITICOS) {
+    const nv = J.feiticos[id] || 0;
+    if (nv < 3) pesos[id] = nv ? 1 : 3;
+  }
+  return Object.keys(pesos).length ? escolherPeso(pesos) : null;
+}
+
+function aprenderFeitico(id) {
+  const f = FEITICOS[id];
+  const antes = J.feiticos[id] || 0;
+  if (antes >= 3) { J.ouro += 50; texto(J.x, J.y - 30, `Já dominas ${f.nome}: +50 ouro`, '#ffd23f', 14); return; }
+  J.feiticos[id] = antes + 1;
+  const tecla = ORDEM_FEITICOS.indexOf(id) + 1;
+  mostrarBanner(antes ? `${f.nome} nível ${antes + 1}` : `Aprendeste: ${f.nome}`, antes ? 'O feitiço ficou mais forte' : `Carrega ${tecla} para lançar`, f.cor);
+  texto(J.x, J.y - 30, antes ? `${f.nome} Nv ${antes + 1}!` : `Novo feitiço!`, f.cor, 18);
+  fanfarra([523, 659, 784, 1046, 1318], 0.04);
+}
+
+// ---------------------------------------------------------------------
+//  Mesa de Encantamentos
+// ---------------------------------------------------------------------
+const CHANCE_REFORCO = [0.95, 0.85, 0.7, 0.55, 0.4]; // de +0 para +1, de +1 para +2, ...
+const SLOTS_EQUIP = ['arma', 'armadura', 'amuleto'];
+const custoReforco = it => Math.round((20 + 15 * RARIDADES[it.r].ordem) * ((it.enc || 0) + 1) * (1 + andar * 0.15));
+const custoEncanto = it => Math.round((35 + 12 * RARIDADES[it.r].ordem) * (1 + andar * 0.15));
+function retSlotMesa(i) { return { x: 40, y: 116 + i * 92, w: 470, h: 80 }; }
+const BOTAO_REFORCAR = { x: 40, y: 410, w: 470, h: 64 };
+const BOTAO_ENCANTO = { x: 40, y: 490, w: 470, h: 64 };
+const dentro = (r) => rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
+
+function renomear(it) {
+  it.nome = `${it.nomeBase || it.nome}${it.afixo ? ' ' + it.afixo.nome : ''}${it.enc ? ' +' + it.enc : ''}`;
+}
+
+function abrirMesa(o) {
+  mesa = { obj: o, t: 0, slot: SLOTS_EQUIP.find(k => J[k]) || 'arma', msg: null };
+  estado = 'encantar';
+  som(500, 0.3, 'sine', 0.04, 400);
+}
+
+function melhorarStats(it) {
+  if (it.tipo === 'arma') {
+    it.dano = Math.max(it.dano + 1, Math.round(it.dano * 1.12));
+    if (it.magia) it.magia = +(it.magia * 1.1).toFixed(3);
+  } else if (it.tipo === 'armadura') {
+    it.def = Math.max(it.def + 1, Math.round(it.def * 1.12));
+    it.hp = it.hp > 0 ? Math.max(it.hp + 5, Math.round(it.hp * 1.12)) : (it.hp || 0) + 5;
+    if (it.mana) it.mana = Math.round(it.mana * 1.12);
+  } else {
+    for (const k of ['crit', 'velMov', 'roubo', 'regen', 'danoPct', 'magia']) if (it[k] > 0) it[k] = +(it[k] * 1.15).toFixed(3);
+    if (it.mana) it.mana = Math.round(it.mana * 1.15);
+    it.crit = +((it.crit || 0) + 0.02).toFixed(3);
+  }
+}
+
+function reforcar(it) {
+  const nv = it.enc || 0;
+  if (nv >= 5) { mesa.msg = { txt: 'Este item já está no máximo (+5)', cor: '#aaa', t: 2 }; return; }
+  const custo = custoReforco(it);
+  if (J.ouro < custo) { mesa.msg = { txt: 'Não tens ouro suficiente', cor: '#ff6060', t: 2 }; som(140, 0.2, 'square', 0.04); return; }
+  J.ouro -= custo;
+  if (Math.random() < CHANCE_REFORCO[nv]) {
+    it.enc = nv + 1;
+    melhorarStats(it);
+    renomear(it);
+    S = stats();
+    mesa.msg = { txt: `Sucesso! ${it.nome}`, cor: '#5dff7a', t: 2.5 };
+    mesa.brilho = 1;
+    fanfarra([523, 659, 784, 1046], 0.04);
+  } else {
+    mesa.msg = { txt: 'O encantamento falhou... perdeste o ouro.', cor: '#ff6060', t: 2.5 };
+    fanfarra([300, 220, 160], 0.04);
+  }
+}
+
+function novoEncanto(it) {
+  const custo = custoEncanto(it);
+  if (J.ouro < custo) { mesa.msg = { txt: 'Não tens ouro suficiente', cor: '#ff6060', t: 2 }; som(140, 0.2, 'square', 0.04); return; }
+  J.ouro -= custo;
+  const antigo = it.afixo;
+  if (antigo) {
+    if (antigo.multDano) it.dano = Math.round(it.dano / antigo.multDano);
+    if (antigo.multVel) it.vel = +(it.vel / antigo.multVel).toFixed(2);
+    if (antigo.multDef) it.def = Math.round(it.def / antigo.multDef);
+    if (antigo.multHp && it.hp > 0) it.hp = Math.round(it.hp / antigo.multHp);
+  }
+  const af = escolher(AFIXOS[it.tipo].filter(a => !antigo || a.id !== antigo.id));
+  if (af.multDano) it.dano = Math.round(it.dano * af.multDano);
+  if (af.multVel) it.vel = +(it.vel * af.multVel).toFixed(2);
+  if (af.multDef) it.def = Math.round(it.def * af.multDef);
+  if (af.multHp && it.hp > 0) it.hp = Math.round(it.hp * af.multHp);
+  it.afixo = af;
+  renomear(it);
+  S = stats();
+  J.hp = Math.min(J.hp, S.maxHp);
+  mesa.msg = { txt: `Novo encantamento: ${af.nome} (${af.desc})`, cor: af.cor, t: 2.5 };
+  mesa.brilho = 1;
+  som(700, 0.3, 'sine', 0.05, 500);
+}
+
+function atualizarMesa(dt) {
+  mesa.t += dt;
+  if (mesa.brilho) mesa.brilho = Math.max(0, mesa.brilho - dt * 2);
+  if (mesa.msg) { mesa.msg.t -= dt; if (mesa.msg.t <= 0) mesa.msg = null; }
+  if (mesa.t < 0.2) return;
+  if (premiu('escape')) { mesa = null; estado = 'jogo'; rato.baixo = false; return; }
+  SLOTS_EQUIP.forEach((k, i) => {
+    if (!J[k]) return;
+    if (premiu(String(i + 1)) || (premiu('rato') && dentro(retSlotMesa(i)))) mesa.slot = k;
+  });
+  const it = J[mesa.slot];
+  if (!it) return;
+  if (premiu('e') || (premiu('rato') && dentro(BOTAO_REFORCAR))) reforcar(it);
+  else if (premiu('r') || (premiu('rato') && dentro(BOTAO_ENCANTO))) novoEncanto(it);
+}
+
+// ---------------------------------------------------------------------
+//  Criação de personagem
+// ---------------------------------------------------------------------
+function retRaca(i) { return { x: 30, y: 84 + i * 94, w: 450, h: 86 }; }
+function retSkin(i) { return { x: 506 + (i % 4) * 108, y: 372 + Math.floor(i / 4) * 102, w: 98, h: 94 }; }
+const BOTAO_COMECAR = { x: 700, y: 586, w: 240, h: 40 };
+
+function abrirCriacao() {
+  criacao = { t: 0, msg: null };
+  estado = 'criar';
+}
+
+function atualizarCriacao(dt) {
+  criacao.t += dt;
+  if (criacao.msg) { criacao.msg.t -= dt; if (criacao.msg.t <= 0) criacao.msg = null; }
+  if (criacao.t < 0.2) return;
+  let ir = ORDEM_RACAS.indexOf(escolhaRaca), is = ORDEM_SKINS.indexOf(escolhaSkin);
+  const n = ORDEM_SKINS.length;
+  const proxSkin = d => {
+    for (let j = 1; j < n; j++) { const k = (is + d * j + n * 2) % n; if (skinLivre(ORDEM_SKINS[k])) return k; }
+    return is;
+  };
+  if (premiu('w', 'arrowup')) ir = (ir + ORDEM_RACAS.length - 1) % ORDEM_RACAS.length;
+  if (premiu('s', 'arrowdown')) ir = (ir + 1) % ORDEM_RACAS.length;
+  if (premiu('a', 'arrowleft')) is = proxSkin(-1);
+  if (premiu('d', 'arrowright')) is = proxSkin(1);
+  let comecar = premiu('enter', ' ');
+  if (premiu('rato')) {
+    ORDEM_RACAS.forEach((_, i) => { if (dentro(retRaca(i))) ir = i; });
+    ORDEM_SKINS.forEach((id, i) => {
+      if (!dentro(retSkin(i))) return;
+      if (skinLivre(id)) is = i;
+      else criacao.msg = { txt: `Chega ao andar ${SKINS[id].recorde} para desbloquear esta skin`, cor: '#ff8080', t: 2.5 };
+    });
+    if (dentro(BOTAO_COMECAR)) comecar = true;
+  }
+  if (ir !== ORDEM_RACAS.indexOf(escolhaRaca) || is !== ORDEM_SKINS.indexOf(escolhaSkin)) som(700, 0.05, 'square', 0.02);
+  escolhaRaca = ORDEM_RACAS[ir];
+  escolhaSkin = ORDEM_SKINS[is];
+  if (comecar) { guardarEscolha(); rato.baixo = false; novoJogo(); }
+  else if (premiu('escape')) estado = 'titulo';
 }
 
 // ---------------------------------------------------------------------
@@ -1404,8 +1705,13 @@ function loop(agora) {
   if (estado === 'titulo') {
     if (saveInfo) {
       if (premiu('enter', ' ', 'rato')) continuarJogo();
-      else if (premiu('n')) novoJogo();
-    } else if (premiu('enter', ' ', 'rato')) novoJogo();
+      else if (premiu('n')) abrirCriacao();
+    } else if (premiu('enter', ' ', 'rato')) abrirCriacao();
+  } else if (estado === 'criar') {
+    atualizarCriacao(dt);
+  } else if (estado === 'encantar') {
+    atualizarMesa(dt);
+    atualizarEfeitos(dt);
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape')) estado = 'pausa';
     else if (premiu('c', 'tab')) estado = 'personagem';

@@ -191,6 +191,47 @@ const HEROI_PES = [
   ['...kpk....kpk...', '...kNk....kNNk..', '...kk.....kkkk..'],
 ];
 
+// Detalhes de cada raça pintados por cima do herói
+function aplicarRaca(g, raca) {
+  const pele = '#f1c8a0';
+  if (raca === 'elfo') { // orelhas pontiagudas
+    for (const [x, y] of [[2, 5], [2, 4], [1, 4], [13, 5], [13, 4], [14, 4]]) pixel(g, x, y, pele);
+  } else if (raca === 'anao') { // barba ruiva
+    const b = '#c9602a', B = '#8a3f1a';
+    for (let x = 5; x <= 10; x++) { pixel(g, x, 6, b); pixel(g, x, 7, x === 5 || x === 10 ? B : b); }
+    for (let x = 6; x <= 9; x++) pixel(g, x, 8, b);
+    pixel(g, 7, 9, B); pixel(g, 8, 9, B);
+  } else if (raca === 'orc') { // pele verde, dentes e olhos amarelos
+    pixel(g, 2, 5, '#8fb33a'); pixel(g, 13, 5, '#8fb33a');
+    pixel(g, 5, 6, '#fffbe6'); pixel(g, 10, 6, '#fffbe6');
+    pixel(g, 6, 5, '#ffe14d'); pixel(g, 9, 5, '#ffe14d');
+  } else if (raca === 'vampiro') { // olhos vermelhos e capa
+    pixel(g, 6, 5, '#ff2040'); pixel(g, 9, 5, '#ff2040');
+    for (let y = 8; y <= 13; y++) { pixel(g, 0, y, '#6a0f1f'); pixel(g, 15, y, '#6a0f1f'); }
+    pixel(g, 3, 7, '#8a1a2a'); pixel(g, 12, 7, '#8a1a2a');
+  }
+}
+
+function gerarHeroi(raca, skinId) {
+  const skin = SKINS[skinId] || SKINS.azul;
+  const pal = Object.assign({}, PAL_HEROI, skin.pal);
+  const frames = HEROI_PES.map(pes => {
+    const g = gradeDeLinhas(HEROI_TOPO.concat(pes), pal);
+    aplicarRaca(g, raca);
+    contornar(g);
+    return gradeParaCanvas(g);
+  });
+  frames.push(virarH(frames[1]));
+  return frames;
+}
+
+const cacheHerois = {};
+function framesHeroi(raca = 'humano', skin = 'azul') {
+  const k = raca + '|' + skin;
+  if (!cacheHerois[k]) cacheHerois[k] = gerarHeroi(raca, skin);
+  return cacheHerois[k];
+}
+
 const PAL_SLIME = { g: '#5fd35f', G: '#3a9a3a', l: '#a6f5a6', w: '#ffffff' };
 const SLIME = [
   [
@@ -554,6 +595,7 @@ function gerarEspinhos(estado) {
 function iconeDoItem(it) {
   const n = it.nomeBase || it.nome;
   if (it.tipo === 'arma') {
+    if (/Cajado|Cetro/.test(n)) return 'cajado';
     if (/Colher/.test(n)) return 'colher';
     if (/Galho/.test(n)) return 'galho';
     if (/Peixe/.test(n)) return 'peixe';
@@ -620,6 +662,12 @@ function gerarIcone(nome, cor) {
       linha(g, 2, 15, 11, 2, cabo); linha(g, 3, 15, 12, 2, caboE);
       poligono(g, [[11, 1], [7, 0], [2, 2], [1, 5], [4, 3], [8, 2], [12, 3]], a);
       linha(g, 2, 2, 7, 0, c);
+      break;
+    case 'cajado':
+      linha(g, 2, 14, 11, 5, cabo); linha(g, 3, 14, 12, 5, caboE);
+      linha(g, 10, 3, 14, 7, b);
+      elipse(g, 13.5, 3.5, 2.8, 2.8, { base: a, claro: c, escuro: b });
+      pixel(g, 13, 2, '#ffffff');
       break;
     case 'colher':
       linha(g, 2, 13, 9, 6, a); linha(g, 3, 13, 10, 6, b);
@@ -875,6 +923,61 @@ function gerarDemonio() {
   return gradeParaCanvas(g);
 }
 
+const MESA = [
+  '.......kkkkkk.......',
+  '......kwwwwwwk......',
+  '.....kwkwkwwwwk.....',
+  '.....kwwwwkwkwk.....',
+  '....kppppppppppk....',
+  '..kkkkkkkkkkkkkkkk..',
+  '.kllllllllllllllllk.',
+  '.kssrssssssssssrssk.',
+  '.kssssssssssssssssk.',
+  '..kSSSSSSSSSSSSSSk..',
+  '...kSk........kSk...',
+  '...kSk........kSk...',
+  '...kSk........kSk...',
+  '..kkkkk......kkkkk..',
+];
+const PAL_MESA = { w: '#f0e6c8', p: '#6a3fb5', l: '#b8b2c4', s: '#8d8698', S: '#5e5868', r: '#d9a6ff' };
+
+function gerarLivro(cor) {
+  const g = novaGrade(12, 14);
+  for (let y = 1; y < 13; y++) for (let x = 2; x < 10; x++) g[y][x] = cor;
+  for (let y = 1; y < 13; y++) { g[y][2] = escurecer(cor, 0.4); g[y][10] = '#f0e6c8'; }
+  for (let y = 2; y < 12; y++) g[y][9] = '#d8ccb0';
+  const c = clarear(cor, 0.6);
+  for (const [x, y] of [[5, 4], [6, 4], [7, 5], [6, 6], [5, 7], [6, 8], [7, 8]]) g[y][x] = c;
+  contornar(g);
+  return gradeParaCanvas(g);
+}
+
+function gerarIconeFeitico(id) {
+  const g = novaGrade(16, 16);
+  const f = FEITICOS[id], a = f.cor, b = escurecer(a, 0.35), c = clarear(a, 0.55);
+  if (id === 'fogo') {
+    poligono(g, [[8, 1], [12, 6], [13, 10], [11, 14], [5, 14], [3, 10], [4, 6], [6, 8]], a);
+    poligono(g, [[8, 6], [10, 10], [9, 13], [7, 13], [6, 10]], '#ffe14d');
+    pixel(g, 8, 11, '#ffffff');
+  } else if (id === 'raio') {
+    poligono(g, [[10, 0], [4, 8], [8, 8], [5, 15], [12, 6], [8, 6], [11, 0]], a);
+    linha(g, 9, 1, 6, 7, c);
+  } else if (id === 'gelo') {
+    for (let k = 0; k < 3; k++) {
+      const ang = k * Math.PI / 3;
+      linha(g, 8 - Math.cos(ang) * 6, 8 - Math.sin(ang) * 6, 8 + Math.cos(ang) * 6, 8 + Math.sin(ang) * 6, a, 2);
+    }
+    pixel(g, 8, 8, '#ffffff'); pixel(g, 8, 2, c); pixel(g, 8, 14, c);
+  } else {
+    for (let y = 2; y < 14; y++) for (let x = 6; x < 10; x++) g[y][x] = a;
+    for (let y = 6; y < 10; y++) for (let x = 2; x < 14; x++) g[y][x] = a;
+    linha(g, 6, 2, 6, 13, c); linha(g, 2, 6, 13, 6, c);
+    linha(g, 9, 3, 9, 13, b);
+  }
+  contornar(g);
+  return gradeParaCanvas(g);
+}
+
 // Círculo pequeno usado nos ícones das melhorias
 function gerarBola(cor, raio) {
   const d = raio * 2 + 2;
@@ -891,8 +994,7 @@ const SPR = {};
 const cacheIcones = {}, cacheLadrilhos = {}, cacheSilhuetas = new Map(), cacheBolas = {};
 
 function construirSprites() {
-  SPR.heroi = HEROI_PES.map(p => sprite(HEROI_TOPO.concat(p), PAL_HEROI));
-  SPR.heroi.push(virarH(SPR.heroi[1]));
+  SPR.heroi = framesHeroi('humano', 'azul');
   SPR.slime = SLIME.map(l => sprite(l, PAL_SLIME));
   SPR.morcego = MORCEGO.map(l => sprite(l, PAL_MORCEGO));
   SPR.esqueleto = [sprite(ESQUELETO, PAL_ESQUELETO)];
@@ -910,6 +1012,10 @@ function construirSprites() {
   SPR.cristal = { inativo: sprite(CRISTAL, pal_cristal('#b44dff')), ativo: sprite(CRISTAL, pal_cristal('#ff3b5b')), feito: sprite(CRISTAL, pal_cristal('#8d8698')) };
   SPR.tocha = PAL_TOCHA.map(p => sprite(TOCHA, p));
   SPR.escada = gerarEscada();
+  SPR.mesa = sprite(MESA, PAL_MESA);
+  SPR.livro = {};
+  SPR.feitico = {};
+  for (const id of ORDEM_FEITICOS) { SPR.livro[id] = gerarLivro(FEITICOS[id].cor); SPR.feitico[id] = gerarIconeFeitico(id); }
   SPR.espinhos = [0, 1, 2].map(gerarEspinhos);
   SPR.reiSlime = [gerarReiSlime(0), gerarReiSlime(1)];
   SPR.lich = [gerarLich()];
