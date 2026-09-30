@@ -36,9 +36,9 @@ Object.assign(INIMIGOS, {
   anjoGuerreiro:   { nome: 'Anjo Guerreiro',     hp: 58,  dano: 15, vel: 85,  r: 14, xp: 34, cor: '#ffe680', minAndar: 1, peso: 3, zonas: [8], ia: 'orc' },
   arqueiroCeleste: { nome: 'Arqueiro Celeste',   hp: 38,  dano: 13, vel: 85,  r: 13, xp: 30, cor: '#fff6c8', minAndar: 1, peso: 3, zonas: [8], ia: 'esqueleto' },
   querubim:        { nome: 'Querubim',           hp: 26,  dano: 10, vel: 140, r: 10, xp: 24, cor: '#ffd8c0', minAndar: 1, peso: 3, zonas: [8], ia: 'morcego' },
-  cavaleiroVazio:  { nome: 'Cavaleiro do Vazio', hp: 66,  dano: 16, vel: 80,  r: 14, xp: 40, cor: '#8a4aff', minAndar: 1, peso: 3, zonas: [9], ia: 'orc' },
-  magoVazio:       { nome: 'Mago do Vazio',      hp: 40,  dano: 14, vel: 95,  r: 12, xp: 34, cor: '#b44dff', minAndar: 1, peso: 3, zonas: [9], ia: 'diabrete' },
-  devorador:       { nome: 'Devorador',          hp: 90,  dano: 17, vel: 55,  r: 16, xp: 44, cor: '#6a3aff', minAndar: 1, peso: 2, zonas: [9], ia: 'zumbi' },
+  cavaleiroVazio:  { nome: 'Cavaleiro do Vazio', hp: 62,  dano: 14, vel: 80,  r: 14, xp: 40, cor: '#8a4aff', minAndar: 1, peso: 3, zonas: [9], ia: 'orc' },
+  magoVazio:       { nome: 'Mago do Vazio',      hp: 38,  dano: 13, vel: 95,  r: 12, xp: 34, cor: '#b44dff', minAndar: 1, peso: 3, zonas: [9], ia: 'diabrete' },
+  devorador:       { nome: 'Devorador',          hp: 84,  dano: 15, vel: 55,  r: 16, xp: 44, cor: '#6a3aff', minAndar: 1, peso: 2, zonas: [9], ia: 'zumbi' },
 });
 // Monstros antigos que também vivem nas zonas finais
 for (const [tipo, z] of [['espiritoCristal', 8], ['elementalGelo', 8], ['sombra', 9], ['olhoVazio', 9]]) if (!INIMIGOS[tipo].zonas.includes(z)) INIMIGOS[tipo].zonas.push(z);

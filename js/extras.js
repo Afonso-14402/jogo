@@ -282,11 +282,14 @@ function criarSalaPacto(marcar) {
   const sala = marcar(diabo ? 'diabo' : 'anjo');
   if (!sala) return null;
   const c = centroPx(sala);
-  objetos.push({ tipo: 'estatua', diabo, sala, x: c.x, y: c.y - 50 });
+  // numa sala pequena a estátua e os pedestais podiam ficar dentro da parede
+  const livre = (x, y, r) => (colideCirculo(mapa, x, y, r) ? pontoLivreNaSala(mapa, sala, r, 1) : { x, y });
+  const pe = livre(c.x, c.y - 50, 16);
+  objetos.push({ tipo: 'estatua', diabo, sala, x: pe.x, y: pe.y });
   const grupo = Math.random();
   const n = diabo ? 3 : 2;
   for (let k = 0; k < n; k++) {
-    const x = c.x + (k - (n - 1) / 2) * 80, y = c.y + 34;
+    const { x, y } = livre(c.x + (k - (n - 1) / 2) * 80, c.y + 34, 14);
     const o = { tipo: 'pedestal', sala, grupo, diabo, x, y };
     if (diabo && k === n - 1) { // o Diabo também vende uma arma ou armadura poderosa
       const r = Math.random() < 0.25 ? 'mitico' : 'lendario';

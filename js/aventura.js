@@ -93,8 +93,9 @@ const escuridaoEvento = () => (mapa.evento === 'escuro' ? 0.975 : null);
 let camLenta = 0, flashEcra = 0;
 function efeitoBossMorto() { camLenta = 1.4; flashEcra = 0.7; }
 function efeitoGolpeForte() { flashEcra = Math.max(flashEcra, 0.18); }
-const ritmoJogo = () => (camLenta > 0 ? 0.3 : 1);
+const ritmoJogo = () => (impacto > 0 ? 0.08 : camLenta > 0 ? 0.3 : 1);
 function atualizarEfeitosEcra(dt) {
+  if (impacto > 0) impacto -= dt;
   if (camLenta > 0) camLenta -= dt;
   if (flashEcra > 0) flashEcra -= dt * 1.5;
 }

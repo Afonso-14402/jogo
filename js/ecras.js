@@ -32,7 +32,8 @@ function desenharAvisos() {
   const a = avisos[0];
   if (!a) return;
   ctx.globalAlpha = clamp(Math.min(a.t, 4 - a.t) * 3, 0, 1);
-  const w = 360, x = (LARGURA - w) / 2, y = 70;
+  if (estado === 'fim') return;
+  const w = 360, x = (LARGURA - w) / 2, y = typeof tutorial !== 'undefined' && tutorial ? 84 : 70;
   painel(x, y, w, 46, 'rgba(24,18,8,0.96)', a.cor);
   textoCentro(a.titulo, LARGURA / 2, y + 15, 15, a.cor);
   if (a.sub) textoCentro(a.sub + (avisos.length > 1 ? `   (+${avisos.length - 1})` : ''), LARGURA / 2, y + 33, 11, '#ddd', false);

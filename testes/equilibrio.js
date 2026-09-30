@@ -4,10 +4,13 @@
 // demora a limpar a arena e quanta vida perde.
 //   node testes/equilibrio.js            (andares 10, 25 e 45; 3 lutas cada)
 //   node testes/equilibrio.js 30 5       (só o andar 30, 5 lutas)
+//   node testes/equilibrio.js 5,10,20 2  (vários andares)
 const { chromium } = require('playwright');
 const path = require('path');
 
-const ANDARES = process.argv[2] ? [Number(process.argv[2])] : [10, 25, 45];
+const ANDARES = process.argv[2] ? process.argv[2].split(',').map(Number) : [10, 25, 45];
+// CLASSES=espada,fogo node testes/equilibrio.js 10,20  (só alguns caçadores)
+const SO_CLASSES = process.env.CLASSES ? process.env.CLASSES.split(',') : null;
 const LUTAS = Number(process.argv[3] || 3);
 
 (async () => {
@@ -21,7 +24,7 @@ const LUTAS = Number(process.argv[3] || 3);
 
   const resultados = {};
   for (const a of ANDARES) {
-    for (const classe of await p.evaluate(() => ORDEM_CLASSES)) {
+    for (const classe of SO_CLASSES || await p.evaluate(() => ORDEM_CLASSES)) {
       const r = await p.evaluate(({ a, classe, lutas }) => {
         // prepara um herói típico do andar (como o poder recomendado)
         function preparar() {

@@ -195,6 +195,15 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 - **Boss Rush**: os 12 bosses seguidos, contra o relógio (recuperas 30% de vida entre bosses). Guarda o melhor tempo.
 - **Transferir progresso**: no menu, copia um código no aparelho antigo e cola-o no novo para levar almas, conquistas, coleção e o jogo guardado.
 - **Sombras**: o Exército das Sombras só existe para o Caçador das Sombras.
+- **Sensação de jogo (polimento)**:
+  - **Golpes com peso**: micro-pausa ao acertar (maior nos críticos e ao matar), faíscas na direção do golpe, recuo maior nos críticos e um som diferente para cada tipo de arma.
+  - **Herói mais vivo**: avança um pouco em cada golpe, deixa um rasto azul na esquiva, pisca a vermelho e encolhe quando leva dano, brilha a verde quando bebe uma poção e respira parado.
+  - **Telemóvel**: joystick analógico e suavizado (perto do centro anda devagar). A mira automática prefere o monstro à tua frente e à vista, e os bosses.
+  - **Comparar itens**: nas cartas do baú, da mochila e da loja aparece quanto **Poder** ganhas ou perdes (▲/▼), e na mochila e na loja também cada atributo.
+  - **Prémios melhores**: quanto mais fundo, menos lixo; às vezes saem armas do mesmo tipo da tua.
+  - **Monstros mais espertos**: alguns fogem quando estão quase a morrer, os outros aproximam-se de lado para te cercar e já não ficam presos nas paredes.
+  - **Curva de dificuldade** afinada com o bot, do andar 1 ao 60 (múmias, golems de cristal e monstros finais mais justos).
+  - **Mais rápido**: a luz é calculada a metade da resolução (−60% de tempo), o minimapa é guardado em cache e há um limite de partículas.
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
 - **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo ou Senhor da Tempestade. Cada evolução tem uma passiva mais forte e melhora a habilidade única.
@@ -278,6 +287,7 @@ js/templo.js        Masmorra Dupla: o templo da estátua e as suas regras
 js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o final do jogo
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
+js/polimento.js     peso dos golpes, herói mais vivo, mira e joystick, comparar itens, monstros mais espertos, luz rápida
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro
@@ -305,6 +315,13 @@ node testes/telemovel.js
 ```
 node testes/equilibrio.js          # andares 10, 25 e 45
 node testes/equilibrio.js 30 5     # só o andar 30, 5 lutas
+node testes/equilibrio.js 5,10,20 2   # vários andares
+```
+
+`testes/caca_bugs.js` joga sozinho do andar 1 ao 60 (abre todos os baús, usa todos os objetos, entra em portais e na cidade, fala com os habitantes) e passa por todos os ecrãs em português e inglês, no PC e no telemóvel. Avisa se houver erros de JavaScript, coisas dentro das paredes, números estragados ou textos a sair do ecrã:
+
+```
+node testes/caca_bugs.js
 ```
 
 ## Jogar online (opcional)

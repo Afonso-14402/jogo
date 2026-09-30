@@ -807,7 +807,7 @@ function aoAcertarJogador(e, dano) {
 function aoSerAtingido(e) {
   if (e.tipo === 'golemCristal' && !e.morto) {
     e.cdEstilhaco = (e.cdEstilhaco || 0);
-    if (tempoJogo - e.cdEstilhaco > 1.1) { e.cdEstilhaco = tempoJogo; anelProjeteis(e, 6, '#7fe0ff', null); }
+    if (tempoJogo - e.cdEstilhaco > 1.8) { e.cdEstilhaco = tempoJogo; anelProjeteis(e, 5, '#7fe0ff', null); }
   }
   if (e.tipo === 'goblin' && e.roubou && e.hp > 0) e.fugir = Math.max(e.fugir, 3);
 }

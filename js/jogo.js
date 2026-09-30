@@ -166,8 +166,15 @@ function chancesBau(tipoBau) {
 }
 
 function sortearItem(tipoBau) {
-  const r = escolherPeso(chancesBau(tipoBau));
-  const pool = ITENS.filter(i => i.r === r && !i.inicial);
+  let r = escolherPeso(chancesBau(tipoBau));
+  // quanto mais fundo, menos lixo (mas pode sempre calhar)
+  if (r === 'lixo' && Math.random() < Math.min(0.6, andar / 40)) r = escolherPeso(chancesBau(tipoBau));
+  let pool = ITENS.filter(i => i.r === r && !i.inicial);
+  // às vezes calha uma arma do mesmo tipo da tua (mais útil para o teu caçador)
+  if (J && J.arma && Math.random() < 0.3) {
+    const mesmo = pool.filter(i => i.tipo === 'arma' && classeArma(i) === classeArma(J.arma));
+    if (mesmo.length) pool = mesmo;
+  }
   const it = criarItem(escolher(pool), andar);
   if (TIPOS_BAU[tipoBau].maldito) { // sempre com encantamento, mas amaldiçoado
     if (!it.afixo || it.afixo.id === 'maldicao') { retirarAfixo(it); aplicarAfixo(it, escolher(AFIXOS[it.tipo])); }
@@ -622,6 +629,7 @@ function texto(x, y, txt, cor = '#fff', tam = 16) {
 }
 
 function explosao(x, y, cor, n = 12, vel = 160, tam = 4) {
+  if (particulas.length > 700) n = Math.min(n, 3); // não deixa o telemóvel ficar lento
   if (n >= 30 && typeof ruido === 'function') ruido(Math.min(0.9, n / 60), Math.min(0.08, n / 700), 900);
   for (let i = 0; i < n; i++) {
     const a = rand(0, Math.PI * 2), v = rand(vel * 0.3, vel);
@@ -719,11 +727,12 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   e.hp -= dano;
   e.flash = 0.1;
   e.acordado = true;
-  if (!e.boss) { e.kbx = dx * 300; e.kby = dy * 300; }
+  if (!e.boss) { e.kbx = dx * 300 * (crit ? 1.6 : 1); e.kby = dy * 300 * (crit ? 1.6 : 1); }
   texto(e.x, e.y - e.r - 4, crit ? `${dano}!` : `${dano}`, crit ? '#ffe14d' : '#ffffff', crit ? 26 : 16);
   explosao(e.x, e.y, e.cor, 5, 120, 3);
   if (S.roubo > 0) J.hp = Math.min(S.maxHp, J.hp + dano * S.roubo);
-  som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
+  if (efeitos) sentirGolpe(e, dano, crit, dx, dy); // som da arma, faíscas e micro-pausa
+  else som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
   const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
   if (af === 'fogo') { e.queima = 3; e.queimaDps = Math.max(1, dano * 0.35); }
   if (af === 'gelo') e.lento = 2;
@@ -869,6 +878,7 @@ function danoJogador(d, fx, fy, fonte = null) {
   vibrar(final > S.maxHp * 0.15 ? 90 : 40);
   texto(J.x, J.y - 20, `-${final}`, '#ff4d4d', 18);
   ruido(0.15, 0.05, 1200);
+  J.dorT = 0.2;
   tremor = Math.max(tremor, 6);
   som(110, 0.18, 'sawtooth', 0.06, -60);
   if (fx != null) {
@@ -921,6 +931,7 @@ function beberPocao() {
   J.mana = Math.min(S.maxMana, J.mana + S.maxMana * 0.4);
   texto(J.x, J.y - 24, `+${cura}`, '#5dff7a', 20);
   explosao(J.x, J.y, '#5dff7a', 14, 120, 4);
+  J.bebeuT = 0.6;
   som(440, 0.25, 'sine', 0.06, 400);
 }
 
@@ -960,6 +971,7 @@ function atualizar(dt) {
   atualizarCidadeMundo(dt);
   atualizarEvento(dt);
   atualizarRestos(dt);
+  atualizarHeroiVivo(dt);
   atualizarFalas(dt);
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
@@ -1233,16 +1245,16 @@ function atualizarJogador(dt) {
   if (teclas['s'] || teclas['arrowdown']) my += 1;
   if (teclas['a'] || teclas['arrowleft']) mx -= 1;
   if (teclas['d'] || teclas['arrowright']) mx += 1;
-  if (toque.joy) {
-    const jx = toque.joy.x - toque.joy.cx, jy = toque.joy.y - toque.joy.cy;
-    if (Math.hypot(jx, jy) > 10) { mx = jx; my = jy; }
-  }
+  let forca = 1;
+  const js = lerJoystick(); // joystick analógico e suavizado
+  if (js) { mx = js.x; my = js.y; forca = js.forca; }
   J.andando = !!(mx || my);
   if (mx || my) {
     const l = Math.hypot(mx, my);
     mx /= l; my /= l;
     J.dirX = mx; J.dirY = my;
     if (!J.golpe) J.angArma = Math.atan2(my, mx);
+    mx *= forca; my *= forca;
   }
   J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt; J.lentoT -= dt;
   const fLento = (J.lentoT > 0 ? 0.5 : 1) * fatorTerreno();
@@ -1264,7 +1276,7 @@ function atualizarJogador(dt) {
   J.kby *= Math.max(0, 1 - dt * 10);
 
   if (toque.atacar) {
-    const a = alvoProximo(S.alcance + J.r + 80);
+    const a = alvoMelhor(S.alcance + J.r + 80);
     if (a) atacar(a.x - J.x, a.y - J.y); else atacar(J.dirX, J.dirY);
   } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
   else if (teclas[' '] || teclas['j']) atacar(J.dirX, J.dirY);
@@ -1390,6 +1402,7 @@ function atualizarInimigo(e, dt) {
       default: // monstros das zonas novas
         ({ vx, vy } = movimentoBioma(e, dt, d, ux, uy, ru));
     }
+    if (!especial) [vx, vy] = iaEsperta(e, dt, d, ux, uy, vx, vy); // foge ferido, cerca-te, não fica preso
     if (!e.morto) habilidadesPassivas(e, dt, d, ux, uy);
   }
   if (e.morto) return; // o goblin fugiu
@@ -1751,7 +1764,7 @@ function alvoProximo(raio) {
 
 function mira() {
   if (modoToque) {
-    const a = alvoProximo(420);
+    const a = alvoMelhor(420);
     if (a) { const dx = a.x - J.x, dy = a.y - J.y, l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
     return [J.dirX, J.dirY];
   }

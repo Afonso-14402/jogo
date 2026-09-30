@@ -7,23 +7,26 @@
 // =====================================================================
 
 const FONTE = '"Tiny5", "Segoe UI", "Trebuchet MS", Arial, sans-serif';
-const fonte = (tam, peso = 'bold') => `${peso} ${tam}px ${FONTE}`;
+// no telemóvel as letras muito pequenas ficam um pouco maiores
+const fonte = (tam, peso = 'bold') => `${peso} ${typeof modoToque !== 'undefined' && modoToque && tam < 12 ? tam + 1 : tam}px ${FONTE}`;
 try { if (document.fonts) { document.fonts.load(fonte(16)); document.fonts.load(fonte(16, 'normal')); } } catch (e) { /* ignora */ }
 
 let LB = LARGURA / ESCALA, AB = ALTURA / ESCALA;
 const bufMundo = document.createElement('canvas');
 bufMundo.width = LB; bufMundo.height = AB;
 const ctxMundo = bufMundo.getContext('2d');
+// a luz é suave: calcula-se a metade da resolução (muito mais rápido)
+const RES_LUZ = 2;
 const bufLuz = document.createElement('canvas');
-bufLuz.width = LB; bufLuz.height = AB;
+bufLuz.width = Math.ceil(LB / RES_LUZ); bufLuz.height = Math.ceil(AB / RES_LUZ);
 const ctxLuz = bufLuz.getContext('2d');
 
 // Tamanho dos buffers do mundo (muda quando o ecrã do telemóvel muda)
 function ajustarBuffers() {
   LB = Math.ceil(vistaW() / ESCALA); AB = Math.ceil(vistaH() / ESCALA);
   if (bufMundo.width !== LB || bufMundo.height !== AB) {
-    bufMundo.width = bufLuz.width = LB;
-    bufMundo.height = bufLuz.height = AB;
+    bufMundo.width = LB; bufMundo.height = AB;
+    bufLuz.width = Math.ceil(LB / RES_LUZ); bufLuz.height = Math.ceil(AB / RES_LUZ);
   }
 }
 // Posição no ecrã (dentro do interface) de um ponto do mundo
@@ -385,19 +388,18 @@ function desenharMundo(t) {
 function desenharLuz(t) {
   const L = ctxLuz;
   L.globalCompositeOperation = 'source-over';
-  L.clearRect(0, 0, LB, AB);
+  const LW = bufLuz.width, LH = bufLuz.height, E2 = ESCALA * RES_LUZ;
+  L.clearRect(0, 0, LW, LH);
   L.fillStyle = `rgba(3,2,8,${naCidade() ? 0.12 : escuridaoEvento() || (mapa.eBoss ? 0.55 : bioma().escuro)})`;
-  L.fillRect(0, 0, LB, AB);
+  L.fillRect(0, 0, LW, LH);
   L.globalCompositeOperation = 'destination-out';
+  let luzesTiros = 0;
   const luz = (x, y, r, forca) => {
-    const bx = (x - vista.x) / ESCALA, by = (y - vista.y) / ESCALA, br = r / ESCALA;
-    if (bx < -br || by < -br || bx > LB + br || by > AB + br) return;
-    const g = L.createRadialGradient(bx, by, 0, bx, by, br);
-    g.addColorStop(0, `rgba(0,0,0,${forca})`);
-    g.addColorStop(0.5, `rgba(0,0,0,${forca * 0.8})`);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    L.fillStyle = g;
-    L.fillRect(bx - br, by - br, br * 2, br * 2);
+    const bx = (x - vista.x) / E2, by = (y - vista.y) / E2, br = r / E2;
+    if (bx < -br || by < -br || bx > LW + br || by > LH + br) return;
+    L.globalAlpha = forca;
+    L.drawImage(manchaLuz(), bx - br, by - br, br * 2, br * 2);
+    L.globalAlpha = 1;
   };
   luz(J.x, J.y, 330 + Math.sin(t * 7) * 6, 1);
   if (pet && J.pet && J.pet.tipo !== 'lobo') luz(pet.x, pet.y, 70, 0.6);
@@ -409,7 +411,7 @@ function desenharLuz(t) {
     else if (o.tipo === 'mesa') luz(o.x, o.y, 120, 0.8);
   }
   for (const b of baus) if (b.tipo === 'ouro') luz(b.x, b.y, 90, 0.7);
-  for (const p of projeteis) if (p.tipo === 'fogo' || p.dono === 'jogador') luz(p.x, p.y, p.explode ? 110 : 50, p.explode ? 0.8 : 0.5);
+  for (const p of projeteis) if ((p.tipo === 'fogo' || p.dono === 'jogador') && luzesTiros++ < 14) luz(p.x, p.y, p.explode ? 110 : 50, p.explode ? 0.8 : 0.5);
   for (const o of ondas) luz(o.x, o.y, o.r * 1.4, 0.6 * (o.t / o.dur));
   for (const o of objetos) if (o.tipo === 'portal' || o.tipo === 'saidaPortal') luz(o.x, o.y, 120, 0.8);
   for (const d of drops) if (d.tipo === 'livro' || d.tipo === 'reliquia') luz(d.x, d.y, 70, 0.6);
@@ -419,18 +421,18 @@ function desenharLuz(t) {
   for (const p of pocas) if (p.tipo !== 'gosma') luz(p.x, p.y, 60, 0.4);
   for (const e of inimigos) if (e.laser && e.laser.fase === 'fogo') for (let k = 0; k < e.laser.comp; k += 60) luz(e.x + Math.cos(e.laser.ang) * k, e.y + Math.sin(e.laser.ang) * k, 60, 0.7);
   L.globalCompositeOperation = 'source-over';
-  ctxMundo.drawImage(bufLuz, 0, 0);
+  ctxMundo.imageSmoothingEnabled = true; // esticar a luz com suavidade
+  ctxMundo.drawImage(bufLuz, 0, 0, LW * RES_LUZ, LH * RES_LUZ);
+  ctxMundo.imageSmoothingEnabled = false;
 
   // brilho das tochas (da cor da zona) e da decoração que brilha
   ctxMundo.globalCompositeOperation = 'lighter';
   const brilho = (x, y, raio, rgb, forca) => {
     const bx = (x - vista.x) / ESCALA, by = (y - vista.y) / ESCALA;
     if (bx < -40 || by < -40 || bx > LB + 40 || by > AB + 40) return;
-    const g = ctxMundo.createRadialGradient(bx, by, 0, bx, by, raio);
-    g.addColorStop(0, `rgba(${rgb},${forca})`);
-    g.addColorStop(1, `rgba(${rgb},0)`);
-    ctxMundo.fillStyle = g;
-    ctxMundo.fillRect(bx - raio, by - raio, raio * 2, raio * 2);
+    ctxMundo.globalAlpha = forca;
+    ctxMundo.drawImage(manchaLuz(rgb), bx - raio, by - raio, raio * 2, raio * 2);
+    ctxMundo.globalAlpha = 1;
   };
   for (const tc of mapa.tochas) if (explorado(tc.x, tc.y + TILE)) brilho(tc.x, tc.y + 10, 34, bioma().brilho, 0.16);
   for (const l of mapa.luzes || []) if (explorado(l.x, l.y)) brilho(l.x, l.y, 22, hexRgb(l.cor).join(','), 0.22);
@@ -585,6 +587,7 @@ function desenharObjeto(o, t) {
 }
 
 function desenharJogador(t) {
+  desenharRastos();
   const piscar = J.invuln > 0 && Math.floor(J.invuln * 20) % 2 === 0;
   sombra(J.x, J.y + 12, 10);
   let ang = J.angArma;
@@ -624,11 +627,17 @@ function desenharJogador(t) {
   if (piscar) ctx.globalAlpha = 0.4;
   if (J.furtivo > 0) ctx.globalAlpha = 0.3 + 0.1 * Math.sin(t * 8);
   const c = framesHeroi(J.raca, J.skin)[frame];
+  const P = poseHeroi(t); // estocada, dor e respiração
+  ctx.save();
+  ctx.translate(J.x + P.ox, J.y + 12 + P.oy); ctx.scale(P.sx, P.sy); ctx.translate(-J.x, -J.y - 12);
   spr(c, J.x, J.y - 4, olhaEsq);
   if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
   if (J.lentoT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.4);
   if (J.veneno > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#5dff3a', 0.3 + Math.sin(t * 8) * 0.1);
   if (J.formaBestial > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.45 + Math.sin(t * 10) * 0.15);
+  if (J.dorT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ff3030', 0.55);
+  ctx.restore();
+  if (J.bebeuT > 0) { ctx.globalAlpha = J.bebeuT; aro(J.x, J.y - 2, 26 - J.bebeuT * 10, '#5dff7a', 3); ctx.globalAlpha = 1; }
   if (J.escudoTitan > 0) { ctx.globalAlpha = 0.5; aro(J.x, J.y - 2, 24, '#c0a060', 3); ctx.globalAlpha = 1; }
   ctx.globalAlpha = 1;
   if (J.amuleto) {
@@ -1053,19 +1062,25 @@ function desenharHUDFinal(t) {
   }
 }
 
+const cacheMinimapa = { c: null, mapa: null, t: 0 };
 function desenharMinimapa() {
   const esc = 3;
   const w = mapa.W * esc, h = mapa.H * esc;
   const x0 = LARGURA + MARGEM_X - w - 16, y0 = 40; // no canto direito do ecrã
   painel(x0 - 6, 10, w + 12, h + 40);
   textoCentro(naCidade() ? 'CIDADE' : J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
-  for (let y = 0; y < mapa.H; y++) {
-    for (let x = 0; x < mapa.W; x++) {
-      if (!mapa.explorado[y * mapa.W + x] || !mapa.tiles[y * mapa.W + x]) continue;
-      ctx.fillStyle = 'rgba(200,190,230,0.35)';
-      ctx.fillRect(x0 + x * esc, y0 + y * esc, esc, esc);
-    }
+  // o chão explorado muda devagar: desenha-se numa imagem que só se refaz 4 vezes por segundo
+  const agoraMs = performance.now();
+  if (!cacheMinimapa.c || cacheMinimapa.mapa !== mapa || agoraMs - cacheMinimapa.t > 250) {
+    const c = cacheMinimapa.c || (cacheMinimapa.c = document.createElement('canvas'));
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = 'rgba(200,190,230,0.35)';
+    for (let y = 0; y < mapa.H; y++) for (let x = 0; x < mapa.W; x++) if (mapa.explorado[y * mapa.W + x] && mapa.tiles[y * mapa.W + x]) g.fillRect(x * esc, y * esc, esc, esc);
+    cacheMinimapa.mapa = mapa; cacheMinimapa.t = agoraMs;
   }
+  ctx.drawImage(cacheMinimapa.c, x0, y0);
   for (const s of mapa.salas) {
     if (!s.tipo || !mapa.explorado[(s.y + 1) * mapa.W + s.x + 1]) continue;
     ctx.globalAlpha = 0.35;
@@ -1165,7 +1180,9 @@ function desenharInfoObjeto(o) {
 function desenharCartaItem(it, x, y, cabecalho) {
   const info = RARIDADES[it.r];
   const linhas = linhasItem(it);
-  const w = 230, h = 128 + linhas.length * 18 + (it.afixo ? 22 : 0) + (it.maldicao ? 36 : 0);
+  let comp = J && ['NOVO', 'À VENDA', 'NA MOCHILA'].includes(cabecalho) ? compararItens(it, J[it.tipo]) : [];
+  if (cabecalho === 'NOVO') comp = comp.slice(0, 1); // na roleta só cabe o resumo (Poder)
+  const w = 230, h = 128 + linhas.length * 18 + (it.afixo ? 22 : 0) + (it.maldicao ? 36 : 0) + (comp.length ? comp.length * 17 + 12 : 0);
   x = clamp(x, 10, LARGURA - w - 10);
   y = clamp(y, 10, ALTURA - h - 10);
   painel(x, y, w, h, 'rgba(12,10,20,0.96)', info.cor);
@@ -1179,6 +1196,11 @@ function desenharCartaItem(it, x, y, cabecalho) {
     const ym = y + 130 + linhas.length * 18 + (it.afixo ? 22 : 0);
     textoCentro(`Maldição: ${it.maldicao.nome}`, x + w / 2, ym + 2, 13, '#ff5ce0', false);
     textoCentroAjustado(it.maldicao.desc, x + w / 2, ym + 19, 12, '#d98ad0', w - 16, false);
+  }
+  if (comp.length) { // comparação com o que tens equipado
+    const yc = y + h - comp.length * 17 - 4;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + 10, yc - 12, w - 20, 1);
+    comp.forEach((l, i) => textoCentro(l.txt, x + w / 2, yc + i * 17, l.grande ? 14 : 12, l.cor, !!l.grande));
   }
   return h;
 }
