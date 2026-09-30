@@ -264,14 +264,13 @@ function desenhar(t) {
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
   if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
-      estado === 'pacto' || estado === 'registo' || estado === 'cidade' || estado === 'diario' ||
+      estado === 'pacto' || estado === 'registo' || estado === 'diario' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
     else if (estado === 'criar') desenharCriacao(t);
     else if (estado === 'opcoes') desenharOpcoes(t);
     else if (estado === 'pacto') desenharPacto(t);
     else if (estado === 'registo') desenharRegisto(t);
-    else if (estado === 'cidade') desenharCidade(t);
     else if (estado === 'diario') desenharDiario(t);
     else desenharMenuMeta(t);
     desenharAvisos();
@@ -299,7 +298,7 @@ function desenhar(t) {
   ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
-  if (estado !== 'pausa' && estado !== 'opcoes' && estado !== 'status') desenharHUD(t);
+  if (estado !== 'pausa' && estado !== 'opcoes' && estado !== 'status' && estado !== 'cidade') desenharHUD(t);
   desenharTutorial(t);
 
   if (estado === 'bau') desenharRoleta(t);
@@ -311,6 +310,7 @@ function desenhar(t) {
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'opcoes') desenharOpcoes(t);
   else if (estado === 'status') desenharStatus(t);
+  else if (estado === 'cidade') desenharPainelCidade(t);
   else if (estado === 'morto') desenharMorte();
   desenharAvisos();
   desenharAvisoRodar();
@@ -328,11 +328,13 @@ function desenharMundo(t) {
   const tochas = SPR.tochaZona[zonaAtual()];
   for (const tc of mapa.tochas) spr(tochas[Math.floor(t * 6 + tc.x) % 2], tc.x, tc.y);
   desenharEstatuaTemplo(t);
+  desenharCidadeMundo(t);
 
   // tudo o que tem "altura" é ordenado pela posição vertical
   const lista = [];
   for (const b of baus) lista.push({ y: b.y, f: () => desenharBau(b) });
   for (const o of objetos) lista.push({ y: o.y, f: () => desenharObjeto(o, t) });
+  entidadesCidade(lista);
   if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
   for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
   for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
@@ -377,7 +379,7 @@ function desenharLuz(t) {
   const L = ctxLuz;
   L.globalCompositeOperation = 'source-over';
   L.clearRect(0, 0, LB, AB);
-  L.fillStyle = `rgba(3,2,8,${mapa.eBoss ? 0.55 : bioma().escuro})`;
+  L.fillStyle = `rgba(3,2,8,${naCidade() ? 0.12 : mapa.eBoss ? 0.55 : bioma().escuro})`;
   L.fillRect(0, 0, LB, AB);
   L.globalCompositeOperation = 'destination-out';
   const luz = (x, y, r, forca) => {
@@ -544,6 +546,8 @@ function desenharBau(b) {
 function desenharObjeto(o, t) {
   if (o.tipo === 'portal' || o.tipo === 'saidaPortal') { desenharPortal(o, t); return; }
   if (o.tipo === 'portaDupla') { desenharPortaDupla(o, t); return; }
+  if (o.tipo === 'escadaCidade' || o.tipo === 'escadaMasmorra') { desenharEscadaCidade(o, t); return; }
+  if (o.tipo === 'edificio') return; // a porta já está desenhada no edifício
   if (desenharObjetoExtra(o, t)) return;
   if (o.tipo === 'mercador') {
     sombra(o.x, o.y + 16, 12);
@@ -803,6 +807,7 @@ function desenharTextosMundo() {
   for (const o of objetos) desenharLetraPortal(o);
   desenharNomesSombras();
   if (mapa.templo) desenharInfoTemplo();
+  desenharNomesCidade();
   // nomes dos inimigos de elite
   for (const e of inimigos) {
     if (!e.elite || e.morto || !explorado(e.x, e.y) || (e.alfa ?? 1) < 0.5 || e.enterrado > 0) continue;
@@ -1019,7 +1024,7 @@ function desenharMinimapa() {
   const w = mapa.W * esc, h = mapa.H * esc;
   const x0 = LARGURA + MARGEM_X - w - 16, y0 = 40; // no canto direito do ecrã
   painel(x0 - 6, 10, w + 12, h + 40);
-  textoCentro(J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
+  textoCentro(naCidade() ? 'CIDADE' : J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
   for (let y = 0; y < mapa.H; y++) {
     for (let x = 0; x < mapa.W; x++) {
       if (!mapa.explorado[y * mapa.W + x] || !mapa.tiles[y * mapa.W + x]) continue;
@@ -1038,7 +1043,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', pedestal: '#fff0a0', estatua: '#ff8080' };
+  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', escadaCidade: '#4dc3ff', escadaMasmorra: '#ffae00', edificio: '#ffe14d', pedestal: '#fff0a0', estatua: '#ff8080' };
   for (const o of objetos) {
     if (o.tipo === 'portal') { // os portais sentem-se de longe: aparecem sempre e a piscar
       ponto(o.x, o.y, Math.floor(performance.now() / 300) % 2 ? (o.vermelho ? '#ff2a2a' : RANKS_PORTAL[o.gi].cor) : '#ffffff', 8);
@@ -1095,6 +1100,7 @@ function desenharInfoObjeto(o) {
   const sx = ecraX(o.x), sy = ecraY(o.y) - 58;
   if (o.tipo === 'portal' || o.tipo === 'saidaPortal') { desenharInfoPortal(o, sx, sy); return; }
   if (o.tipo === 'portaDupla') { desenharInfoPortaDupla(o, sx, sy); return; }
+  if (desenharInfoCidade(o, sx, sy)) return;
   if (desenharInfoExtra(o, sx, sy)) return;
   const E = modoToque ? 'Usar:' : '[E]';
   if (o.tipo === 'mercador') {
@@ -1614,7 +1620,7 @@ function desenharTitulo(t) {
 
   // botões do menu
   botoesTitulo().forEach((b, i) => {
-    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'cidade' ? '#4dc3ff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' ? '#ff8080' : '#ddd';
+    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' ? '#ff8080' : '#ddd';
     botao(b, b.txt, cor);
   });
   if (saveInfo) {
@@ -1654,7 +1660,7 @@ function desenharTitulo(t) {
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item!', 670, 530, 14, '#fff', false);
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 586, 13, '#7ec8ff', false);
-  if (!modoToque) textoCentro('ENTER: jogar · N: novo · C: cidade · D: diário · O: torre · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
+  if (!modoToque) textoCentro('ENTER: jogar · N: novo · D: diário · O: torre · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
   botaoIdioma();
   botoesMenuToque(true);
 }
@@ -1724,7 +1730,7 @@ function desenharMorte() {
   if (J.novoRecorde) textoCentro('NOVO RECORDE!', LARGURA / 2, 476, 26, '#ffe14d');
   else textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 476, 18, '#7ec8ff');
   textoCentro(`+${J.almasGanhas || 0} almas  (tens ${meta.almas})`, LARGURA / 2, 514, 20, '#b48cff');
-  textoCentro(`+${J.moedasGanhas || 0} moedas de caçador para a Cidade (tens ${meta.moedas || 0})`, LARGURA / 2, 540, 14, '#ffd23f', false);
+  textoCentro('Gasta-as no Altar das Almas, no menu inicial', LARGURA / 2, 540, 12, '#aaa', false);
   if (J.modo === 'diario') textoCentro(`Desafio Diário: ${J.pontosDiario} pontos${J.recordeDiario ? ' · NOVO RECORDE DE HOJE!' : ''}`, LARGURA / 2, 330, 16, '#ffae00');
   if (J.modo === 'torre') textoCentro(`Torre: chegaste ao andar ${andar}/100 (recorde ${meta.torreMax || andar})`, LARGURA / 2, 330, 16, '#ff8080');
   botao(BOTOES_MORTE.denovo, modoToque ? 'Tentar outra vez' : 'ENTER: Outra vez', '#5dff7a');

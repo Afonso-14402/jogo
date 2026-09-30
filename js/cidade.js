@@ -1,42 +1,30 @@
 'use strict';
 // =====================================================================
-//  CIDADE DOS CAÇADORES (entre partidas)
+//  CIDADE DOS CAÇADORES (dentro do jogo)
+//  Depois de cada boss aparece uma escada para cima, para a cidade. Lá andas à
+//  vontade entre as casas e os habitantes e entras nos edifícios:
+//  - A tua Casa: descansar (vida e mana cheias) e guardar o jogo
 //  - Associação de Caçadores: reavaliação de rank e contratos
-//  - Ferreiro: forja a arma inicial e dá uma armadura para começar
-//  - Alquimista: mais poções, poções mais fortes e mais mana
-//  - Portão: jogo normal, Desafio Diário e Torre
-//  Paga-se com Moedas de Caçador, que ganhas no fim de cada partida.
+//  - Ferreiro: afiar a arma e reforçar a armadura (sem falhar)
+//  - Alquimista: poções e elixires de vida e de mana
+//  A escada da praça desce para o andar seguinte.
 // =====================================================================
 
 function metaCidade() {
-  if (meta.moedas == null) meta.moedas = 0;
-  if (!meta.cidade) meta.cidade = {};
   if (!meta.contratos) meta.contratos = {};
   if (meta.rankCacador == null) meta.rankCacador = 0;
   if (meta.melhorPoder == null) meta.melhorPoder = 0;
-  return meta.cidade;
 }
-const nCidade = id => (metaCidade()[id] || 0);
-
-// Moedas ganhas numa partida (uma parte do ouro que trazes e o que fizeste)
-function calcularMoedas() {
-  return Math.max(1, Math.round((J.ouro * 0.15 + andar * 4 + (J.bossesMortos || 0) * 10) * (J.modo === 'torre' ? 1.3 : 1)));
-}
-function ganharMoedasFim() {
-  metaCidade();
-  J.moedasGanhas = calcularMoedas();
-  meta.moedas += J.moedasGanhas;
-  salvarMeta();
-}
+const naCidade = () => !!(mapa && mapa.cidade);
 
 // ---------------------------------------------------------------------
 //  Rank de caçador (reavaliação na Associação)
 // ---------------------------------------------------------------------
 const bonusRankCacador = () => ({ dano: 0.03 * (meta.rankCacador || 0), hp: 0.03 * (meta.rankCacador || 0) });
-// Poder que tens de ter mostrado numa partida para passar ao rank k
+// Poder que tens de ter mostrado para passar ao rank k
 const poderParaRank = k => poderReferencia(RANKS[k - 1].ate);
 
-// O melhor poder de sempre fica guardado (visto ao descer cada andar)
+// O melhor poder de sempre fica guardado
 function registarPoder() {
   metaCidade();
   const p = poderJogador();
@@ -44,12 +32,14 @@ function registarPoder() {
 }
 
 function reavaliar() {
+  registarPoder();
   const k = (meta.rankCacador || 0) + 1;
   if (k >= RANKS.length) return { txt: 'Já és um Caçador de Nível Nacional!', cor: '#ffe14d' };
   const precisa = poderParaRank(k);
   if (meta.melhorPoder < precisa) return { txt: `O cristal não reage. Precisas de mostrar poder ${precisa} (o teu melhor: ${meta.melhorPoder})`, cor: '#ff8080' };
   meta.rankCacador = k;
   salvarMeta();
+  S = stats();
   cidade.anim = { t: 0, letra: RANKS[k].letra, cor: RANKS[k].cor };
   fanfarra([392, 523, 659, 784, 1046, 1318, 1568], 0.05);
   if (RANKS[k].letra === 'S' || RANKS[k].letra === 'Nacional') desbloquear('reavaliadoS');
@@ -57,20 +47,21 @@ function reavaliar() {
 }
 
 // ---------------------------------------------------------------------
-//  Contratos da Associação (acumulam entre partidas)
+//  Contratos da Associação (acumulam entre partidas, dão almas)
 // ---------------------------------------------------------------------
 const CONTRATOS = [
-  { id: 'matar',      desc: 'Mata {n} monstros',        n: [100, 300, 800, 2000],  moedas: [40, 80, 150, 300] },
-  { id: 'elite',      desc: 'Mata {n} monstros de elite', n: [10, 30, 80, 200],   moedas: [40, 80, 150, 300] },
-  { id: 'boss',       desc: 'Derrota {n} bosses',       n: [3, 10, 25, 60],        moedas: [50, 100, 180, 350] },
-  { id: 'portalFeito', desc: 'Conquista {n} portais',   n: [2, 8, 20, 50],         moedas: [50, 100, 180, 350] },
-  { id: 'baus',       desc: 'Abre {n} baús',            n: [20, 60, 150, 400],     moedas: [30, 60, 120, 250] },
-  { id: 'andar',      desc: 'Chega ao andar {n}',       n: [10, 20, 35, 50],       moedas: [40, 90, 180, 400], maximo: true },
+  { id: 'matar',       desc: 'Mata {n} monstros',          n: [100, 300, 800, 2000], almas: [15, 30, 60, 120] },
+  { id: 'elite',       desc: 'Mata {n} monstros de elite', n: [10, 30, 80, 200],     almas: [15, 30, 60, 120] },
+  { id: 'boss',        desc: 'Derrota {n} bosses',         n: [3, 10, 25, 60],       almas: [20, 40, 80, 150] },
+  { id: 'portalFeito', desc: 'Conquista {n} portais',      n: [2, 8, 20, 50],        almas: [20, 40, 80, 150] },
+  { id: 'baus',        desc: 'Abre {n} baús',              n: [20, 60, 150, 400],    almas: [10, 25, 50, 100] },
+  { id: 'andar',       desc: 'Chega ao andar {n}',         n: [10, 20, 35, 50],      almas: [20, 40, 80, 160], maximo: true },
 ];
 function estadoContrato(C) {
-  const e = metaCidade() && (meta.contratos[C.id] || (meta.contratos[C.id] = { nivel: 0, prog: 0 }));
+  metaCidade();
+  const e = meta.contratos[C.id] || (meta.contratos[C.id] = { nivel: 0, prog: 0 });
   const nv = Math.min(e.nivel, C.n.length - 1);
-  return { e, nv, alvo: C.n[nv], premio: C.moedas[nv], acabado: e.nivel >= C.n.length, pronto: e.nivel < C.n.length && e.prog >= C.n[nv] };
+  return { e, alvo: C.n[nv], premio: C.almas[nv], acabado: e.nivel >= C.n.length, pronto: e.nivel < C.n.length && e.prog >= C.n[nv] };
 }
 // Chamado por registar() (extras.js)
 function progressoContratos(evento, q) {
@@ -80,13 +71,13 @@ function progressoContratos(evento, q) {
     if (acabado) continue;
     const antes = e.prog >= C.n[e.nivel];
     e.prog = C.maximo ? Math.max(e.prog, q) : e.prog + q;
-    if (!antes && e.prog >= C.n[e.nivel]) avisar('Contrato cumprido!', 'Recebe o prémio na Associação de Caçadores', '#4dc3ff');
+    if (!antes && e.prog >= C.n[e.nivel]) avisar('Contrato cumprido!', 'Recebe o prémio na Associação, na Cidade dos Caçadores', '#4dc3ff');
   }
 }
 function receberContrato(C) {
   const { e, pronto, premio } = estadoContrato(C);
   if (!pronto) return false;
-  meta.moedas += premio;
+  meta.almas += premio;
   e.nivel++;
   if (!C.maximo) e.prog = 0;
   salvarMeta();
@@ -95,71 +86,171 @@ function receberContrato(C) {
 }
 
 // ---------------------------------------------------------------------
-//  Lojas da cidade
+//  Lojas (pagas com o ouro da partida)
 // ---------------------------------------------------------------------
-const LOJAS_CIDADE = {
-  ferreiro: [
-    { id: 'forja',    nome: 'Forjar a arma inicial',   desc: 'Começas com a arma +1 (até +5)',            custo: [60, 120, 200, 320, 500] },
-    { id: 'armadura', nome: 'Armadura de caçador',     desc: 'Começas com uma armadura Comum, Rara ou Épica', custo: [80, 200, 450] },
-  ],
-  alquimista: [
-    { id: 'pocoes',   nome: 'Bolsa de poções',          desc: '+1 poção no início (até +3)',          custo: [50, 120, 250] },
-    { id: 'cura',     nome: 'Receita melhorada',        desc: 'Poções curam +5% (até +15%)',          custo: [80, 180, 350] },
-    { id: 'mana',     nome: 'Elixir de mana',           desc: '+15 mana máxima (até +45)',            custo: [60, 140, 280] },
-  ],
-};
-function comprarCidade(o) {
-  const nv = nCidade(o.id);
-  if (nv >= o.custo.length) return { txt: 'Já está no máximo', cor: '#aaa' };
-  if (meta.moedas < o.custo[nv]) { som(140, 0.2, 'square', 0.04); return { txt: 'Não tens moedas suficientes. Joga mais partidas!', cor: '#ff6060' }; }
-  meta.moedas -= o.custo[nv];
-  meta.cidade[o.id] = nv + 1;
-  salvarMeta();
-  fanfarra([523, 659, 784], 0.04);
-  return { txt: `${o.nome}: nível ${nv + 1}!`, cor: '#5dff7a' };
-}
+const precoAfiar = it => Math.round(60 * Math.pow(1.6, it.enc || 0) * (1 + andar * 0.12));
+const precoPocao = () => 30 + andar * 4;
+const precoElixir = n => Math.round((120 + andar * 15) * (1 + n * 0.5));
+const MAX_ELIXIR = 3;
+const cidadeRun = () => J.cidadeRun || (J.cidadeRun = { vida: 0, mana: 0 });
 
-// Bónus da cidade (entra nos stats)
+// Bónus que vêm da cidade (entra nos stats)
 function bonusCidade() {
-  const r = bonusRankCacador();
-  return { danoPct: r.dano, hpPct: r.hp, cura: 0.05 * nCidade('cura'), mana: 15 * nCidade('mana') };
+  const r = bonusRankCacador(), c = J ? cidadeRun() : { vida: 0, mana: 0 };
+  return { danoPct: r.dano, hpPct: r.hp + 0.08 * c.vida, cura: 0, mana: 20 * c.mana };
 }
 
-// No início de cada partida
+// No início de cada partida: o Rank S dá +1 poção
 function aplicarCidadeInicial() {
-  const f = nCidade('forja');
-  for (let k = 0; k < f && J.arma; k++) { J.arma.enc = (J.arma.enc || 0) + 1; melhorarStats(J.arma); }
-  if (f && J.arma) renomear(J.arma);
-  const a = nCidade('armadura');
-  if (a) {
-    const r = ['comum', 'raro', 'epico'][a - 1];
-    const l = ITENS.filter(i => i.tipo === 'armadura' && i.r === r && !i.inicial);
-    if (l.length) J.armadura = criarItem(escolher(l), 1, true);
-  }
-  J.pocoes += nCidade('pocoes') + ((meta.rankCacador || 0) >= 5 ? 1 : 0);
+  J.cidadeRun = { vida: 0, mana: 0 };
+  if ((meta.rankCacador || 0) >= 5) J.pocoes++;
+}
+
+function pagar(preco) {
+  if (J.ouro < preco) { som(140, 0.2, 'square', 0.04); return false; }
+  J.ouro -= preco;
+  som(1300, 0.08, 'square', 0.03, 300);
+  return true;
 }
 
 // ---------------------------------------------------------------------
-//  Ecrã da cidade
+//  O mapa da cidade
 // ---------------------------------------------------------------------
 const EDIFICIOS = [
-  { id: 'assoc',      nome: 'Associação de Caçadores', cor: '#4dc3ff', parede: '#2a3a5a', telhado: '#1a2a4a', npc: ['humano', 'real'] },
-  { id: 'ferreiro',   nome: 'Ferreiro',                cor: '#ff9b45', parede: '#4a3020', telhado: '#6a2a1a', npc: ['anao', 'dourado'] },
-  { id: 'alquimista', nome: 'Alquimista',              cor: '#5dff7a', parede: '#2a4a30', telhado: '#1a3a24', npc: ['elfo', 'gelo'] },
-  { id: 'portao',     nome: 'Portão da Masmorra',      cor: '#ffe14d', parede: '#3a3040', telhado: '#241c2c', npc: null },
+  { id: 'casa',       nome: 'A tua Casa',              cor: '#ffae00', parede: '#6a4a2a', telhado: '#8a2a1a', tx: 3 },
+  { id: 'assoc',      nome: 'Associação de Caçadores', cor: '#4dc3ff', parede: '#2a3a5a', telhado: '#1a2a4a', tx: 13 },
+  { id: 'ferreiro',   nome: 'Ferreiro',                cor: '#ff9b45', parede: '#4a3020', telhado: '#5a2418', tx: 27 },
+  { id: 'alquimista', nome: 'Alquimista',              cor: '#5dff7a', parede: '#2a4a30', telhado: '#1a3a24', tx: 37 },
 ];
-let cidade = null;
-const retEdificio = i => ({ x: 24 + i * 232, y: 96, w: 216, h: 300 });
-const retLinhaCidade = i => ({ x: 40, y: 450 + i * 46, w: 520, h: 40 });
+const CID_W = 46, CID_H = 26, ED_W = 6, ED_Y = 2, ED_H = 5;
 
-function abrirCidade() {
-  metaCidade();
-  cidade = { t: 0, ed: 0, sel: 0, msg: null, anim: null };
+function gerarCidade() {
+  const m = criarBaseMapa(CID_W, CID_H);
+  m.cidade = true;
+  m.eBoss = false;
+  const sala = { x: 1, y: 1, w: CID_W - 2, h: CID_H - 2 };
+  m.salas.push(sala);
+  m.salaInicio = sala; m.salaEscada = sala;
+  for (let y = 1; y < CID_H - 1; y++) for (let x = 1; x < CID_W - 1; x++) cavar(m, x, y);
+  const solidos = (x0, y0, w, h) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) m.tiles[y * m.W + x] = 0; };
+  for (const E of EDIFICIOS) solidos(E.tx, ED_Y, ED_W, ED_H);
+  solidos(22, 12, 2, 2); // fonte
+  m.arvores = [[2, 21], [6, 23], [40, 22], [43, 20], [2, 13], [43, 12], [10, 22], [35, 23]];
+  for (const [x, y] of m.arvores) solidos(x, y, 1, 1);
+  m.fonte = { x: 23 * TILE, y: 13 * TILE };
+  m.inicio = { x: 23 * TILE, y: 19 * TILE };
+  m.posBoss = { x: 23 * TILE, y: 13 * TILE };
+  m.escada = { x: -9999, y: -9999, ativa: false };
+  m.explorado.fill(1);
+  m.tochas = [];
+  m.lama = new Set();
+  m.candeeiros = [[9, 9], [20, 9], [26, 9], [34, 9], [9, 18], [36, 18]].map(([x, y]) => ({ x: (x + 0.5) * TILE, y: (y + 0.5) * TILE }));
+  m.luzes = m.candeeiros.map(c => ({ x: c.x, y: c.y - 30, cor: '#ffd27a' }));
+  // habitantes que passeiam pela praça
+  const gente = [['humano', 'floresta'], ['elfo', 'gelo'], ['anao', 'carmesim'], ['orc', 'sombra'], ['gnomo', 'real'], ['vampiro', 'infinito']];
+  m.aldeoes = gente.map(([raca, skin], i) => ({ raca, skin, x: (6 + i * 7) * TILE, y: (11 + (i % 3) * 3) * TILE, r: 10, alvo: null, espera: rand(0, 2), dir: 1, andando: false, t: 0 }));
+  return m;
+}
+
+function renderizarCidade(m) {
+  const T = TILE / ESCALA;
+  const c = document.createElement('canvas');
+  c.width = m.W * T; c.height = m.H * T;
+  const g = c.getContext('2d');
+  for (let y = 0; y < m.H; y++) for (let x = 0; x < m.W; x++) {
+    const h = Math.abs((x * 73856093) ^ (y * 19349663));
+    const px = x * T, py = y * T;
+    const praca = y >= 8 && y <= 20 && x >= 4 && x <= 41, rua = x >= 21 && x <= 24;
+    if (x === 0 || y === 0 || x === m.W - 1 || y === m.H - 1) { // muralha
+      g.fillStyle = '#4a4458'; g.fillRect(px, py, T, T);
+      g.fillStyle = '#5e5870'; g.fillRect(px + 1, py + 1, T - 2, T / 2 - 2);
+      g.fillStyle = '#2a2436'; g.fillRect(px, py + T - 2, T, 2);
+    } else if (praca || rua) { // calçada
+      g.fillStyle = h % 3 ? '#8a8078' : '#7a7068'; g.fillRect(px, py, T, T);
+      g.fillStyle = '#5e564e'; g.fillRect(px, py + T / 2, T, 1); g.fillRect(px + ((y % 2) ? T / 2 : 0), py, 1, T / 2); g.fillRect(px + ((y % 2) ? 0 : T / 2), py + T / 2, 1, T / 2);
+    } else { // relva
+      g.fillStyle = h % 5 ? '#3f7a34' : '#468a3a'; g.fillRect(px, py, T, T);
+      if (h % 7 === 0) { g.fillStyle = '#6ab050'; g.fillRect(px + (h % 11), py + (h % 9), 2, 3); }
+      if (h % 23 === 0) { g.fillStyle = ['#ff7fd0', '#ffe14d', '#ffffff'][h % 3]; g.fillRect(px + 5, py + 6, 2, 2); }
+    }
+  }
+  return c;
+}
+
+// Objetos com que se pode interagir
+function objetosCidade() {
+  const l = EDIFICIOS.map(E => ({ tipo: 'edificio', id: E.id, x: (E.tx + ED_W / 2) * TILE, y: (ED_Y + ED_H + 0.4) * TILE }));
+  l.push({ tipo: 'escadaMasmorra', x: 23 * TILE, y: 22 * TILE, t: 0 });
+  return l;
+}
+
+// Escada para cima, para a cidade (aparece quando matas um boss)
+function abrirEscadaCidade(x, y) {
+  objetos.push({ tipo: 'escadaCidade', x, y, t: 0 });
+}
+
+let cidade = null;
+
+function entrarCidade() {
+  mapa = gerarCidade();
+  mapaImg = renderizarCidade(mapa);
+  inimigos = []; projeteis = []; baus = []; drops = []; perigos = []; armadilhas = []; ondas = []; raios = [];
+  objetos = objetosCidade();
+  reiniciarBioma(); reiniciarCampo();
+  boss = null;
+  J.x = mapa.inicio.x; J.y = mapa.inicio.y; J.invuln = 1;
+  cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
+  levantarExercito();
+  criarPetEntidade();
+  J.visitaCidade = { descansou: false };
+  registarPoder();
+  mostrarBanner('CIDADE DOS CAÇADORES', `Descansa e prepara-te para o andar ${andar + 1}`, '#4dc3ff');
+  fanfarra([523, 659, 784, 659, 1046], 0.04);
+  guardarJogo();
+}
+
+function sairCidade() {
+  som(300, 0.4, 'triangle', 0.05, -150);
+  proximoAndar();
+}
+
+// Os habitantes passeiam pela praça
+function atualizarCidadeMundo(dt) {
+  if (!naCidade()) return;
+  for (const o of objetos) if (o.t != null) o.t += dt;
+  for (const a of mapa.aldeoes) {
+    a.t += dt;
+    if (!a.alvo) {
+      a.andando = false;
+      a.espera -= dt;
+      if (a.espera <= 0) a.alvo = { x: rand(5, 40) * TILE, y: rand(9, 20) * TILE };
+      continue;
+    }
+    const dx = a.alvo.x - a.x, dy = a.alvo.y - a.y, d = Math.hypot(dx, dy);
+    if (d < 6) { a.alvo = null; a.espera = rand(1, 4); continue; }
+    a.andando = true;
+    a.dir = dx > 0 ? 1 : -1;
+    const x0 = a.x, y0 = a.y;
+    moverEntidade(mapa, a, dx / d * 55 * dt, dy / d * 55 * dt);
+    if (Math.hypot(a.x - x0, a.y - y0) < 0.2) { a.alvo = null; a.espera = 0.5; } // bateu numa parede
+  }
+}
+
+// ---------------------------------------------------------------------
+//  Painel de um edifício (por cima do mundo)
+// ---------------------------------------------------------------------
+function abrirEdificio(id) {
+  cidade = { t: 0, ed: EDIFICIOS.findIndex(E => E.id === id), sel: 0, msg: null, anim: null };
   estado = 'cidade';
+  som(500, 0.08, 'triangle', 0.03, 100);
 }
 
 function linhasCidade() {
   const id = EDIFICIOS[cidade.ed].id;
+  if (id === 'casa') return [
+    { tipo: 'descansar', txt: J.visitaCidade && J.visitaCidade.descansou ? 'Já descansaste nesta visita' : 'Descansar (vida e mana cheias)' },
+    { tipo: 'guardar', txt: 'Guardar o jogo e sair para o menu' },
+  ];
   if (id === 'assoc') {
     const k = (meta.rankCacador || 0) + 1;
     const l = [{ tipo: 'reav', txt: k < RANKS.length ? `Reavaliação de rank (precisas de poder ${poderParaRank(k)})` : 'Reavaliação: rank máximo' }];
@@ -171,128 +262,113 @@ function linhasCidade() {
     }
     return l;
   }
-  if (id === 'portao') return [
-    { tipo: 'novo', txt: 'Masmorra normal' },
-    { tipo: 'diario', txt: `Desafio Diário${meta.diario && meta.diario[hojeTexto()] ? ' (já jogado hoje)' : ''}` },
-    { tipo: 'torre', txt: 'Torre dos 100 Andares' },
-  ];
-  return LOJAS_CIDADE[id].map(o => {
-    const nv = nCidade(o.id), max = nv >= o.custo.length;
-    return { tipo: 'loja', o, txt: `${o.nome}  (${nv}/${o.custo.length})`, preco: max ? null : o.custo[nv] };
+  if (id === 'ferreiro') return ['arma', 'armadura'].map(t => {
+    const it = J[t];
+    if (!it) return { tipo: 'nada', txt: t === 'arma' ? 'Sem arma' : 'Não tens armadura' };
+    const max = (it.enc || 0) >= 5;
+    return { tipo: 'afiar', t, txt: `${t === 'arma' ? 'Afiar' : 'Reforçar'}: ${it.nome}${max ? ' (máximo)' : ''}`, preco: max ? null : precoAfiar(it) };
   });
+  const c = cidadeRun();
+  return [
+    { tipo: 'pocao', txt: `Poção (tens ${J.pocoes})`, preco: precoPocao() },
+    { tipo: 'elixir', k: 'vida', txt: `Elixir de vida: +8% vida máxima (${c.vida}/${MAX_ELIXIR})`, preco: c.vida >= MAX_ELIXIR ? null : precoElixir(c.vida) },
+    { tipo: 'elixir', k: 'mana', txt: `Elixir de mana: +20 mana máxima (${c.mana}/${MAX_ELIXIR})`, preco: c.mana >= MAX_ELIXIR ? null : precoElixir(c.mana) },
+  ];
 }
+
+const retLinhaCidade = i => ({ x: 120, y: 250 + i * 50, w: 560, h: 42 });
 
 function atualizarCidade(dt) {
   const C = cidade;
   C.t += dt;
   if (C.msg) { C.msg.t -= dt; if (C.msg.t <= 0) C.msg = null; }
   if (C.anim) { C.anim.t += dt; if (C.anim.t > 3) C.anim = null; }
-  if (C.t < 0.1) return;
-  if (premiu('escape') || clicou(BOTAO_VOLTAR)) { estado = 'titulo'; cidade = null; return; }
-  EDIFICIOS.forEach((e, i) => { if (premiu(String(i + 1)) || clicou(retEdificio(i))) { if (C.ed !== i) { C.ed = i; C.sel = 0; som(600, 0.05, 'square', 0.02); } } });
-  if (premiu('a', 'arrowleft')) { C.ed = (C.ed + 3) % 4; C.sel = 0; }
-  if (premiu('d', 'arrowright')) { C.ed = (C.ed + 1) % 4; C.sel = 0; }
+  if (C.t < 0.15) return;
+  if (premiu('escape') || clicou(BOTAO_FECHAR)) { estado = 'jogo'; cidade = null; rato.baixo = false; return; }
   const L = linhasCidade();
   if (premiu('s', 'arrowdown')) C.sel = (C.sel + 1) % L.length;
   if (premiu('w', 'arrowup')) C.sel = (C.sel + L.length - 1) % L.length;
-  L.forEach((l, i) => { if (dentro(retLinhaCidade(i))) C.sel = i; });
+  L.forEach((l, i) => { if (premiu(String(i + 1))) { C.sel = i; } if (dentro(retLinhaCidade(i))) C.sel = i; });
   let acao = null;
-  L.forEach((l, i) => { if (clicou(retLinhaCidade(i))) acao = l; });
+  L.forEach((l, i) => { if (clicou(retLinhaCidade(i)) || premiu(String(i + 1))) acao = l; });
   if (premiu('e', 'enter', ' ')) acao = L[C.sel];
   if (!acao) return;
-  const msg = t => { C.msg = Object.assign({ t: 2.5 }, t); };
-  if (acao.tipo === 'reav') msg(reavaliar());
-  else if (acao.tipo === 'contrato') {
+  const msg = (txt, cor) => { C.msg = { txt, cor, t: 2.5 }; };
+  const semOuro = () => msg('Não tens ouro suficiente', '#ff6060');
+  if (acao.tipo === 'descansar') {
+    if (J.visitaCidade.descansou) return msg('Já descansaste nesta visita', '#aaa');
+    J.visitaCidade.descansou = true;
+    J.hp = S.maxHp; J.mana = S.maxMana; J.veneno = 0;
+    msg('Dormiste na tua cama. Vida e mana cheias!', '#5dff7a');
+    fanfarra([392, 523, 659], 0.04);
+  } else if (acao.tipo === 'guardar') {
+    guardarJogo();
+    cidade = null;
+    estado = 'titulo';
+  } else if (acao.tipo === 'reav') {
+    const r = reavaliar(); msg(r.txt, r.cor);
+  } else if (acao.tipo === 'contrato') {
     const p = receberContrato(acao.C);
-    msg(p ? { txt: `Contrato entregue: +${p} moedas`, cor: '#ffe14d' } : { txt: 'Ainda não cumpriste este contrato', cor: '#aaa' });
-  } else if (acao.tipo === 'loja') msg(comprarCidade(acao.o));
-  else if (acao.tipo === 'novo') { rato.baixo = false; modoProximo = null; abrirCriacao(); }
-  else if (acao.tipo === 'diario') { rato.baixo = false; comecarDiario(); }
-  else if (acao.tipo === 'torre') { rato.baixo = false; modoProximo = 'torre'; abrirCriacao(); }
+    msg(p ? `Contrato entregue: +${p} almas` : 'Ainda não cumpriste este contrato', p ? '#b48cff' : '#aaa');
+  } else if (acao.tipo === 'afiar') {
+    if (acao.preco == null) return msg('Já está no máximo (+5)', '#aaa');
+    if (!pagar(acao.preco)) return semOuro();
+    const it = J[acao.t];
+    it.enc = (it.enc || 0) + 1;
+    melhorarStats(it);
+    renomear(it);
+    S = stats();
+    if (it.enc >= 5) desbloquear('encantar5');
+    msg(`O ferreiro melhorou: ${it.nome}`, '#5dff7a');
+    fanfarra([523, 659, 784], 0.04);
+  } else if (acao.tipo === 'pocao') {
+    if (!pagar(acao.preco)) return semOuro();
+    J.pocoes++;
+    msg('+1 poção', '#ff6b8a');
+  } else if (acao.tipo === 'elixir') {
+    if (acao.preco == null) return msg('Já bebeste todos os elixires deste tipo', '#aaa');
+    if (!pagar(acao.preco)) return semOuro();
+    cidadeRun()[acao.k]++;
+    const hp0 = S.maxHp;
+    S = stats();
+    J.hp += Math.max(0, S.maxHp - hp0);
+    msg(acao.k === 'vida' ? 'Sentes-te mais forte: +8% vida máxima' : 'A tua mana cresce: +20', '#5dff7a');
+    fanfarra([659, 784, 1046], 0.04);
+  }
 }
 
-function desenharEdificio(E, r, sel, t) {
-  const base = r.y + r.h;
-  // parede
-  ctx.fillStyle = E.parede;
-  ctx.fillRect(r.x + 16, r.y + 90, r.w - 32, r.h - 90);
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  for (let y = r.y + 100; y < base; y += 16) ctx.fillRect(r.x + 16, y, r.w - 32, 2);
-  // telhado
-  ctx.fillStyle = E.telhado;
-  ctx.beginPath(); ctx.moveTo(r.x + 4, r.y + 96); ctx.lineTo(r.x + r.w / 2, r.y + 20); ctx.lineTo(r.x + r.w - 4, r.y + 96); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = E.cor; ctx.fillRect(r.x + 4, r.y + 92, r.w - 8, 5);
-  // janelas acesas
-  const luz = 0.7 + Math.sin(t * 2 + r.x) * 0.15;
-  ctx.fillStyle = `rgba(255,210,120,${luz})`;
-  ctx.fillRect(r.x + 36, r.y + 120, 30, 30); ctx.fillRect(r.x + r.w - 66, r.y + 120, 30, 30);
-  ctx.fillStyle = E.parede; ctx.fillRect(r.x + 50, r.y + 120, 2, 30); ctx.fillRect(r.x + r.w - 52, r.y + 120, 2, 30);
-  // porta ou portão
-  if (E.id === 'portao') {
-    ctx.fillStyle = '#07060a'; ctx.fillRect(r.x + 56, r.y + 170, r.w - 112, r.h - 170);
-    const R = RANKS_PORTAL[Math.floor(t * 0.7) % 8];
-    for (let k = 3; k >= 0; k--) { ctx.globalAlpha = 0.25 + k * 0.15; ctx.fillStyle = k % 2 ? R.cor : '#1a1422'; ctx.beginPath(); ctx.ellipse(r.x + r.w / 2, r.y + 236, 20 + k * 9 + Math.sin(t * 3 + k) * 2, 30 + k * 12, 0, 0, Math.PI * 2); ctx.fill(); }
-    ctx.globalAlpha = 1;
-  } else {
-    ctx.fillStyle = '#2a1a10'; ctx.fillRect(r.x + r.w / 2 - 22, base - 80, 44, 80);
-    ctx.fillStyle = '#ffd23f'; ctx.fillRect(r.x + r.w / 2 + 12, base - 42, 4, 4);
-  }
-  // letreiro
-  painel(r.x + 10, r.y + 58, r.w - 20, 26, 'rgba(20,14,8,0.95)', sel ? '#ffffff' : E.cor);
-  textoCentroAjustado(E.nome, r.x + r.w / 2, r.y + 72, 12, E.cor, r.w - 30);
-  // habitante à porta
-  if (E.npc) sprEcra(framesHeroi(E.npc[0], E.npc[1])[Math.floor(t * 2 + r.x) % 2 ? 0 : 1], r.x + r.w / 2 - 56, base - 30, 3);
-  if (E.id === 'ferreiro') { // bigorna e faíscas
-    ctx.fillStyle = '#555a66'; ctx.fillRect(r.x + r.w - 70, base - 22, 40, 12); ctx.fillRect(r.x + r.w - 60, base - 10, 20, 10);
-    if (Math.sin(t * 6) > 0.6) { ctx.fillStyle = '#ffe14d'; ctx.fillRect(r.x + r.w - 52 + Math.random() * 12, base - 34 - Math.random() * 10, 3, 3); }
-  }
-  if (E.id === 'alquimista') for (let k = 0; k < 3; k++) { ctx.fillStyle = ['#ff5a5a', '#5dff7a', '#4dc3ff'][k]; ctx.fillRect(r.x + r.w - 72 + k * 16, base - 20, 10, 14); }
-  if (E.id === 'assoc') { ctx.fillStyle = '#4dc3ff'; ctx.globalAlpha = 0.6 + Math.sin(t * 3) * 0.3; ctx.beginPath(); ctx.arc(r.x + r.w - 50, base - 22, 12, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
-  if (sel) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.strokeRect(r.x + 2, r.y + 14, r.w - 4, r.h - 12); }
-}
-
-function desenharCidade(t) {
-  // céu, lua e chão
-  const g = ctx.createLinearGradient(0, 0, 0, 400);
-  g.addColorStop(0, '#0a0a24'); g.addColorStop(1, '#3a2240');
-  ctx.fillStyle = g; ctx.fillRect(-MARGEM_X, 0, TELA_W, 400);
-  ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(820, 60, 26, 0, Math.PI * 2); ctx.fill();
-  for (let k = 0; k < 40; k++) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect((k * 173) % LARGURA, (k * 67) % 90, 2, 2); }
-  ctx.fillStyle = '#2a2430'; ctx.fillRect(-MARGEM_X, 396, TELA_W, 244);
-  ctx.fillStyle = '#3a3240';
-  for (let x = -MARGEM_X; x < LARGURA + MARGEM_X; x += 32) for (let y = 400; y < 430; y += 12) ctx.fillRect(x + ((y / 12) % 2) * 16, y, 28, 9);
-  EDIFICIOS.forEach((E, i) => desenharEdificio(E, retEdificio(i), cidade.ed === i, t));
-  botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
-  textoCentro('CIDADE DOS CAÇADORES', LARGURA / 2, 30, 28, '#4dc3ff');
-  textoDir(`Moedas: ${meta.moedas}`, LARGURA - 20, 30, 18, '#ffd23f');
-  textoDir(`Rank de caçador: ${RANKS[meta.rankCacador || 0].letra}`, LARGURA - 20, 56, 13, RANKS[meta.rankCacador || 0].cor);
-  // painel do edifício escolhido
+function desenharPainelCidade(t) {
   const E = EDIFICIOS[cidade.ed];
-  painel(20, 434, 920, 196, 'rgba(12,10,20,0.95)', E.cor);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
+  painel(100, 130, 760, 420, 'rgba(14,11,22,0.97)', E.cor);
+  textoCentro(E.nome, LARGURA / 2 - 80, 164, 28, E.cor);
+  textoDir(`Ouro: ${J.ouro}`, 840, 164, 18, '#ffd23f');
+  const info = {
+    casa: 'A tua casa na cidade. Aqui descansas e guardas o jogo.',
+    assoc: `A Associação mede o teu poder. Rank atual: ${RANKS[meta.rankCacador || 0].letra} (cada rank: +3% dano e vida para sempre)`,
+    ferreiro: 'O ferreiro melhora o teu equipamento sem nunca falhar (até +5).',
+    alquimista: 'Poções e elixires que duram até ao fim da partida.',
+  }[E.id];
+  textoCentroAjustado(info, LARGURA / 2, 206, 13, '#ccc', 700, false);
   linhasCidade().forEach((l, i) => {
     const r = retLinhaCidade(i), s = cidade.sel === i;
-    const cor = l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor;
+    const direita = l.preco != null || l.premio;
     painel(r.x, r.y, r.w, r.h, s ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', s ? '#ffffff' : l.pronto ? '#ffe14d' : '#3a3150');
-    textoCentroAjustado(l.txt, r.x + r.w / 2 - (l.preco != null || l.premio ? 50 : 0), r.y + r.h / 2 + 1, 14, cor, r.w - (l.preco != null || l.premio ? 120 : 20));
-    if (l.preco != null) textoDir(`${l.preco} moedas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, meta.moedas >= l.preco ? '#ffd23f' : '#ff8080');
-    if (l.premio) textoDir(l.pronto ? `Receber ${l.premio}` : `${l.premio} moedas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, l.pronto ? '#ffe14d' : '#887');
+    textoEsq(`${i + 1}`, r.x + 12, r.y + r.h / 2 + 1, 13, '#777');
+    textoCentroAjustado(l.txt, r.x + r.w / 2 - (direita ? 40 : 0), r.y + r.h / 2 + 1, 14, l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor, r.w - (direita ? 150 : 40));
+    if (l.preco != null) textoDir(`${l.preco} ouro`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, J.ouro >= l.preco ? '#ffd23f' : '#ff8080');
+    if (l.premio) textoDir(l.pronto ? `Receber ${l.premio} almas` : `${l.premio} almas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, l.pronto ? '#ffe14d' : '#887');
   });
-  // explicação à direita
-  const info = {
-    assoc: ['A Associação mede o teu poder.', `O teu melhor poder: ${meta.melhorPoder}`, 'Cada rank dá +3% dano e +3% vida', 'para sempre (Rank S: +1 poção).', 'Contratos dão moedas de caçador.'],
-    ferreiro: ['O ferreiro prepara o teu equipamento', 'para a próxima entrada na masmorra.'],
-    alquimista: ['O alquimista enche a tua bolsa', 'antes de cada partida.'],
-    portao: ['Escolhe como queres entrar:', 'Normal: a masmorra de sempre', 'Diário: mesmo mapa para todos, hoje', 'Torre: 100 andares de arenas'],
-  }[E.id];
-  const o = E.id === 'ferreiro' || E.id === 'alquimista' ? LOJAS_CIDADE[E.id][Math.min(cidade.sel, LOJAS_CIDADE[E.id].length - 1)] : null;
-  (o ? info.concat(['', o.desc]) : info).forEach((l, i) => textoEsq(l, 590, 460 + i * 22, 13, i === 0 ? E.cor : '#ccc', 'normal'));
-  if (cidade.msg) textoCentro(cidade.msg.txt, LARGURA / 2, 418, 15, cidade.msg.cor);
-  else textoCentro(`Ganhas moedas no fim de cada partida (15% do ouro + andar + bosses)`, LARGURA / 2, 418, 12, '#887', false);
-  if (!modoToque) textoCentro('1-4 / A D: edifício · W S: escolher · E: comprar · Esc: voltar', LARGURA / 2, 634, 11, '#777', false);
-  // animação da reavaliação
-  if (cidade.anim) {
+  // quem te atende
+  const npc = { casa: ['humano', J.skin], assoc: ['humano', 'real'], ferreiro: ['anao', 'dourado'], alquimista: ['elfo', 'gelo'] }[E.id];
+  sprEcra(framesHeroi(npc[0], npc[1])[Math.floor(t * 2) % 2 ? 0 : 1], 770, 360, 5);
+  if (cidade.msg) textoCentro(cidade.msg.txt, LARGURA / 2, 516, 15, cidade.msg.cor);
+  botao(BOTAO_FECHAR, 'Sair', '#ff8080');
+  if (!modoToque) textoCentro('1-4 ou W/S: escolher · E: comprar · Esc: sair', LARGURA / 2, 568, 12, '#777', false);
+  if (cidade.anim) { // animação da reavaliação
     const a = cidade.anim, al = Math.min(1, a.t * 2) * Math.min(1, (3 - a.t) * 2);
-    ctx.globalAlpha = al * 0.8; ctx.fillStyle = '#000'; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
+    ctx.globalAlpha = al * 0.85; ctx.fillStyle = '#000'; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
     ctx.globalAlpha = al;
     ctx.fillStyle = a.cor; ctx.beginPath(); ctx.arc(LARGURA / 2, 280, 60 + Math.sin(t * 8) * 6, 0, Math.PI * 2); ctx.fill();
     textoCentro(a.letra, LARGURA / 2, 284, a.letra.length > 2 ? 30 : 64, '#07060a');
@@ -300,4 +376,120 @@ function desenharCidade(t) {
     textoCentro(`Rank ${a.letra}`, LARGURA / 2, 424, 28, a.cor);
     ctx.globalAlpha = 1;
   }
+}
+
+// ---------------------------------------------------------------------
+//  Desenho da cidade no mundo
+// ---------------------------------------------------------------------
+function desenharEdificioMundo(E, t) {
+  const x = E.tx * TILE, y = ED_Y * TILE, w = ED_W * TILE, h = ED_H * TILE, base = y + h;
+  // telhado (sobe acima do edifício)
+  ctx.fillStyle = E.telhado;
+  ctx.beginPath(); ctx.moveTo(x - 8, y + 52); ctx.lineTo(x + w / 2, y - 40); ctx.lineTo(x + w + 8, y + 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  for (let k = 0; k < 5; k++) ctx.fillRect(x + w / 2 - 20 * k - 10, y - 30 + k * 16, 40 * k + 20, 3);
+  // parede
+  ctx.fillStyle = E.parede; ctx.fillRect(x, y + 48, w, h - 48);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)'; for (let yy = y + 60; yy < base; yy += 14) ctx.fillRect(x, yy, w, 2);
+  ctx.fillStyle = E.cor; ctx.fillRect(x - 8, y + 48, w + 16, 5);
+  // janelas acesas
+  ctx.fillStyle = `rgba(255,210,120,${0.75 + Math.sin(t * 2 + x) * 0.15})`;
+  ctx.fillRect(x + 22, y + 70, 30, 28); ctx.fillRect(x + w - 52, y + 70, 30, 28);
+  ctx.fillStyle = E.parede; ctx.fillRect(x + 36, y + 70, 2, 28); ctx.fillRect(x + w - 38, y + 70, 2, 28);
+  // porta
+  ctx.fillStyle = '#2a1a10'; ctx.fillRect(x + w / 2 - 20, base - 62, 40, 62);
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + w / 2 + 10, base - 32, 4, 4);
+  // letreiro
+  ctx.fillStyle = 'rgba(20,14,8,0.95)'; ctx.fillRect(x + 12, y + 108, w - 24, 20);
+  ctx.fillStyle = E.cor; ctx.fillRect(x + 12, y + 108, w - 24, 2); ctx.fillRect(x + 12, y + 126, w - 24, 2);
+  // pormenores
+  if (E.id === 'ferreiro') { ctx.fillStyle = '#555a66'; ctx.fillRect(x + w + 4, base - 20, 30, 10); ctx.fillRect(x + w + 12, base - 10, 14, 10); if (Math.sin(t * 6) > 0.5) { ctx.fillStyle = '#ffe14d'; ctx.fillRect(x + w + 12 + Math.random() * 10, base - 30 - Math.random() * 8, 3, 3); } }
+  if (E.id === 'alquimista') for (let k = 0; k < 3; k++) { ctx.fillStyle = ['#ff5a5a', '#5dff7a', '#4dc3ff'][k]; ctx.fillRect(x + w + 4 + k * 10, base - 14, 7, 12); }
+  if (E.id === 'assoc') { ctx.globalAlpha = 0.6 + Math.sin(t * 3) * 0.3; circulo(x + w + 18, base - 16, 9, '#4dc3ff'); ctx.globalAlpha = 1; }
+  if (E.id === 'casa') { ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x + w - 40, y - 10, 14, 30); if (Math.random() < 0.1) particulas.push({ x: x + w - 33, y: y - 14, vx: rand(-5, 5), vy: -25, t: 1.4, cor: '#bbbbbb', tam: 5 }); }
+}
+
+function desenharCidadeMundo(t) {
+  if (!naCidade()) return;
+  for (const E of EDIFICIOS) desenharEdificioMundo(E, t);
+  // fonte
+  const f = mapa.fonte;
+  sombra(f.x, f.y + 30, 40);
+  ctx.fillStyle = '#6a6478'; ctx.beginPath(); ctx.ellipse(f.x, f.y + 10, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#4d9fff'; ctx.beginPath(); ctx.ellipse(f.x, f.y + 8, 36, 18, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8a8498'; ctx.fillRect(f.x - 6, f.y - 30, 12, 38);
+  if (Math.random() < 0.6) particulas.push({ x: f.x + rand(-3, 3), y: f.y - 32, vx: rand(-40, 40), vy: rand(-90, -50), t: 0.6, cor: '#bfe6ff', tam: 3 });
+  // árvores e candeeiros
+  for (const [tx, ty] of mapa.arvores) {
+    const x = (tx + 0.5) * TILE, y = (ty + 0.5) * TILE;
+    sombra(x, y + 14, 16);
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x - 4, y - 4, 8, 18);
+    circulo(x, y - 14, 20, '#2f6a2a'); circulo(x - 6, y - 20, 12, '#3f8a34');
+  }
+  for (const c of mapa.candeeiros) {
+    ctx.fillStyle = '#2a2436'; ctx.fillRect(c.x - 2, c.y - 34, 4, 40);
+    ctx.fillStyle = '#ffd27a'; ctx.fillRect(c.x - 6, c.y - 44, 12, 10);
+  }
+}
+
+// Os habitantes (entram na lista ordenada pela altura)
+function entidadesCidade(lista) {
+  if (!naCidade()) return;
+  for (const a of mapa.aldeoes) lista.push({ y: a.y, f: () => { sombra(a.x, a.y + 12, 9); spr(framesHeroi(a.raca, a.skin)[a.andando ? [0, 1, 0, 2][Math.floor(a.t * 8) % 4] : 0], a.x, a.y - (a.andando ? Math.abs(Math.sin(a.t * 10)) * 2 : 0), a.dir < 0); } });
+}
+
+// Nomes nos letreiros (no ecrã, para ficarem nítidos)
+function desenharNomesCidade() {
+  if (!naCidade()) return;
+  for (const E of EDIFICIOS) textoCentro(E.nome, ecraX((E.tx + ED_W / 2) * TILE), ecraY(ED_Y * TILE + 118), 11 * Math.min(1.2, ZOOM), E.cor, false);
+}
+
+// Escada para cima (na masmorra, depois do boss) e escada para baixo (na cidade)
+function desenharEscadaCidade(o, t) {
+  const x = alinhar(o.x), y = alinhar(o.y);
+  if (o.tipo === 'escadaMasmorra') { // descer para a masmorra
+    ctx.drawImage(SPR.escada, x - TILE / 2 - 6, y - TILE / 2 - 6, TILE + 12, TILE + 12);
+    ctx.globalAlpha = 0.5 + Math.sin(t * 4) * 0.3;
+    ctx.strokeStyle = '#ffae00'; ctx.lineWidth = 2;
+    ctx.strokeRect(x - TILE / 2 - 6, y - TILE / 2 - 6, TILE + 12, TILE + 12);
+    ctx.globalAlpha = 1;
+    return;
+  }
+  // degraus de pedra que sobem para a luz
+  sombra(o.x, o.y + 22, 26);
+  for (let k = 0; k < 5; k++) {
+    const w = 52 - k * 6, yy = y + 14 - k * 9;
+    ctx.fillStyle = ['#5a5468', '#6a6478', '#7a7488', '#8a8498', '#9a94a8'][k];
+    ctx.fillRect(x - w / 2, yy, w, 9);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x - w / 2, yy + 7, w, 2);
+  }
+  ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 3);
+  ctx.fillStyle = '#fff6c8';
+  ctx.beginPath(); ctx.moveTo(x - 14, y - 32); ctx.lineTo(x + 14, y - 32); ctx.lineTo(x + 30, y + 22); ctx.lineTo(x - 30, y + 22); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+  const b = Math.sin(t * 4) * 3;
+  ctx.fillStyle = '#4dc3ff';
+  ctx.beginPath(); ctx.moveTo(x, y - 46 + b); ctx.lineTo(x - 8, y - 36 + b); ctx.lineTo(x + 8, y - 36 + b); ctx.closePath(); ctx.fill();
+  if (Math.random() < 0.2) particulas.push({ x: o.x + rand(-20, 20), y: o.y + 10, vx: 0, vy: -50, t: 0.6, cor: '#fff6c8', tam: 3 });
+}
+
+function desenharInfoCidade(o, sx, sy) {
+  const usar = modoToque ? 'Usar' : '[E]';
+  if (o.tipo === 'escadaCidade') {
+    textoCentro('Escada para a Cidade dos Caçadores', sx, sy - 36, 16, '#4dc3ff');
+    textoCentro('Abre os baús primeiro! Da cidade segues para o andar seguinte', sx, sy - 18, 12, '#ddd');
+    textoCentro(`${usar}: Subir à cidade`, sx, sy, 15, '#ffe680');
+    return true;
+  }
+  if (o.tipo === 'escadaMasmorra') {
+    textoCentro(`Escada para a masmorra (andar ${andar + 1})`, sx, sy - 18, 15, '#ffae00');
+    textoCentro(`${usar}: Descer à masmorra`, sx, sy, 15, '#ffe680');
+    return true;
+  }
+  if (o.tipo === 'edificio') {
+    const E = EDIFICIOS.find(x => x.id === o.id);
+    textoCentro(`${usar}: Entrar em ${traduzir(E.nome)}`, sx, sy + 20, 15, E.cor);
+    return true;
+  }
+  return false;
 }

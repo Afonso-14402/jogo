@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'classe', 'evoluido', 'provacao', 'modo', 'generais'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun'];
 
 function lerSave() {
   try {
@@ -44,7 +44,7 @@ let saveInfo = lerSave();
 
 function guardarJogo() {
   if (!J || J.hp <= 0) return;
-  const dados = { v: 1, andar, tempoJogo, J: {} };
+  const dados = { v: 1, andar: naCidade() ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade, continuas no andar seguinte
   for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
   try { localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e) { /* sem storage */ }
 }
@@ -779,7 +779,6 @@ function matarInimigo(e) {
     if (!J.levouDanoBoss) desbloquear('intocavel');
     if (mapa.portal) { bossPortalMorto(e); return; } // boss de um portal
     vitoriaTorre();
-    if (mapa.provacao) concluirProvacao();
     if (J.pet) petGanharXp(10);
     mapa.escada.ativa = true;
     tremor = 20;
@@ -791,7 +790,9 @@ function matarInimigo(e) {
     const livro = sortearLivro();
     if (livro) drops.push({ tipo: 'livro', feitico: livro, x: ex, y: ey + 64, t: 0 });
     soltarReliquia(ex, ey - 64);
-    mostrarBanner('BOSS DERROTADO!', 'Abre os baús e desce a escada', '#ffae00');
+    mostrarBanner('BOSS DERROTADO!', 'Abre os baús: podes subir à cidade ou descer a escada', '#ffae00');
+    abrirEscadaCidade(ex + 200, ey); // escada para cima, para a Cidade dos Caçadores
+    if (mapa.provacao) concluirProvacao(); // o banner da mudança de classe fica por cima
     fanfarra([392, 523, 659, 784, 1046, 1318], 0.05);
     projeteis = []; perigos = [];
     // os lacaios morrem com o mestre
@@ -876,7 +877,6 @@ function morrer(desistiu = false) {
   J.desistiu = desistiu;
   J.almasGanhas = calcularAlmas();
   meta.almas += J.almasGanhas;
-  ganharMoedasFim();
   if (J.modo === 'diario') fimDiario();
   recordeTorre();
   salvarMeta();
@@ -942,6 +942,7 @@ function atualizar(dt) {
   atualizarPortal(dt);
   atualizarTorre();
   atualizarTemplo(dt);
+  atualizarCidadeMundo(dt);
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
@@ -1069,6 +1070,9 @@ function usarObjeto(o) {
   if (o.tipo === 'portal') { entrarPortal(o); return; }
   if (o.tipo === 'saidaPortal') { sairPortal(); return; }
   if (o.tipo === 'portaDupla') { entrarTemplo(o); return; }
+  if (o.tipo === 'escadaCidade') { entrarCidade(); return; }
+  if (o.tipo === 'escadaMasmorra') { sairCidade(); return; }
+  if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
   if (o.tipo === 'estatua') return;
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
   if (o.tipo === 'mesa') { abrirMesa(o); return; }
@@ -2071,7 +2075,7 @@ const clicou = r => premiu('rato') && dentro(r);
 
 function botoesTitulo() {
   const l = saveInfo ? [['continuar', 'Continuar'], ['novo', 'Novo jogo']] : [['novo', 'Começar']];
-  l.push(['cidade', 'Cidade dos Caçadores'], ['diario', 'Desafio Diário'], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
+  l.push(['diario', 'Desafio Diário'], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
   const calor = calorDe(meta.pacto || {});
   const peq = [['almas', `Almas (${meta.almas})`], ['pacto', calor ? `Pacto (Calor ${calor})` : 'Pacto de Castigo'],
     ['colecao', 'Coleção'], ['conquistas', 'Conquistas'], ['registo', 'Missões']];
@@ -2269,7 +2273,6 @@ function loop(agora) {
     if (premiu('t')) acao = 'conquistas';
     if (premiu('k')) acao = 'pacto';
     if (premiu('r')) acao = 'registo';
-    if (premiu('c')) acao = 'cidade';
     if (premiu('d')) acao = 'diario';
     if (premiu('o')) acao = 'torre';
     if (premiu('i') || clicou(BOTAO_IDIOMA)) { mudarIdioma(); acao = null; }
@@ -2277,7 +2280,6 @@ function loop(agora) {
     if (acao === 'opcoes') abrirOpcoes();
     else if (acao === 'continuar') continuarJogo();
     else if (acao === 'novo') { modoProximo = null; abrirCriacao(); }
-    else if (acao === 'cidade') abrirCidade();
     else if (acao === 'diario') comecarDiario();
     else if (acao === 'torre') { modoProximo = 'torre'; abrirCriacao(); }
     else if (acao) abrirMenuMeta(acao);

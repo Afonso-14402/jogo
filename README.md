@@ -173,11 +173,12 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 
   Também há armas lendárias de caçador para encontrar: **Mata-Cavaleiros**, **Fúria do Dragão**, **Adagas do Rei Demónio** (mítico) e o amuleto **Orbe da Ganância**.
 - **Música e som**: cada zona tem a sua música (gerada no momento, sem ficheiros), e há músicas próprias para o menu, a cidade, os bosses, os portais e o templo. As explosões e os golpes têm sons com ruído. A tecla **M** (ou Opções no telemóvel) muda entre *tudo*, *só efeitos* e *desligado*.
-- **Cidade dos Caçadores** (menu inicial): no fim de cada partida ganhas **Moedas de Caçador** (15% do ouro + andar + bosses) para gastar aqui.
-  - **Associação de Caçadores**: **reavaliação de rank** (o cristal mede o melhor poder que já mostraste; cada rank, de E a Nacional, dá +3% dano e +3% vida para sempre, e o Rank S dá +1 poção) e **contratos** que acumulam entre partidas (matar monstros e elites, bosses, portais, baús, andares).
-  - **Ferreiro**: forja a arma inicial (+1 a +5) e dá uma armadura Comum, Rara ou Épica para começar.
-  - **Alquimista**: mais poções no início, poções mais fortes e mais mana.
-  - **Portão**: jogo normal, Desafio Diário ou Torre.
+- **Cidade dos Caçadores** (dentro do jogo): depois de cada boss aparece, ao lado dos baús, uma **escada para cima**. Sobes e chegas a uma cidade onde andas à vontade, com praça, fonte, candeeiros, árvores e habitantes a passear. Vais até à porta de cada edifício e carregas **E** (ou USAR):
+  - **A tua Casa**: descansar (vida e mana cheias, uma vez por visita) e guardar o jogo.
+  - **Associação de Caçadores**: **reavaliação de rank** (o cristal mede o melhor poder que já mostraste; cada rank, de E a Nacional, dá +3% dano e +3% vida para sempre, e o Rank S dá +1 poção no início) e **contratos** que acumulam entre partidas e dão almas.
+  - **Ferreiro**: afia a arma e reforça a armadura (+1, sem falhar, até +5), pago com ouro.
+  - **Alquimista**: poções e elixires de vida (+8%) e de mana (+20), até 3 de cada por partida.
+  - A **escada da praça** desce para o andar seguinte. Se guardares na cidade, continuas nesse andar.
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
 - **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo ou Senhor da Tempestade. Cada evolução tem uma passiva mais forte e melhora a habilidade única.
@@ -256,7 +257,7 @@ js/cacador.js       atributos, habilidades de caçador, exército das sombras, p
 js/classes.js       caçadores jogáveis (arma e habilidade única de cada um)
 js/portais.js       portais E a SSS dentro das masmorras (ondas, boss e prémios), Portais Vermelhos
 js/modos.js         Desafio Diário (semente do dia) e Torre dos 100 Andares
-js/cidade.js        Cidade dos Caçadores: reavaliação de rank, contratos, ferreiro e alquimista
+js/cidade.js        Cidade dos Caçadores (mapa, casas, habitantes): casa, reavaliação de rank, contratos, ferreiro e alquimista
 js/templo.js        Masmorra Dupla: o templo da estátua e as suas regras
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs

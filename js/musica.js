@@ -134,8 +134,8 @@ function tocarPasso(id, passo, t0, colcheia) {
 // Que música deve estar a tocar agora
 function faixaDesejada() {
   if (['titulo', 'criar', 'almas', 'colecao', 'conquistas', 'pacto', 'registo', 'diario'].includes(estado)) return 'titulo';
-  if (estado === 'cidade') return 'cidade';
   if (!mapa || !J) return 'titulo';
+  if (estado === 'cidade' || mapa.cidade) return 'cidade';
   if (estado === 'morto') return null;
   if (mapa.templo) return 'templo';
   if (boss && !boss.morto) return 'boss';
