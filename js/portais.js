@@ -224,7 +224,7 @@ const relogioPortal = t => `${Math.floor(Math.max(0, t) / 60)}:${String(Math.flo
 
 // O rank e o tempo até à rutura aparecem por cima do portal
 function desenharLetraPortal(o) {
-  if (o.tipo !== 'portal' || !explorado(o.x, o.y)) return;
+  if (o.tipo !== 'portal' || !explorado(o.x, o.y) || (J.objPerto === o && estado === 'jogo')) return; // ao pé dele já se vê a informação toda
   const R = RANKS_PORTAL[o.gi], y = ecraY(o.y) - 58 * (0.8 + o.gi * 0.07) * ZOOM;
   textoCentro(R.letra, ecraX(o.x), y, 18, o.vermelho ? '#ff3b3b' : R.cor);
   textoCentro(relogioPortal(o.rutura), ecraX(o.x), y - 18, 11, o.rutura < 30 ? '#ff4d4d' : '#ddd');
