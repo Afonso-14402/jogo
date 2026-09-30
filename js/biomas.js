@@ -17,9 +17,12 @@ const BIOMAS = [
   { escuro: 0.76, chama: ['#ff9b2a', '#fff4c0'], brilho: '255,170,60', ar: 'areia' },     // Templo do Deserto
   { escuro: 0.87, chama: ['#5ae0ff', '#e8fcff'], brilho: '100,230,255', ar: 'brilho' },   // Caverna de Cristal
   { escuro: 0.92, chama: ['#c04dff', '#f0c8ff'], brilho: '190,80,255', ar: 'vazio' },     // Reino do Vazio
+  { escuro: 0.72, chama: ['#ffe680', '#ffffff'], brilho: '255,240,180', ar: 'pena' },     // Cidadela Celeste (41-50)
+  { escuro: 0.94, chama: ['#6a3aff', '#d0c0ff'], brilho: '120,80,255', ar: 'vazio' },     // Trono do Monarca (51-60)
 ];
 
-const zonaDoAndar = a => Math.floor((a - 1) / 5) % NOMES_ZONAS.length;
+// Até ao andar 40 muda a cada 5 andares; 41-50 e 51-60 são as zonas finais; depois repete tudo
+const zonaDoAndar = a => a <= 40 ? Math.floor((a - 1) / 5) : a <= 60 ? 8 + Math.floor((a - 41) / 10) : Math.floor((a - 61) / 5) % NOMES_ZONAS.length;
 const zonaAtual = () => zonaDoAndar(andar);
 const bioma = () => BIOMAS[zonaAtual()];
 
@@ -410,6 +413,21 @@ function gerarDecoracoes(z) {
       }
       pedras('#2e1a40');
       break;
+    case 8: // Cidadela Celeste: cristais dourados e penas
+      for (const c of ['#ffe680', '#ffffff', '#fff0a0']) {
+        const g = novo();
+        poligono(g, [[5, 14], [8, 3], [11, 14]], x => x < 8 ? clarear(c, 0.4) : escurecer(c, 0.15));
+        fim(g, c);
+      }
+      pedras('#c8c0e0');
+      break;
+    case 9: // Trono do Monarca: ossos, caveiras e runas
+      ossos(); caveira();
+      { const g = novo(), c = '#8a6aff';
+        for (let a = 0; a < 16; a++) pixel(g, 8 + Math.round(Math.cos(a / 16 * Math.PI * 2) * 5), 9 + Math.round(Math.sin(a / 16 * Math.PI * 2) * 3), c);
+        fim(g, '#6a3aff', true); }
+      pedras('#2a1a3a');
+      break;
   }
   return lista;
 }
@@ -520,6 +538,7 @@ function atualizarAmbiente(dt) {
     else if (tipo === 'neve') { a.vx = rand(10, 30); a.vy = rand(30, 60); a.cor = 'rgba(240,248,255,0.8)'; a.tam = Math.random() < 0.3 ? 4 : 2; }
     else if (tipo === 'vagalume') { a.vx = rand(-12, 12); a.vy = rand(-12, 12); a.cor = '#d8ff6a'; }
     else if (tipo === 'areia') { a.vx = rand(40, 80); a.vy = rand(-6, 6); a.cor = 'rgba(240,210,150,0.5)'; }
+    else if (tipo === 'pena') { a.vx = rand(-12, 12); a.vy = rand(15, 35); a.cor = Math.random() < 0.6 ? '#fff6c8' : '#ffe680'; a.tam = 3; }
     else if (tipo === 'brilho') { a.vx = rand(-4, 4); a.vy = rand(-8, -2); a.cor = Math.random() < 0.5 ? '#bff4ff' : '#ffc0f0'; }
     else { a.vx = rand(-6, 6); a.vy = rand(-25, -8); a.cor = Math.random() < 0.5 ? '#b44dff' : '#5a2a8a'; }
     ambiente.push(a);
@@ -537,7 +556,7 @@ function desenharAmbiente() {
   const tipo = bioma().ar;
   for (const a of ambiente) {
     let alfa = clamp(Math.min(a.t, 1.2) / 1.2, 0, 1);
-    if (tipo === 'vagalume' || tipo === 'brilho') alfa *= 0.4 + 0.6 * Math.abs(Math.sin(a.fase * 3));
+    if (tipo === 'vagalume' || tipo === 'brilho' || tipo === 'pena') alfa *= 0.4 + 0.6 * Math.abs(Math.sin(a.fase * 3));
     ctx.globalAlpha = alfa;
     if (tipo === 'nevoa') circulo(a.x, a.y, a.tam, a.cor);
     else { ctx.fillStyle = a.cor; ctx.fillRect(alinhar(a.x), alinhar(a.y), a.tam, a.tam); }

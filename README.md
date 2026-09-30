@@ -179,6 +179,22 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Ferreiro**: afia a arma e reforça a armadura (+1, sem falhar, até +5), pago com ouro.
   - **Alquimista**: poções e elixires de vida (+8%) e de mana (+20), até 3 de cada por partida.
   - A **escada da praça** desce para o andar seguinte. Se guardares na cidade, continuas nesse andar.
+- **História e chefe final**: o [Sistema] e o vilão, o **Monarca do Vazio**, falam contigo ao longo da descida numa caixa de diálogo, sem parar o jogo. As últimas zonas são a **Cidadela Celeste** (andares 41-50) e o **Trono do Monarca** (51-60), com monstros próprios (Anjo Guerreiro, Arqueiro Celeste, Querubim, Cavaleiro do Vazio, Mago do Vazio e Devorador) e 4 bosses novos, cada um com desenho, animação e ataques próprios:
+  - **Arcanjo Caído** (45): leque de penas, pilares de luz e investidas pelo ar.
+  - **General do Monarca** (50): ondas de espada, saltos esmagadores e cortes giratórios.
+  - **Carrasco do Vazio** (55): ceifa em arco, correntes que te puxam e poças do Vazio.
+  - **Monarca do Vazio** (60, chefe final): três fases, anéis de esferas, chuva do Vazio, espirais de lâminas e o seu exército.
+
+  Vencê-lo mostra o **final do jogo**; depois podes continuar a descer (modo infinito).
+- **Animações**: todos os monstros e bosses respiram, inclinam-se ao andar, amassam quando levam um golpe, crescem ao preparar um ataque, aparecem a crescer e desfazem-se ao morrer. Os sprites ganharam luz e sombra automáticas e os bosses brilham à volta. Ao matar um boss o tempo abranda e há um clarão; os críticos têm números maiores.
+- **Cidade mais viva**: os habitantes dão **pedidos** (matar um tipo de monstro, elites, abrir baús, conquistar um portal) e pagam em ouro, XP e poções. O **Ancião** junto à fonte conta a história. Em tua casa ficam os **troféus** dos bosses que já derrotaste.
+- **Conjuntos de equipamento**: Dracónico, Crepúsculo e Seráfico (arma, armadura e amuleto). 2 peças dão um bónus e 3 peças um bónus maior (por exemplo, golpes que queimam).
+- **Pets que evoluem**: no nível 10 o companheiro evolui (Lobo Alfa, Fada Rainha, Dragão Jovem...), fica maior, com aura e +60% dano.
+- **Eventos nos andares**: mercador ambulante, chuva de ouro, andar escuro (+50% XP), lua de sangue (monstros mais fortes, mais XP e ouro) ou bênção da deusa.
+- **Mapa grande**: tecla **Tab**, ou tocar no minimapa no telemóvel.
+- **Boss Rush**: os 12 bosses seguidos, contra o relógio (recuperas 30% de vida entre bosses). Guarda o melhor tempo.
+- **Transferir progresso**: no menu, copia um código no aparelho antigo e cola-o no novo para levar almas, conquistas, coleção e o jogo guardado.
+- **Sombras**: o Exército das Sombras só existe para o Caçador das Sombras.
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
 - **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo ou Senhor da Tempestade. Cada evolução tem uma passiva mais forte e melhora a habilidade única.
@@ -259,6 +275,9 @@ js/portais.js       portais E a SSS dentro das masmorras (ondas, boss e prémios
 js/modos.js         Desafio Diário (semente do dia) e Torre dos 100 Andares
 js/cidade.js        Cidade dos Caçadores (mapa, casas, habitantes): casa, reavaliação de rank, contratos, ferreiro e alquimista
 js/templo.js        Masmorra Dupla: o templo da estátua e as suas regras
+js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o final do jogo
+js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
+js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro

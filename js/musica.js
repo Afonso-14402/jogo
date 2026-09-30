@@ -37,6 +37,9 @@ const FAIXAS = {
   zona4:   { bpm: 96,  base: 54, esc: 'harmonica', acordes: [0, 5, 3, 4], mel: 'square',   bx: 'square',   bat: 1, dens: 0.55, sem: 47 },
   zona5:   { bpm: 110, base: 50, esc: 'frigio',    acordes: [0, 1, 6, 0], mel: 'sawtooth', bx: 'sawtooth', bat: 1, dens: 0.6,  sem: 53 },
   zona6:   { bpm: 80,  base: 59, esc: 'dorico',    acordes: [0, 4, 3, 1], mel: 'sine',     bx: 'triangle', bat: 0, dens: 0.4,  sem: 59 },
+  zona8:   { bpm: 96,  base: 60, esc: 'maior',     acordes: [0, 4, 5, 3], mel: 'triangle', bx: 'sine',     bat: 1, dens: 0.5,  sem: 79 },
+  zona9:   { bpm: 118, base: 47, esc: 'harmonica', acordes: [0, 1, 5, 4], mel: 'sawtooth', bx: 'sawtooth', bat: 2, dens: 0.55, sem: 83 },
+  final:   { bpm: 150, base: 45, esc: 'frigio',    acordes: [0, 1, 6, 4], mel: 'square',   bx: 'sawtooth', bat: 2, dens: 0.85, sem: 89 },
   zona7:   { bpm: 72,  base: 49, esc: 'tons',      acordes: [0, 2, 4, 1], mel: 'triangle', bx: 'sine',     bat: 0, dens: 0.35, sem: 61 },
   boss:    { bpm: 144, base: 52, esc: 'harmonica', acordes: [0, 5, 6, 4], mel: 'square',   bx: 'sawtooth', bat: 2, dens: 0.8,  sem: 67 },
   portal:  { bpm: 126, base: 53, esc: 'frigio',    acordes: [0, 1, 0, 3], mel: 'sawtooth', bx: 'square',   bat: 2, dens: 0.65, sem: 71 },
@@ -138,9 +141,9 @@ function faixaDesejada() {
   if (estado === 'cidade' || mapa.cidade) return 'cidade';
   if (estado === 'morto') return null;
   if (mapa.templo) return 'templo';
-  if (boss && !boss.morto) return 'boss';
+  if (boss && !boss.morto) return boss.final ? 'final' : 'boss';
   if (mapa.portal) return 'portal';
-  return 'zona' + Math.min(7, zonaAtual());
+  return 'zona' + zonaAtual();
 }
 
 function atualizarMusica() {

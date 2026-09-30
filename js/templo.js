@@ -31,7 +31,7 @@ function entrarTemplo(o) {
   inimigos = []; projeteis = []; baus = []; drops = []; perigos = []; objetos = []; armadilhas = []; ondas = []; raios = [];
   reiniciarBioma(); reiniciarCampo();
   boss = null;
-  J.x = mapa.posBoss.x; J.y = mapa.posBoss.y + 180; J.invuln = 1.5; // começa à frente da estátua
+  J.x = mapa.posBoss.x; J.y = mapa.posBoss.y + 150; J.invuln = 1.5; // começa à frente da estátua
   cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
   levantarExercito();
   criarPetEntidade();
@@ -140,25 +140,21 @@ function desenharEstatuaTemplo(t) {
     for (let k = 0; k < 9; k++) ctx.fillRect(x - 60 + (k * 37) % 120, y + 20 + (k * 13) % 30, 16, 10);
     return;
   }
-  sombra(E.x, E.y + 60, 70);
-  // trono e corpo de pedra
-  ctx.fillStyle = '#5a554c'; ctx.fillRect(x - 70, y - 20, 140, 80);
-  ctx.fillStyle = '#8a8478'; ctx.fillRect(x - 44, y - 60, 88, 110);
-  ctx.fillStyle = '#a8a294'; ctx.fillRect(x - 40, y - 56, 30, 100);
-  ctx.fillStyle = '#6a655a'; ctx.fillRect(x - 70, y - 30, 26, 60); ctx.fillRect(x + 44, y - 30, 26, 60);
-  // cabeça
-  ctx.fillStyle = '#9a9486'; ctx.fillRect(x - 28, y - 110, 56, 50);
-  ctx.fillStyle = '#b8b2a4'; ctx.fillRect(x - 26, y - 108, 18, 46);
-  // sorriso
-  ctx.fillStyle = '#3a362e'; ctx.fillRect(x - 14, y - 74, 28, 4); ctx.fillRect(x - 18, y - 78, 4, 4); ctx.fillRect(x + 14, y - 78, 4, 4);
-  // olhos (vermelhos quando olha para ti)
-  const olha = T.olhar > 0, pisca = olha || Math.sin(t * 2) > 0.95;
-  ctx.fillStyle = olha ? '#ff2020' : pisca ? '#ffae00' : '#2a2620';
-  ctx.fillRect(x - 18, y - 94, 10, 6); ctx.fillRect(x + 8, y - 94, 10, 6);
-  if (olha) { ctx.globalAlpha = 0.35 + 0.2 * Math.sin(t * 20); circulo(x - 13, y - 91, 16, '#ff2020'); circulo(x + 13, y - 91, 16, '#ff2020'); ctx.globalAlpha = 1; }
-  // mãos com uma tábua de pedra
-  ctx.fillStyle = '#7a7468'; ctx.fillRect(x - 30, y + 10, 60, 30);
-  ctx.fillStyle = '#4a463e'; for (let k = 0; k < 3; k++) ctx.fillRect(x - 22, y + 16 + k * 8, 44, 2);
+  const olha = T.olhar > 0, c = SPR.estatuaDeus;
+  const tremer = olha ? rand(-1.5, 1.5) : 0, cy = E.y;
+  sombra(E.x, E.y + 56, 78);
+  spr(c, E.x + tremer, cy);
+  if (olha) sprCor(c, E.x + tremer, cy, false, '#ff2020', 0.12 + 0.08 * Math.sin(t * 12));
+  // olhos: apagados, a piscar de vez em quando, ou vermelhos quando olha para ti
+  const pisca = olha || Math.sin(t * 2) > 0.95;
+  const ox = [-8, 8], oy = cy - 44;
+  for (const dx of ox) {
+    ctx.fillStyle = olha ? '#ff2020' : pisca ? '#ffae00' : '#2a2620';
+    ctx.fillRect(alinhar(E.x + tremer + dx - 3), alinhar(oy), 6, 4);
+    if (olha || pisca) { ctx.globalAlpha = olha ? 0.35 + 0.2 * Math.sin(t * 20) : 0.25; circulo(E.x + tremer + dx, oy + 2, olha ? 14 : 8, olha ? '#ff2020' : '#ffae00'); ctx.globalAlpha = 1; }
+  }
+  // pó a cair da estátua
+  if (Math.random() < (olha ? 0.6 : 0.12)) particulas.push({ x: E.x + rand(-50, 50), y: cy - rand(20, 70), vx: 0, vy: rand(20, 50), t: 0.8, cor: '#b8b2a4', tam: 3 });
 }
 
 // Texto no ecrã: tempo que falta e aviso

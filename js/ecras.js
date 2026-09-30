@@ -13,6 +13,15 @@ function desenharPet(t) {
   const c = frames[voa ? Math.floor(t * 8) % frames.length : 0];
   sombra(pet.x, pet.y + (voa ? 28 : 10), voa ? 6 : 9);
   const y = pet.y + (voa ? 0 : (pet.andando ? -Math.abs(Math.sin(t * 14)) * 3 : 0));
+  if (petEvoluido()) { // evoluído: maior e com uma aura
+    ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 4);
+    circulo(pet.x, y, 16, PETS[tipo].cor);
+    ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(pet.x, y); ctx.scale(1.4, 1.4); ctx.translate(-pet.x, -y);
+    spr(c, pet.x, y, pet.dir < 0);
+    ctx.restore();
+    return;
+  }
   spr(c, pet.x, y, pet.dir < 0);
 }
 

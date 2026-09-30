@@ -391,6 +391,10 @@ function desenharInfoExtra(o, sx, sy) {
 //  Coleção: Itens, Monstros (bestiário) e Relíquias
 // ---------------------------------------------------------------------
 const DESC_MONSTROS = {
+  anjoGuerreiro: 'Carrega contra ti com a lança.', arqueiroCeleste: 'Dispara flechas de luz de longe.', querubim: 'Voa aos ziguezagues e morde.',
+  cavaleiroVazio: 'Prepara-se e faz uma investida.', magoVazio: 'Lança esferas do Vazio.', devorador: 'Lento, mas engole tudo o que apanha.',
+  arcanjo: 'Leque de penas, pilares de luz e investidas pelo ar.', generalMonarca: 'Ondas de espada, saltos esmagadores e cortes giratórios.',
+  carrasco: 'Ceifa em arco, puxa-te com correntes e deixa poças do Vazio.', monarca: 'O chefe final. Três fases, esferas, chuva do Vazio e o seu exército.',
   slime: 'Salta para cima de ti.', morcego: 'Voa aos ziguezagues.', esqueleto: 'Dispara flechas quando te vê.',
   orc: 'Prepara-se e faz uma investida.', fantasma: 'Atravessa paredes.', zumbi: 'Levanta-se uma vez depois de morrer.',
   diabrete: 'Atira bolas de fogo.', slimeLava: 'Explode quando morre.', loboGelo: 'Muito rápido. A mordida abranda-te.',

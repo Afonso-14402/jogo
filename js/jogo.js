@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
 
 function lerSave() {
   try {
@@ -217,26 +217,28 @@ function stats() {
   const C = bonusCacador(); // atributos do caçador
   const K = bonusClasse();  // passiva do caçador escolhido (e Forma Bestial)
   const Z = bonusCidade();  // rank de caçador e alquimista da cidade
+  const Q = bonusConjuntos(); // conjuntos de equipamento
   const magia = (a.magia || 0) + (am.magia || 0) + somaAfixos('magia') + 0.2 * nPerk('arcano') + (R.magia || 0) + X.magia + C.magia + K.magia;
   return {
-    maxHp: Math.max(10, Math.round((J.hpBase + K.hp + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct') + X.hpPct + C.hpPct + Z.hpPct) * (1 - (J.vidaVendida || 0)))),
+    maxHp: Math.max(10, Math.round((J.hpBase + K.hp + (ar ? ar.hp : 0) + 30 * nPerk('vitalidade') + (R.hp || 0) + 10 * nMeta('vida')) * (1 + somaMaldicoes('vidaPct') + X.hpPct + C.hpPct + Z.hpPct + Q.hpPct) * (1 - (J.vidaVendida || 0)))),
     def: Math.round((J.defBase + K.def + (ar ? ar.def : 0) + 3 * nPerk('pedra') + (R.def || 0)) * (1 + X.defPct)),
-    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct) * (1 + C.danoPct) * (1 + K.danoPct) * (1 + Z.danoPct)),
-    crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit + C.crit + K.crit),
-    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel + C.velMov + K.vel),
+    dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct) * (1 + C.danoPct) * (1 + K.danoPct) * (1 + Z.danoPct) * (1 + Q.danoPct)),
+    crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit + C.crit + K.crit + Q.crit),
+    vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel + C.velMov + K.vel + Q.vel),
     roubo: Math.min(0.1 + K.roubo, (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0) + K.roubo),
-    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen') + X.regen + K.regen,
+    regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen') + X.regen + K.regen + Q.regen,
     danoPct: am.danoPct || 0,
-    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0) + C.velAtaque + K.velAtaque)),
+    cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0) + C.velAtaque + K.velAtaque + Q.velAtaque)),
     alcance: a.alcance,
     xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp') + X.xp + K.xp) * dif().xp,
     sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte') + X.sorte,
     espinhos: somaAfixos('espinhos') + X.espinhos,
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')) * X.dash,
-    curaPocao: (0.35 + 0.12 * nPerk('pocoes') + (R.cura || 0) + K.cura + Z.cura) * (1 - 0.25 * nPacto('secura')),
+    curaPocao: (0.35 + 0.12 * nPerk('pocoes') + (R.cura || 0) + K.cura + Z.cura + Q.cura) * (1 - 0.25 * nPacto('secura')),
     ouroMult: Math.max(0.1, (1 + (R.ouro || 0)) * dif().ouro * (1 + somaMaldicoes('ouroPct')) * X.ouro * (1 - 0.3 * nPacto('pobreza'))),
     danoRecebido: somaMaldicoes('danoRecebido'),
     magia,
+    queimar: Q.queimar,
     poder: Math.round((8 + J.nivel * 3) * Math.max(0.2, 1 + magia)),
     maxMana: Math.max(0, 50 + (R.mana || 0) + (ar ? ar.mana || 0 : 0) + (am.mana || 0) + somaAfixos('manaMax') + 25 * nPerk('mana') + 10 * nMeta('mana') + somaMaldicoes('manaMax') + X.mana + C.mana + Z.mana),
     manaRegen: 3 + 2 * nPerk('canal') + X.manaRegen,
@@ -251,6 +253,7 @@ function equipar(item) {
   if (!J.melhorItem || RARIDADES[item.r].ordem > RARIDADES[J.melhorItem.r].ordem) J.melhorItem = item;
   registrarItem(item);
   if (item.maldicao) desbloquear('maldito');
+  for (const k in CONJUNTOS) if (pecasConjunto(k) >= 3) desbloquear('conjunto');
 }
 
 // Equipa e manda o item antigo para a mochila (ou vende-o se estiver cheia)
@@ -375,6 +378,7 @@ function continuarJogo() {
 
 function proximoAndar() {
   andar++;
+  if (J && J.modo === 'bossrush') andarBossRush();
   if (J) atualizarFatorAdaptativo(); // os monstros acompanham o teu poder
   if (J && andar > 1) registarPoder();
   if (J) { const rk = rankJogador().letra; if (rk === 'S' || rk === 'Nacional') desbloquear('rankS'); if (rk === 'Nacional') desbloquear('nacional'); }
@@ -384,7 +388,7 @@ function proximoAndar() {
   andarProvacao(); // nível 30: o andar passa a ser a Provação da mudança de classe
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
-  objetos = []; armadilhas = []; ondas = [];
+  objetos = []; armadilhas = []; ondas = []; restos = [];
   reiniciarBioma();
   boss = null;
   reiniciarCampo();
@@ -393,14 +397,14 @@ function proximoAndar() {
   levantarExercito();
   if (J.modo === 'torre' && !mapa.eBoss) popularTorre();
   else if (mapa.eBoss) {
-    boss = mapa.provacao ? bossProvacao() : J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss();
+    boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss());
     inimigos.push(boss);
     mostrarBanner(mapa.provacao ? 'PROVAÇÃO DE CLASSE' : `ANDAR ${andar} — BOSS`, boss.nome, mapa.provacao ? '#4dc3ff' : '#ff4d4d');
     som(80, 1.2, 'sawtooth', 0.06, -30);
   } else {
     if (semente != null) comSemente(semente + 1, popularAndar); else popularAndar();
     const zona = NOMES_ZONAS[zonaAtual()];
-    if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 40 ? ' (Profundezas)' : ''}`, '#ffe14d');
+    if (zonaDoAndar(andar) !== zonaDoAndar(andar - 1)) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 60 ? ' (Profundezas)' : ''}`, '#ffe14d');
     else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
     banner.extra = `Andar de Rank ${rankDoAndar(andar).letra} · poder recomendado ${poderRecomendado(andar)} · o teu: ${poderJogador()}`;
     banner.corExtra = corPoder();
@@ -410,6 +414,8 @@ function proximoAndar() {
   cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
   revelar(mapa, J.x, J.y, 7);
   criarPetEntidade();
+  sortearEvento();
+  historiaDoAndar();
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
   conquistasAoDescer();
@@ -584,7 +590,7 @@ function criarInimigo(tipo, x, y) {
     dano: Math.round(d.dano * fd), vel: d.vel * (1 + 0.12 * nPacto('pressa')), xp: Math.round(d.xp * (1 + (andar - 1) * 0.2)),
     cor: d.cor, t: Math.random() * 10, cd: rand(0.8, 2), acordado: false,
     kbx: 0, kby: 0, flash: 0, boss: false, morto: false, carga: 0, preparar: 0, cx: 0, cy: 0, z: 0,
-    nv: 1, hab: new Set(HAB_BASE[tipo] || []),
+    nv: 1, hab: new Set(HAB_BASE[tipo] || []), ia: d.ia, nasceu: tempoJogo,
   };
 }
 
@@ -714,13 +720,15 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   e.flash = 0.1;
   e.acordado = true;
   if (!e.boss) { e.kbx = dx * 300; e.kby = dy * 300; }
-  texto(e.x, e.y - e.r - 4, crit ? `${dano}!` : `${dano}`, crit ? '#ffe14d' : '#ffffff', crit ? 22 : 16);
+  texto(e.x, e.y - e.r - 4, crit ? `${dano}!` : `${dano}`, crit ? '#ffe14d' : '#ffffff', crit ? 26 : 16);
   explosao(e.x, e.y, e.cor, 5, 120, 3);
   if (S.roubo > 0) J.hp = Math.min(S.maxHp, J.hp + dano * S.roubo);
   som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
   const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
   if (af === 'fogo') { e.queima = 3; e.queimaDps = Math.max(1, dano * 0.35); }
   if (af === 'gelo') e.lento = 2;
+  if (efeitos && S.queimar && !(af === 'fogo')) { e.queima = 2.5; e.queimaDps = Math.max(1, dano * 0.25); }
+  if (crit && e.boss && dano > e.maxHp * 0.04) efeitoGolpeForte();
   if (efeitos) golpeReliquias(e);
   if (efeitos && J.arma.paralisa && Math.random() < J.arma.paralisa && !e.morto) { e.medo = Math.max(e.medo || 0, e.boss ? 0.3 : 0.9); texto(e.x, e.y - e.r - 16, 'Paralisado!', '#7dff5a', 12); }
   aoSerAtingido(e);
@@ -759,10 +767,12 @@ function matarInimigo(e) {
   e.morto = true;
   J.kills++;
   registar('matar');
+  progressoPedidos('matar', e);
   if (e.elite) registar('elite');
   if (e.nv === 3) registar('campeao');
   if (e.boss) registar('boss');
   deixarCadaver(e);
+  guardarResto(e);
   explosao(e.x, e.y, e.cor, e.boss ? 80 : 16, e.boss ? 350 : 180, e.boss ? 7 : 4);
   som(e.boss ? 60 : 150, e.boss ? 1 : 0.2, 'sawtooth', 0.05, -40);
   ruido(e.boss ? 1 : 0.12, e.boss ? 0.09 : 0.03, e.boss ? 700 : 2500);
@@ -779,6 +789,9 @@ function matarInimigo(e) {
     if (!J.levouDanoBoss) desbloquear('intocavel');
     if (mapa.portal) { bossPortalMorto(e); return; } // boss de um portal
     vitoriaTorre();
+    efeitoBossMorto();
+    if (!meta.trofeus) meta.trofeus = {};
+    if (BOSSES.some(b => b.id === e.tipo)) { meta.trofeus[e.tipo] = true; salvarMeta(); }
     if (J.pet) petGanharXp(10);
     mapa.escada.ativa = true;
     tremor = 20;
@@ -791,7 +804,9 @@ function matarInimigo(e) {
     if (livro) drops.push({ tipo: 'livro', feitico: livro, x: ex, y: ey + 64, t: 0 });
     soltarReliquia(ex, ey - 64);
     mostrarBanner('BOSS DERROTADO!', 'Abre os baús: podes subir à cidade ou descer a escada', '#ffae00');
-    abrirEscadaCidade(ex + 200, ey); // escada para cima, para a Cidade dos Caçadores
+    if (J.modo !== 'bossrush') abrirEscadaCidade(ex + 200, ey); // escada para cima, para a Cidade dos Caçadores
+    if (e.final) vitoriaFinal();
+    bossRushVencido();
     if (mapa.provacao) concluirProvacao(); // o banner da mudança de classe fica por cima
     fanfarra([392, 523, 659, 784, 1046, 1318], 0.05);
     projeteis = []; perigos = [];
@@ -809,7 +824,7 @@ function matarInimigo(e) {
     }
   }
   if (Math.random() < 0.12) drops.push({ tipo: 'pocao', x: e.x, y: e.y, t: 0 });
-  soltarOuro(e.x, e.y, Math.max(1, Math.round(rand(1, 3) * (1 + (andar - 1) * 0.25) * (e.elite ? 5 : 1))), e.elite ? 4 : 1);
+  soltarOuro(e.x, e.y, Math.max(1, Math.round(rand(1, 3) * (1 + (andar - 1) * 0.25) * (e.elite ? 5 : 1) * (e.ouroExtra || 1))), e.elite ? 4 : 1);
   if (e.elite) {
     if (e.elite === 'explosivo') perigos.push({ x: e.x, y: e.y, r: 75, t: 0.7, dur: 0.7, dano: Math.round(e.dano * 1.3), cor: '#ff7b25' });
     if (Math.random() < 0.35) baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
@@ -943,6 +958,9 @@ function atualizar(dt) {
   atualizarTorre();
   atualizarTemplo(dt);
   atualizarCidadeMundo(dt);
+  atualizarEvento(dt);
+  atualizarRestos(dt);
+  atualizarFalas(dt);
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
@@ -1073,6 +1091,7 @@ function usarObjeto(o) {
   if (o.tipo === 'escadaCidade') { entrarCidade(); return; }
   if (o.tipo === 'escadaMasmorra') { sairCidade(); return; }
   if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
+  if (o.tipo === 'aldeao') { falarAldeao(o); return; }
   if (o.tipo === 'estatua') return;
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
   if (o.tipo === 'mesa') { abrirMesa(o); return; }
@@ -1311,7 +1330,7 @@ function atualizarInimigo(e, dt) {
     if (!e.visto) { e.visto = true; veMonstroNovo(e); }
     const especial = movimentoHabilidade(e, dt, d, ux, uy);
     if (especial) { vx = especial.vx; vy = especial.vy; }
-    else switch (e.tipo) {
+    else switch (e.ia || e.tipo) { // os monstros novos usam o comportamento de um antigo (ia)
       case 'slime':
         if (e.t % 1.1 < 0.45) { vx = ru.x * e.vel * 1.8; vy = ru.y * e.vel * 1.8; }
         break;
@@ -1327,7 +1346,7 @@ function atualizarInimigo(e, dt) {
         else { const s = Math.sin(e.t * 0.8) > 0 ? 1 : -1; vx = -uy * e.vel * 0.6 * s; vy = ux * e.vel * 0.6 * s; }
         if (e.cd <= 0 && d < 400 && vejo) {
           e.cd = rand(1.6, 2.3);
-          tiroInimigo(e, ux, uy, { vel: 250, dano: e.dano, cor: '#e8e2cf', r: 5, tipo: 'flecha' });
+          tiroInimigo(e, ux, uy, { vel: 250, dano: e.dano, cor: e.tipo === 'arqueiroCeleste' ? '#fff6a0' : '#e8e2cf', r: 5, tipo: 'flecha' });
           som(700, 0.08, 'triangle', 0.02, -400);
         }
         break;
@@ -1356,9 +1375,9 @@ function atualizarInimigo(e, dt) {
         else if (d < 150) { vx = -ux * e.vel; vy = -uy * e.vel; }
         else { const s = Math.sin(e.t * 0.9) > 0 ? 1 : -1; vx = -uy * e.vel * 0.7 * s; vy = ux * e.vel * 0.7 * s; }
         if (e.cd <= 0 && d < 380 && vejo) {
-          if (e.tipo === 'diabrete') {
+          if (e.tipo === 'diabrete' || e.tipo === 'magoVazio') {
             e.cd = rand(1.8, 2.6);
-            tiroInimigo(e, ux, uy, { vel: 230, dano: e.dano, cor: '#ff7b25', r: 7, tipo: 'fogo', vida: 2.5 });
+            tiroInimigo(e, ux, uy, e.tipo === 'magoVazio' ? { vel: 240, dano: e.dano, cor: '#b44dff', r: 8, tipo: 'bola', vida: 2.5 } : { vel: 230, dano: e.dano, cor: '#ff7b25', r: 7, tipo: 'fogo', vida: 2.5 });
             som(250, 0.15, 'sawtooth', 0.03, -100);
           } else {
             e.cd = rand(2.2, 3);
@@ -1628,6 +1647,7 @@ function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
   }
 
   if (e.tipo === 'guardiao' || e.tipo === 'senhorVazio') ({ vx, vy } = atualizarBossNovo(e, dt, d, ux, uy, ru, fase2));
+  else if (BOSSES_FINAIS.includes(e.tipo)) ({ vx, vy } = atualizarBossFinal(e, dt, d, ux, uy, ru, fase2));
 
   const bateu = moverEntidade(mapa, e, vx * dt * fLento, vy * dt * fLento);
   if (bateu && e.investida > 0) { e.investida = 0; tremor = 10; som(60, 0.3, 'square', 0.05); }
@@ -1948,16 +1968,18 @@ function criarPetEntidade() {
 
 const xpPetProximo = n => 6 + n * 4;
 function petGanharXp(q) {
+  const antes = J.pet.nivel;
   J.pet.xp += q;
   while (J.pet.xp >= xpPetProximo(J.pet.nivel)) {
     J.pet.xp -= xpPetProximo(J.pet.nivel);
     J.pet.nivel++;
-    if (pet) { texto(pet.x, pet.y - 24, `${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}!`, PETS[J.pet.tipo].cor, 15); explosao(pet.x, pet.y, PETS[J.pet.tipo].cor, 14, 140, 4); }
+    if (pet) { texto(pet.x, pet.y - 24, `${nomePet()} Nv ${J.pet.nivel}!`, PETS[J.pet.tipo].cor, 15); explosao(pet.x, pet.y, PETS[J.pet.tipo].cor, 14, 140, 4); }
     if (J.pet.nivel >= 5) desbloquear('amigo');
   }
+  verEvolucaoPet(antes);
 }
 
-const danoPet = () => Math.round((4 + J.pet.nivel * 3) * (1 + (andar - 1) * 0.12) * (temRel('coleira') ? 2 : 1));
+const danoPet = () => Math.round((4 + J.pet.nivel * 3) * (1 + (andar - 1) * 0.12) * (temRel('coleira') ? 2 : 1) * (petEvoluido() ? 1.6 : 1));
 
 function atualizarPet(dt) {
   if (!J.pet || !pet) return;
@@ -2075,10 +2097,10 @@ const clicou = r => premiu('rato') && dentro(r);
 
 function botoesTitulo() {
   const l = saveInfo ? [['continuar', 'Continuar'], ['novo', 'Novo jogo']] : [['novo', 'Começar']];
-  l.push(['diario', 'Desafio Diário'], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
+  l.push(['diario', 'Desafio Diário'], ['bossrush', `Boss Rush${meta.bossRush ? ` (${relogioRush(meta.bossRush)})` : ''}`], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
   const calor = calorDe(meta.pacto || {});
   const peq = [['almas', `Almas (${meta.almas})`], ['pacto', calor ? `Pacto (Calor ${calor})` : 'Pacto de Castigo'],
-    ['colecao', 'Coleção'], ['conquistas', 'Conquistas'], ['registo', 'Missões']];
+    ['colecao', 'Coleção'], ['conquistas', 'Conquistas'], ['registo', 'Missões'], ['transferir', 'Transferir progresso']];
   return l.map(([id, txt], i) => ({ id, txt, x: 70, y: 206 + i * 44, w: 330, h: 38 }))
     .concat(peq.map(([id, txt], i) => ({ id, txt, peq: true, x: 70 + (i % 2) * 168, y: 214 + l.length * 44 + Math.floor(i / 2) * 40, w: 162, h: 34 })));
 }
@@ -2181,6 +2203,7 @@ function abrirBau(b) {
   }
   J.bausAbertos++;
   registar('baus');
+  progressoPedidos('baus');
   if (b.tipo === 'ouro' && Math.random() < 0.2) soltarReliquia(b.x, b.y + 30);
   iniciarRoleta(b.tipo, 'jogo');
 }
@@ -2275,6 +2298,7 @@ function loop(agora) {
     if (premiu('r')) acao = 'registo';
     if (premiu('d')) acao = 'diario';
     if (premiu('o')) acao = 'torre';
+    if (premiu('b')) acao = 'bossrush';
     if (premiu('i') || clicou(BOTAO_IDIOMA)) { mudarIdioma(); acao = null; }
     if (modoToque && clicou(BOTAO_OPCOES)) acao = 'opcoes';
     if (acao === 'opcoes') abrirOpcoes();
@@ -2282,6 +2306,8 @@ function loop(agora) {
     else if (acao === 'novo') { modoProximo = null; abrirCriacao(); }
     else if (acao === 'diario') comecarDiario();
     else if (acao === 'torre') { modoProximo = 'torre'; abrirCriacao(); }
+    else if (acao === 'bossrush') { modoProximo = 'bossrush'; abrirCriacao(); }
+    else if (acao === 'transferir') abrirTransferir();
     else if (acao) abrirMenuMeta(acao);
   } else if (estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
     atualizarMenuMeta(dt);
@@ -2291,6 +2317,12 @@ function loop(agora) {
     atualizarRegisto(dt);
   } else if (estado === 'cidade') {
     atualizarCidade(dt);
+  } else if (estado === 'mapa') {
+    atualizarMapaGrande();
+  } else if (estado === 'fim') {
+    atualizarFim(dt);
+  } else if (estado === 'transferir') {
+    atualizarTransferir(dt);
   } else if (estado === 'diario') {
     atualizarDiario(dt);
   } else if (estado === 'opcoes') {
@@ -2304,9 +2336,10 @@ function loop(agora) {
     atualizarEfeitos(dt);
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape') || clicou(BOTAO_PAUSA)) { estado = 'pausa'; rato.baixo = false; }
-    else if (premiu('c', 'tab')) estado = 'personagem';
+    else if (premiu('c')) estado = 'personagem';
+    else if (premiu('tab')) estado = 'mapa';
     else if (premiu('i')) abrirMochila();
-    else { atualizar(dt); atualizarTutorial(dt); }
+    else { atualizar(dt * ritmoJogo()); atualizarTutorial(dt); }
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
     atualizarEscolha(dt);
@@ -2330,6 +2363,7 @@ function loop(agora) {
     else if (premiu('escape') || clicou(BOTOES_MORTE.menu)) estado = 'titulo';
   }
   if (estado !== 'jogo') toque.atacar = false;
+  atualizarEfeitosEcra(dt);
   atualizarAvisos(dt);
 
   desenhar(agora / 1000);

@@ -198,6 +198,7 @@ function linhasItem(it) {
     if (it.mana) l.push(`Mana: +${it.mana}`);
     if (!l.length) l.push('Não faz absolutamente nada.');
   }
+  l.push(...linhasConjunto(it));
   return l;
 }
 
@@ -264,7 +265,7 @@ function desenhar(t) {
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
   if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
-      estado === 'pacto' || estado === 'registo' || estado === 'diario' ||
+      estado === 'pacto' || estado === 'registo' || estado === 'diario' || estado === 'transferir' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
     else if (estado === 'criar') desenharCriacao(t);
@@ -272,6 +273,7 @@ function desenhar(t) {
     else if (estado === 'pacto') desenharPacto(t);
     else if (estado === 'registo') desenharRegisto(t);
     else if (estado === 'diario') desenharDiario(t);
+    else if (estado === 'transferir') desenharTransferir();
     else desenharMenuMeta(t);
     desenharAvisos();
     desenharAvisoRodar();
@@ -298,8 +300,9 @@ function desenhar(t) {
   ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
-  if (estado !== 'pausa' && estado !== 'opcoes' && estado !== 'status' && estado !== 'cidade') desenharHUD(t);
+  if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado)) desenharHUD(t);
   desenharTutorial(t);
+  desenharFalas();
 
   if (estado === 'bau') desenharRoleta(t);
   else if (estado === 'nivel') desenharEscolha(t);
@@ -311,7 +314,10 @@ function desenhar(t) {
   else if (estado === 'opcoes') desenharOpcoes(t);
   else if (estado === 'status') desenharStatus(t);
   else if (estado === 'cidade') desenharPainelCidade(t);
+  else if (estado === 'mapa') desenharMapaGrande();
+  else if (estado === 'fim') desenharFim(t);
   else if (estado === 'morto') desenharMorte();
+  desenharClarao();
   desenharAvisos();
   desenharAvisoRodar();
 }
@@ -334,6 +340,7 @@ function desenharMundo(t) {
   const lista = [];
   for (const b of baus) lista.push({ y: b.y, f: () => desenharBau(b) });
   for (const o of objetos) lista.push({ y: o.y, f: () => desenharObjeto(o, t) });
+  for (const r of restos) lista.push({ y: r.y, f: () => desenharResto(r) });
   entidadesCidade(lista);
   if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
   for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
@@ -379,7 +386,7 @@ function desenharLuz(t) {
   const L = ctxLuz;
   L.globalCompositeOperation = 'source-over';
   L.clearRect(0, 0, LB, AB);
-  L.fillStyle = `rgba(3,2,8,${naCidade() ? 0.12 : mapa.eBoss ? 0.55 : bioma().escuro})`;
+  L.fillStyle = `rgba(3,2,8,${naCidade() ? 0.12 : escuridaoEvento() || (mapa.eBoss ? 0.55 : bioma().escuro)})`;
   L.fillRect(0, 0, LB, AB);
   L.globalCompositeOperation = 'destination-out';
   const luz = (x, y, r, forca) => {
@@ -646,7 +653,7 @@ function desenharArma(ang) {
 }
 
 function spriteInimigo(e, t) {
-  const novo = spriteBioma(e, t) || spriteConteudo(e, t);
+  const novo = spriteBioma(e, t) || spriteConteudo(e, t) || spriteFinais(e, t);
   if (novo) return novo;
   switch (e.tipo) {
     case 'slime': {
@@ -710,6 +717,30 @@ function desenharInimigo(e, t) {
   if ((e.tipo === 'orc' && e.preparar > 0) || e.prepInv > 0) sprCor(s.c, x, y, flip, '#ff3c3c', 0.6);
   if (e.buffT > 0) { ctx.globalAlpha = 0.5 * alfaBase; aro(e.x, e.y + e.r * 0.8, e.r + 4, '#ff6060', 2); ctx.globalAlpha = 1; }
 
+  // animação: respirar, inclinar ao andar, amassar ao levar um golpe, crescer ao atacar e ao aparecer
+  const pe = y + h / 2 - 2;
+  ctx.save();
+  {
+    const resp = Math.sin(t * 3 + e.x * 0.05);
+    let sx = 1 - 0.02 * resp, sy = 1 + 0.035 * resp;
+    const mov = e.x - (e.ultX ?? e.x);
+    e.ultX = e.x;
+    e.incl = (e.incl || 0) * 0.85 + clamp(mov * 0.05, -0.16, 0.16) * 0.15;
+    if (e.flash > 0) { sx *= 1.16; sy *= 0.86; }
+    if (e.preparar > 0 || e.prepInv > 0 || e.golpeT > 0 || e.ceifaT > 0 || (e.boss && e.investida > 0)) { sx *= 1.08; sy *= 1.08; }
+    const idade = tempoJogo - (e.nasceu ?? -9);
+    if (idade >= 0 && idade < 0.35) { const k = 0.2 + 0.8 * idade / 0.35; sx *= k; sy *= k; }
+    ctx.translate(x, pe);
+    ctx.rotate(e.boss ? e.incl * 0.4 : e.incl);
+    ctx.scale(sx, sy);
+    ctx.translate(-x, -pe);
+  }
+  if (e.boss) { // brilho à volta dos bosses
+    ctx.globalAlpha = (0.18 + Math.sin(t * 4) * 0.08) * alfaBase;
+    const sil = silhueta(s.c, e.aura || e.cor);
+    for (const [ox, oy] of [[-3, 0], [3, 0], [0, -3], [0, 3]]) spr(sil, x + ox, y + oy, flip);
+    ctx.globalAlpha = 1;
+  }
   if (e.elite) {
     const cor = ELITES[e.elite].cor;
     ctx.globalAlpha = (0.55 + Math.sin(t * 6) * 0.25) * alfaBase;
@@ -717,10 +748,12 @@ function desenharInimigo(e, t) {
     for (const [ox, oy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) spr(sil, x + ox, y + oy, flip);
     ctx.globalAlpha = 1;
   }
+  if (e.aura) { ctx.globalAlpha = 0.22 + 0.12 * Math.sin(t * 3); circulo(e.x, e.y, e.r * 1.8, e.aura); ctx.globalAlpha = 1; }
   ctx.globalAlpha = (s.alpha || 1) * alfaBase;
   spr(s.c, x, y, flip);
+  if (e.tinta) sprCor(s.c, x, y, flip, e.tinta, 0.45);
   ctx.globalAlpha = 1;
-  if (alfaBase < 0.5) { if (e.mini) ctx.restore(); return; } // invisível: nem barra de vida
+  if (alfaBase < 0.5) { ctx.restore(); if (e.mini) ctx.restore(); return; } // invisível: nem barra de vida
   if (e.enfurecido) sprCor(s.c, x, y, flip, '#ff2020', 0.25 + Math.sin(t * 10) * 0.1);
   if (e.tipo === 'dragao' && e.investida > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.35);
   if (e.tipo === 'demonio' && e.aparecer > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.5);
@@ -728,6 +761,7 @@ function desenharInimigo(e, t) {
   else if (e.congelado > 0) sprCor(s.c, x, y, flip, '#bfe6ff', 0.65);
   else if (e.lento > 0) sprCor(s.c, x, y, flip, '#7fd8ff', 0.4);
   else if (e.queima > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.3);
+  ctx.restore();
 
   if (e.tipo === 'dragao' && e.sopro > 0) {
     const ang = Math.atan2(J.y - e.y, J.x - e.x);
@@ -802,7 +836,7 @@ function desenharTextosMundo() {
   }
   ctx.globalAlpha = 1;
   if (pet && J.pet && estado !== 'morto') {
-    textoCentro(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`, ecraX(pet.x), ecraY(pet.y) - 26, 11, PETS[J.pet.tipo].cor);
+    textoCentro(`${nomePet()} Nv ${J.pet.nivel}`, ecraX(pet.x), ecraY(pet.y) - (petEvoluido() ? 34 : 26), 11, PETS[J.pet.tipo].cor);
   }
   for (const o of objetos) desenharLetraPortal(o);
   desenharNomesSombras();
@@ -1425,7 +1459,7 @@ function desenharPersonagem() {
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
   textoEsq(obtidas.length ? 'Melhorias' : 'Melhorias: ainda nenhuma. Sobe de nível!', 356, 370, 16, '#ffe14d');
   const extraP = [];
-  if (J.pet) extraP.push(`${PETS[J.pet.tipo].nome} Nv ${J.pet.nivel}`);
+  if (J.pet) extraP.push(`${nomePet()} Nv ${J.pet.nivel}`);
   if (J.vidasExtra > 0) extraP.push('Segunda Vida pronta');
   if (extraP.length) textoDir(extraP.join('  ·  '), 924, 370, 13, '#ff9ff3');
   obtidas.forEach((p, i) => {
@@ -1520,7 +1554,7 @@ function desenharMesa(t) {
 //  Criação de personagem
 // ---------------------------------------------------------------------
 function desenharCriacao(t) {
-  textoCentro(modoProximo === 'torre' ? 'TORRE: CRIA A TUA PERSONAGEM' : 'CRIA A TUA PERSONAGEM', LARGURA / 2 + 60, 30, 26, modoProximo === 'torre' ? '#ff8080' : '#ffae00');
+  textoCentro(modoProximo === 'torre' ? 'TORRE: CRIA A TUA PERSONAGEM' : modoProximo === 'bossrush' ? 'BOSS RUSH: CRIA A TUA PERSONAGEM' : 'CRIA A TUA PERSONAGEM', LARGURA / 2 + 60, 30, 26, modoProximo ? '#ff8080' : '#ffae00');
   botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
   // separadores Caçador / Raça
   ABAS_CRIACAO.forEach((a, i) => {
@@ -1620,7 +1654,7 @@ function desenharTitulo(t) {
 
   // botões do menu
   botoesTitulo().forEach((b, i) => {
-    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' ? '#ff8080' : '#ddd';
+    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : '#ddd';
     botao(b, b.txt, cor);
   });
   if (saveInfo) {
@@ -1660,7 +1694,7 @@ function desenharTitulo(t) {
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item!', 670, 530, 14, '#fff', false);
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 586, 13, '#7ec8ff', false);
-  if (!modoToque) textoCentro('ENTER: jogar · N: novo · D: diário · O: torre · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
+  if (!modoToque) textoCentro('ENTER: jogar · N: novo · D: diário · O: torre · B: boss rush · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
   botaoIdioma();
   botoesMenuToque(true);
 }
@@ -1711,7 +1745,7 @@ function desenharPausa() {
 function desenharMorte() {
   ctx.fillStyle = 'rgba(40,0,0,0.75)';
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
-  textoCentro(J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, 60, J.desistiu ? '#ff9f43' : '#ff4040');
+  textoCentro(J.venceuRush ? 'BOSS RUSH COMPLETO!' : J.desistiu ? 'DESISTISTE' : 'MORRESTE', LARGURA / 2, 130, J.venceuRush ? 46 : 60, J.venceuRush ? '#ffe14d' : J.desistiu ? '#ff9f43' : '#ff4040');
   const D = dif();
   textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · ${D.nome}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 178, 16, D.cor);
   if (!J.desistiu && J.causa) textoCentro(`Morto por: ${J.causa}`, LARGURA / 2, 200, 14, '#ff8080', false);
@@ -1733,6 +1767,7 @@ function desenharMorte() {
   textoCentro('Gasta-as no Altar das Almas, no menu inicial', LARGURA / 2, 540, 12, '#aaa', false);
   if (J.modo === 'diario') textoCentro(`Desafio Diário: ${J.pontosDiario} pontos${J.recordeDiario ? ' · NOVO RECORDE DE HOJE!' : ''}`, LARGURA / 2, 330, 16, '#ffae00');
   if (J.modo === 'torre') textoCentro(`Torre: chegaste ao andar ${andar}/100 (recorde ${meta.torreMax || andar})`, LARGURA / 2, 330, 16, '#ff8080');
+  if (J.modo === 'bossrush') textoCentro(J.venceuRush ? `Tempo: ${relogioRush(tempoJogo)}${J.recordeRush ? ' · NOVO RECORDE!' : ''}` : `Boss Rush: chegaste ao boss ${Math.ceil(andar / 5)}/${BOSSES.length}`, LARGURA / 2, 330, 16, '#ffae00');
   botao(BOTOES_MORTE.denovo, modoToque ? 'Tentar outra vez' : 'ENTER: Outra vez', '#5dff7a');
   botao(BOTOES_MORTE.menu, modoToque ? 'Menu' : 'Esc: Menu', '#ddd');
 }

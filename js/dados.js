@@ -99,6 +99,16 @@ const ITENS = [
   { tipo: 'arma', r: 'lendario', nome: 'Fúria do Dragão', dano: 34, vel: 1.7, alcance: 42, crit: 0.28, paralisa: 0.1, desc: 'Feitas com os dentes de um dragão rei.' },
   { tipo: 'arma', r: 'mitico', nome: 'Adagas do Rei Demónio', dano: 58, vel: 1.9, alcance: 44, crit: 0.35, paralisa: 0.15, desc: 'O rei dos demónios ainda as quer de volta.' },
   { tipo: 'amuleto', r: 'lendario', nome: 'Orbe da Ganância', magia: 1.0, danoPct: 0.1, desc: 'Duplica o poder dos teus feitiços.' },
+  // conjuntos (2 ou 3 peças iguais dão bónus: ver CONJUNTOS em aventura.js)
+  { tipo: 'arma', r: 'epico', nome: 'Espada Dracónica', dano: 21, vel: 1.05, alcance: 56, crit: 0.1, desc: 'Conjunto Dracónico.' },
+  { tipo: 'armadura', r: 'epico', nome: 'Couraça Dracónica', def: 9, hp: 50, desc: 'Conjunto Dracónico.' },
+  { tipo: 'amuleto', r: 'epico', nome: 'Olho Dracónico', danoPct: 0.12, crit: 0.05, desc: 'Conjunto Dracónico.' },
+  { tipo: 'arma', r: 'epico', nome: 'Adaga do Crepúsculo', dano: 16, vel: 1.45, alcance: 40, crit: 0.2, desc: 'Conjunto do Crepúsculo.' },
+  { tipo: 'armadura', r: 'epico', nome: 'Manto do Crepúsculo', def: 6, hp: 30, mana: 20, desc: 'Conjunto do Crepúsculo.' },
+  { tipo: 'amuleto', r: 'epico', nome: 'Anel do Crepúsculo', crit: 0.1, velMov: 0.1, desc: 'Conjunto do Crepúsculo.' },
+  { tipo: 'arma', r: 'epico', nome: 'Lança Seráfica', dano: 20, vel: 1.0, alcance: 80, crit: 0.08, desc: 'Conjunto Seráfico.' },
+  { tipo: 'armadura', r: 'epico', nome: 'Armadura Seráfica', def: 10, hp: 60, desc: 'Conjunto Seráfico.' },
+  { tipo: 'amuleto', r: 'epico', nome: 'Auréola Seráfica', regen: 2, magia: 0.2, desc: 'Conjunto Seráfico.' },
 
   // --------------------------- ARMADURAS ---------------------------
   { tipo: 'armadura', r: 'lixo', nome: 'Saco de Batatas', def: 0, hp: 0, desc: 'Pelo menos tapa.' },
@@ -380,7 +390,7 @@ const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo', 'inferno']
 // ---------------------------------------------------------------------
 //  ZONAS: cada 5 andares mudam as cores e os inimigos
 // ---------------------------------------------------------------------
-const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado', 'Pântano Venenoso', 'Templo do Deserto', 'Caverna de Cristal', 'Reino do Vazio'];
+const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado', 'Pântano Venenoso', 'Templo do Deserto', 'Caverna de Cristal', 'Reino do Vazio', 'Cidadela Celeste', 'Trono do Monarca'];
 
 // ---------------------------------------------------------------------
 //  MALDIÇÕES: os itens dos Baús Amaldiçoados são fortes mas trazem uma destas.
@@ -478,6 +488,11 @@ const CONQUISTAS = [
   { id: 'torre100',  nome: 'Senhor da Torre',    desc: 'Conquista os 100 andares da Torre',     almas: 200 },
   { id: 'evolucao',  nome: 'Mudança de Classe',  desc: 'Passa a provação do nível 30',          almas: 50 },
   { id: 'general',   nome: 'Primeiro General',   desc: 'Ergue um boss como general sombra',     almas: 40 },
+  { id: 'final',     nome: 'Vencedor do Vazio',  desc: 'Derrota o Monarca do Vazio no andar 60', almas: 300 },
+  { id: 'petEvo',    nome: 'Evolução Animal',    desc: 'Um companheiro chega ao nível 10',      almas: 40 },
+  { id: 'bossrush',  nome: 'Caçador de Bosses',  desc: 'Completa o Boss Rush',                  almas: 100 },
+  { id: 'ajudante',  nome: 'Amigo da Cidade',    desc: 'Cumpre 5 pedidos dos habitantes',       almas: 40 },
+  { id: 'conjunto',  nome: 'Conjunto Completo',  desc: 'Usa as 3 peças de um conjunto',         almas: 50 },
   { id: 'templo',    nome: 'Masmorra Dupla',     desc: 'Sobrevive ao Templo da Masmorra Dupla', almas: 60 },
 ];
 

@@ -361,6 +361,7 @@ function criarSombra(s, x, y) {
 // No início de cada andar o exército aparece à tua volta
 function levantarExercito() {
   cadaveres = [];
+  if (J.classe !== 'sombras') J.sombras = []; // o exército é só do Caçador das Sombras
   sombras = (J.sombras || []).map((s, i) => {
     const a = i / Math.max(1, J.sombras.length) * Math.PI * 2;
     let x = J.x + Math.cos(a) * 40, y = J.y + Math.sin(a) * 40;
@@ -469,6 +470,7 @@ const RANKS = [
 const rankDoAndar = a => RANKS.find(r => a <= r.ate);
 
 function dpsSombras() {
+  if (J.classe !== 'sombras') return 0;
   return (J.sombras || []).reduce((s, x) => s + danoSombra(x) / (x.boss ? 1.2 : 0.9), 0);
 }
 

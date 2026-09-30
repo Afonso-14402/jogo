@@ -147,8 +147,9 @@ function gerarCidade() {
   m.candeeiros = [[9, 9], [20, 9], [26, 9], [34, 9], [9, 18], [36, 18]].map(([x, y]) => ({ x: (x + 0.5) * TILE, y: (y + 0.5) * TILE }));
   m.luzes = m.candeeiros.map(c => ({ x: c.x, y: c.y - 30, cor: '#ffd27a' }));
   // habitantes que passeiam pela praça
-  const gente = [['humano', 'floresta'], ['elfo', 'gelo'], ['anao', 'carmesim'], ['orc', 'sombra'], ['gnomo', 'real'], ['vampiro', 'infinito']];
-  m.aldeoes = gente.map(([raca, skin], i) => ({ raca, skin, x: (6 + i * 7) * TILE, y: (11 + (i % 3) * 3) * TILE, r: 10, alvo: null, espera: rand(0, 2), dir: 1, andando: false, t: 0 }));
+  m.aldeoes = HABITANTES.map((h, i) => ({ tipo: 'aldeao', nome: h.nome, papel: h.papel, raca: h.raca, skin: h.skin,
+    x: h.papel === 'anciao' ? 23 * TILE : (6 + i * 7) * TILE, y: h.papel === 'anciao' ? 15.6 * TILE : (11 + (i % 3) * 3) * TILE,
+    r: 10, alvo: null, espera: rand(0, 2), dir: 1, andando: false, t: 0 }));
   return m;
 }
 
@@ -178,6 +179,89 @@ function renderizarCidade(m) {
 }
 
 // Objetos com que se pode interagir
+// Os habitantes da cidade: alguns pedem ajuda, o Ancião conta a história
+const HABITANTES = [
+  { nome: 'Ancião', papel: 'anciao', raca: 'humano', skin: 'celestial' },
+  { nome: 'Rosa', papel: 'pedido', raca: 'humano', skin: 'floresta' },
+  { nome: 'Tomé', papel: 'pedido', raca: 'anao', skin: 'carmesim' },
+  { nome: 'Leonor', papel: 'pedido', raca: 'elfo', skin: 'gelo' },
+  { nome: 'Brás', papel: 'conversa', raca: 'orc', skin: 'sombra' },
+  { nome: 'Inês', papel: 'conversa', raca: 'gnomo', skin: 'real' },
+  { nome: 'Duarte', papel: 'conversa', raca: 'vampiro', skin: 'infinito' },
+];
+const CONVERSAS = ['Bom dia, caçador! Hoje o céu está calmo.', 'Os preços do ferreiro estão pela hora da morte.', 'Vi um portal vermelho ontem... fugi a correr.',
+  'A fonte da praça tem água benta. Ou assim dizem.', 'Cuidado com os baús que mordem!', 'O meu avô dizia que a masmorra não tem fundo.',
+  'Se vires uma porta antiga, não te mexas quando a estátua olhar para ti.'];
+const LORE_ANCIAO = [
+  [10, 'Dizem que no fundo da masmorra vive um rei feito de sombra.'],
+  [20, 'Os portais começaram a abrir no dia em que o Vazio acordou.'],
+  [30, 'O Monarca do Vazio já foi um caçador, como tu. O poder mudou-o.'],
+  [40, 'Acima do reino dele há uma cidadela de anjos que lhe juraram lealdade.'],
+  [59, 'O trono fica no andar 60. Leva poções. Muitas poções.'],
+  [9999, 'Venceste-o... ou vais vencer. Para nós já és uma lenda, caçador.'],
+];
+
+// Pedidos dos habitantes (duram até ao fim da partida)
+function novoPedido(quem) {
+  const z = zonaDoAndar(andar + 1);
+  const monstros = Object.keys(INIMIGOS).filter(k => INIMIGOS[k].peso && INIMIGOS[k].zonas.includes(z) && INIMIGOS[k].minAndar <= andar + 1);
+  const tipos = ['elite', 'baus', 'portal'].concat(monstros.length ? ['matar', 'matar'] : []);
+  const tipo = escolher(tipos);
+  const p = { quem, tipo, prog: 0, ouro: 80 + andar * 12 };
+  if (tipo === 'matar') { p.monstro = escolher(monstros); p.n = randInt(6, 10); }
+  else if (tipo === 'elite') p.n = randInt(2, 3);
+  else if (tipo === 'baus') p.n = randInt(3, 5);
+  else p.n = 1;
+  return p;
+}
+function textoPedido(p) {
+  if (p.tipo === 'matar') return `Mata ${p.n} ${traduzir(INIMIGOS[p.monstro].nome)} (${Math.min(p.prog, p.n)}/${p.n})`;
+  if (p.tipo === 'elite') return `Mata ${p.n} monstros de elite (${Math.min(p.prog, p.n)}/${p.n})`;
+  if (p.tipo === 'baus') return `Abre ${p.n} baús (${Math.min(p.prog, p.n)}/${p.n})`;
+  return `Conquista um portal (${Math.min(p.prog, p.n)}/${p.n})`;
+}
+// Chamado quando matas, abres baús e conquistas portais
+function progressoPedidos(evento, e) {
+  if (!J || !J.pedidos) return;
+  for (const p of J.pedidos) {
+    if (p.prog >= p.n) continue;
+    if ((evento === 'matar' && p.tipo === 'matar' && e.tipo === p.monstro) || (evento === 'matar' && p.tipo === 'elite' && e.elite) ||
+      (evento === 'baus' && p.tipo === 'baus') || (evento === 'portal' && p.tipo === 'portal')) {
+      p.prog++;
+      if (p.prog >= p.n) avisar(`Pedido de ${p.quem} cumprido!`, 'Volta à cidade para receberes a recompensa', '#ffe14d');
+    }
+  }
+}
+const pedidoDe = nome => (J.pedidos || []).find(p => p.quem === nome);
+
+function falarAldeao(o) {
+  if (o.papel === 'anciao') { falar('anciao', LORE_ANCIAO.find(([a]) => andar <= a)[1]); return; }
+  if (o.papel === 'conversa') { falarComo(o.nome, escolher(CONVERSAS)); return; }
+  if (!J.pedidos) J.pedidos = [];
+  const p = pedidoDe(o.nome);
+  if (p && p.prog >= p.n) {
+    J.pedidos.splice(J.pedidos.indexOf(p), 1);
+    J.ouro += p.ouro;
+    ganharXp(Math.round(xpProximo(J.nivel) * 0.3));
+    J.pocoes++;
+    falarComo(o.nome, `Obrigado, caçador! Toma ${p.ouro} de ouro e uma poção.`);
+    fanfarra([523, 659, 784, 1046], 0.04);
+    registar('pedido');
+    if (contar('pedidos') >= 5) desbloquear('ajudante');
+  } else if (p) falarComo(o.nome, `Ainda estou à espera: ${textoPedido(p)}`);
+  else if (J.pedidos.length >= 3) falarComo(o.nome, 'Já tens pedidos demais. Volta quando tiveres tempo!');
+  else {
+    const n = novoPedido(o.nome);
+    J.pedidos.push(n);
+    falarComo(o.nome, `Podes ajudar-me? ${textoPedido(n)}. Pago ${n.ouro} de ouro.`);
+  }
+}
+// Fala de um habitante (usa a caixa de diálogo da história)
+function falarComo(nome, txt) {
+  QUEM['h_' + nome] = { nome, cor: '#ffe680' };
+  falar('h_' + nome, txt);
+}
+
 function objetosCidade() {
   const l = EDIFICIOS.map(E => ({ tipo: 'edificio', id: E.id, x: (E.tx + ED_W / 2) * TILE, y: (ED_Y + ED_H + 0.4) * TILE }));
   l.push({ tipo: 'escadaMasmorra', x: 23 * TILE, y: 22 * TILE, t: 0 });
@@ -195,7 +279,7 @@ function entrarCidade() {
   mapa = gerarCidade();
   mapaImg = renderizarCidade(mapa);
   inimigos = []; projeteis = []; baus = []; drops = []; perigos = []; armadilhas = []; ondas = []; raios = [];
-  objetos = objetosCidade();
+  objetos = objetosCidade().concat(mapa.aldeoes);
   reiniciarBioma(); reiniciarCampo();
   boss = null;
   J.x = mapa.inicio.x; J.y = mapa.inicio.y; J.invuln = 1;
@@ -219,6 +303,8 @@ function atualizarCidadeMundo(dt) {
   if (!naCidade()) return;
   for (const o of objetos) if (o.t != null) o.t += dt;
   for (const a of mapa.aldeoes) {
+    if (a.papel === 'anciao') { a.t += dt; continue; } // o Ancião fica junto à fonte
+    if (Math.hypot(a.x - J.x, a.y - J.y) < 50) { a.alvo = null; a.andando = false; a.dir = J.x > a.x ? 1 : -1; continue; } // pára para falar contigo
     a.t += dt;
     if (!a.alvo) {
       a.andando = false;
@@ -363,6 +449,17 @@ function desenharPainelCidade(t) {
   // quem te atende
   const npc = { casa: ['humano', J.skin], assoc: ['humano', 'real'], ferreiro: ['anao', 'dourado'], alquimista: ['elfo', 'gelo'] }[E.id];
   sprEcra(framesHeroi(npc[0], npc[1])[Math.floor(t * 2) % 2 ? 0 : 1], 770, 360, 5);
+  if (E.id === 'casa') { // troféus dos bosses que já derrotaste (em qualquer partida)
+    textoEsq('Troféus:', 130, 400, 14, '#ffae00');
+    BOSSES.forEach((b, i) => {
+      const c = SPR[b.id] && SPR[b.id][0];
+      if (!c) return;
+      const tem = meta.trofeus && meta.trofeus[b.id], esc = Math.max(1, Math.floor(40 / Math.max(c.width, c.height)));
+      sprEcra(tem ? c : silhueta(c, '#2a2438'), 150 + i * 56, 450, esc);
+    });
+    textoEsq(`${Object.keys(meta.trofeus || {}).length}/${BOSSES.length}`, 130, 490, 12, '#aaa', 'normal');
+  }
+  if (E.id === 'assoc' && J.pedidos && J.pedidos.length) textoEsq(`Pedidos da cidade: ${J.pedidos.map(textoPedido).join(' · ')}`, 130, 460, 11, '#ffe680', 'normal');
   if (cidade.msg) textoCentro(cidade.msg.txt, LARGURA / 2, 516, 15, cidade.msg.cor);
   botao(BOTAO_FECHAR, 'Sair', '#ff8080');
   if (!modoToque) textoCentro('1-4 ou W/S: escolher · E: comprar · Esc: sair', LARGURA / 2, 568, 12, '#777', false);
@@ -441,6 +538,11 @@ function entidadesCidade(lista) {
 // Nomes nos letreiros (no ecrã, para ficarem nítidos)
 function desenharNomesCidade() {
   if (!naCidade()) return;
+  for (const a of mapa.aldeoes) {
+    const p = a.papel === 'pedido' ? pedidoDe(a.nome) : null;
+    const marca = a.papel === 'anciao' ? '…' : a.papel === 'pedido' ? (p ? (p.prog >= p.n ? '?' : '') : '!') : '';
+    if (marca) textoCentro(marca, ecraX(a.x), ecraY(a.y) - 40 * ZOOM, 18, marca === '?' ? '#5dff7a' : '#ffe14d');
+  }
   for (const E of EDIFICIOS) textoCentro(E.nome, ecraX((E.tx + ED_W / 2) * TILE), ecraY(ED_Y * TILE + 118), 11 * Math.min(1.2, ZOOM), E.cor, false);
 }
 
@@ -484,6 +586,12 @@ function desenharInfoCidade(o, sx, sy) {
   if (o.tipo === 'escadaMasmorra') {
     textoCentro(`Escada para a masmorra (andar ${andar + 1})`, sx, sy - 18, 15, '#ffae00');
     textoCentro(`${usar}: Descer à masmorra`, sx, sy, 15, '#ffe680');
+    return true;
+  }
+  if (o.tipo === 'aldeao') {
+    const p = o.papel === 'pedido' ? pedidoDe(o.nome) : null;
+    textoCentro(o.nome, sx, sy + 12, 13, '#ffe680');
+    textoCentro(`${usar}: ${p && p.prog >= p.n ? 'Receber recompensa' : 'Falar'}`, sx, sy + 30, 14, '#ffe680');
     return true;
   }
   if (o.tipo === 'edificio') {

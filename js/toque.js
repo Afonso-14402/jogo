@@ -72,6 +72,7 @@ canvas.addEventListener('touchstart', e => {
     rato.x = p.x; rato.y = p.y;
     if (estado === 'jogo') {
       if (tutorial && noRet(p, BOTAO_SALTAR_TUTORIAL)) { acabarTutorial(); continue; }
+      if (noRet(p, retMinimapa())) { estado = 'mapa'; continue; } // tocar no minimapa abre o mapa grande
       const b = botaoEm(p);
       if (b) {
         tutorialAcao(b.id);

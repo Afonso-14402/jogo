@@ -1038,6 +1038,8 @@ const ZONAS = [
   { chao: '#6a5638', parede: '#9a7a48', topo: '#2a1f10', musgo: '#b89a60', det: 'hieroglifo' }, // Templo do Deserto
   { chao: '#1f2a3a', parede: '#34406a', topo: '#0c1020', musgo: '#4a8aa8', det: 'cristal' },  // Caverna de Cristal
   { chao: '#1a1026', parede: '#2e1a40', topo: '#07040c', musgo: '#4a2a6a', det: 'runa' },     // Reino do Vazio
+  { chao: '#6a6488', parede: '#b8b0d8', topo: '#2a2448', musgo: '#ffd27a', det: 'hieroglifo' }, // Cidadela Celeste
+  { chao: '#120a1a', parede: '#281838', topo: '#040208', musgo: '#5a2aff', det: 'runa' },     // Trono do Monarca
 ];
 
 // Detalhe pintado por cima de uma parede
@@ -1367,7 +1369,7 @@ function iconeItem(it) {
 }
 
 function ladrilhosZona(andar) {
-  const i = Math.floor((andar - 1) / 5) % ZONAS.length;
+  const i = zonaDoAndar(andar);
   if (!cacheLadrilhos[i]) cacheLadrilhos[i] = gerarLadrilhos(ZONAS[i]);
   return cacheLadrilhos[i];
 }
