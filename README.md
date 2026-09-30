@@ -365,6 +365,10 @@ node testes/jogar_a_2.js           # inclui uma volta pelos 60 andares com o con
 node testes/jogar_a_2.js rapido    # sem essa volta
 ```
 
+## App Android (Play Store)
+
+O jogo também é uma app Android (pasta `android/`, feita com o Capacitor). O GitHub constrói-a sozinho em cada alteração: um APK de teste e, com a chave de assinatura nos segredos do repositório, o `.aab` para a Play Store. Os passos todos, os textos da loja e as respostas aos formulários da Google estão em **[PLAY_STORE.md](PLAY_STORE.md)**. As imagens da loja estão em `loja/`.
+
 ## Jogar online (opcional)
 
 No GitHub vai a **Settings → Pages**, escolhe o branch e a pasta `/ (root)`. O jogo fica disponível num link `https://<utilizador>.github.io/jogo/`.
