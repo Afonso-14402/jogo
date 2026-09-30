@@ -124,7 +124,7 @@ Os textos (título e descrições) estão mais abaixo.
 
 > Desce a Masmorra do Destino, um RPG de ação em pixel art feito para jogar no telemóvel.
 >
-> ⚔️ **9 caçadores diferentes**, cada um com a sua arma, habilidade única e habilidades próprias: do Caçador das Sombras, que ergue um exército dos monstros que derrota, ao Guardião do Tempo, que para o tempo e volta atrás.
+> ⚔️ **10 caçadores diferentes**, cada um com a sua arma, habilidade única e habilidades próprias: do Caçador das Sombras, que ergue um exército dos monstros que derrota, ao Guardião do Tempo, que para o tempo e volta atrás.
 >
 > 🐉 **60 andares e 12 bosses**: dragões, liches, rainhas aranha, anjos caídos e o Soberano do Vazio no fim de tudo. Cada zona tem monstros, armadilhas e cenários próprios.
 >
@@ -148,7 +148,7 @@ Os textos (título e descrições) estão mais abaixo.
 
 > Descend into the Dungeon of Destiny, a pixel-art action RPG made for your phone.
 >
-> ⚔️ **9 different hunters**, each with their own weapon, unique ability and skills: from the Shadow Hunter, who raises an army from defeated monsters, to the Time Guardian, who stops time and rewinds it.
+> ⚔️ **10 different hunters**, each with their own weapon, unique ability and skills: from the Shadow Hunter, who raises an army from defeated monsters, to the Time Guardian, who stops time and rewinds it.
 >
 > 🐉 **60 floors and 12 bosses**: dragons, liches, spider queens, fallen angels and the Void Sovereign at the very bottom. Every zone has its own monsters, traps and scenery.
 >

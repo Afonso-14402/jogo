@@ -68,6 +68,9 @@ const TODAS_HABILIDADES = {
   julgamento: { nome: 'Julgamento',        mana: 25, cd: 9,  cor: '#fff6a0', desc: 'Pilares de luz caem sobre os 4 monstros mais perto (x2 em mortos-vivos)' },
   tornado:    { nome: 'Tornado',           mana: 20, cd: 9,  cor: '#9fdcff', desc: 'Um tornado lento que atravessa e corta tudo no caminho' },
   acelerar:   { nome: 'Acelerar',          mana: 20, cd: 14, cor: '#7df9ff', desc: 'Durante 5 s andas e atacas 50% mais depressa' },
+  leque:      { nome: 'Leque de Flechas',  mana: 15, cd: 5,  cor: '#c8b4ff', desc: 'Disparas 5 flechas em leque que atravessam os monstros' },
+  explosiva:  { nome: 'Flecha Explosiva',  mana: 20, cd: 8,  cor: '#ff9f40', desc: 'Uma flecha que explode e queima tudo à volta (dano x2.5)' },
+  recuo:      { nome: 'Salto Atrás',       mana: 10, cd: 6,  cor: '#e0d8ff', desc: 'Saltas para trás, empurras os monstros perto e ficas invencível um instante' },
   rebobinar:  { nome: 'Rebobinar',         mana: 25, cd: 16, cor: '#b0f4ff', desc: 'Voltas 3 segundos atrás: ao sítio e à vida que tinhas' },
 };
 // Níveis em que se desbloqueia a 1.ª, 2.ª, 3.ª e 4.ª habilidade
@@ -92,7 +95,8 @@ function usarHabilidade(i) {
   if (J.mana < h.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
   const feito = ({ ergue: habErgue, sede: habSede, mao: habMao, furtivo: habFurtivo, redemoinho: habRedemoinho, investida: habInvestida,
     milCortes: habMilCortes, paredeFogo: habParedeFogo, supernova: habSupernova, rugido: habRugido, grito: habGrito, onda: habMao,
-    barreira: habBarreira, julgamento: habJulgamento, tornado: habTornado, acelerar: habAcelerar, rebobinar: habRebobinar })[h.id]();
+    barreira: habBarreira, julgamento: habJulgamento, tornado: habTornado, acelerar: habAcelerar, rebobinar: habRebobinar,
+    leque: habLeque, explosiva: habExplosiva, recuo: habRecuo })[h.id]();
   if (!feito) return;
   J.mana -= h.mana;
   J.cdHab[h.id] = h.cd * (temRel('relogio') ? 0.7 : 1) * fatorRecarga();
@@ -320,6 +324,45 @@ function habTornado() {
   projeteis.push({ x: J.x + ux * 20, y: J.y + uy * 20, vx: ux * 170, vy: uy * 170, r: 20, vida: 2.2, cor: '#9fdcff',
     tipo: 'lamina', dono: 'jogador', dano, perfura: 30, atingidos: [] });
   som(500, 0.6, 'sine', 0.04, -300);
+  return true;
+}
+
+// Arqueira Lunar
+function habLeque() {
+  const [ux, uy] = mira(), base = Math.atan2(uy, ux);
+  const { dano, crit } = rolarDano(1.1);
+  for (const a of [-0.3, -0.15, 0, 0.15, 0.3]) {
+    projeteis.push({ x: J.x + ux * 14, y: J.y + uy * 14, vx: Math.cos(base + a) * 560, vy: Math.sin(base + a) * 560, r: 6, vida: Math.max(0.4, S.alcance / 560),
+      cor: '#c8b4ff', tipo: 'flecha', dono: 'jogador', dano, crit, perfura: 2 + perfuraClasse(), atingidos: [] });
+  }
+  som(820, 0.15, 'triangle', 0.04, -500);
+  return true;
+}
+function habExplosiva() {
+  const [ux, uy] = mira();
+  projeteis.push({ x: J.x + ux * 14, y: J.y + uy * 14, vx: ux * 500, vy: uy * 500, r: 8, vida: Math.max(0.5, S.alcance / 500),
+    cor: '#ff9f40', tipo: 'flecha', dono: 'jogador', dano: rolarDano(2.5).dano, explode: 80 });
+  som(600, 0.2, 'sawtooth', 0.04, -300);
+  return true;
+}
+function habRecuo() {
+  const [ux, uy] = mira();
+  for (const e of inimigos) {
+    if (e.morto || e.z > 20) continue;
+    const d = Math.hypot(e.x - J.x, e.y - J.y);
+    if (d > 90 + e.r) continue;
+    const { dano, crit } = rolarDano(1);
+    danoInimigo(e, dano, crit, (e.x - J.x) / (d || 1) * 3, (e.y - J.y) / (d || 1) * 3, true);
+    e.medo = Math.max(e.medo || 0, e.boss ? 0.3 : 0.8);
+  }
+  let d = 0;
+  while (d < 150 && !colideCirculo(mapa, J.x - ux * (d + 8), J.y - uy * (d + 8), J.r)) d += 8;
+  for (let k = 0; k <= d; k += 14) particulas.push({ x: J.x - ux * k, y: J.y - uy * k, vx: 0, vy: 0, t: 0.3, cor: '#e0d8ff', tam: 5 });
+  J.x -= ux * d; J.y -= uy * d;
+  J.invuln = Math.max(J.invuln, 0.4);
+  ondas.push({ x: J.x + ux * d, y: J.y + uy * d, r: 90, t: 0.3, dur: 0.3, cor: '#e0d8ff' });
+  revelar(mapa, J.x, J.y, 7);
+  som(900, 0.15, 'sine', 0.04, 400);
   return true;
 }
 

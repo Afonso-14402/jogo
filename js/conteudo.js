@@ -39,7 +39,7 @@ function dispararFlecha(dx, dy) {
   const { dano, crit } = rolarDano();
   const vel = 560, vida = Math.max(0.3, S.alcance / vel);
   projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * vel, vy: dy * vel, r: 6, vida, cor: RARIDADES[J.arma.r].cor,
-    tipo: 'flecha', dono: 'jogador', dano, crit, perfura: 1, atingidos: [] });
+    tipo: 'flecha', dono: 'jogador', dano, crit, perfura: 1 + perfuraClasse(), atingidos: [] });
   som(760, 0.07, 'triangle', 0.03, -500);
 }
 

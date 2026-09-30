@@ -847,6 +847,15 @@ const EN = {
   'Toca no botão de ': 'Tap the button of ', ' para lançar magia': ' to cast magic', 'Carrega 1 para lançar ': 'Press 1 to cast ', ' (gasta mana)': ' (uses mana)',
   'Toca em ★ para usar ': 'Tap ★ to use ', 'Carrega F para usar ': 'Press F to use ',
   'Toca em »» para te esquivares': 'Tap »» to dodge', 'Shift: esquiva (ficas invencível)': 'Shift: dodge (you are invincible)',
+  // Arqueira Lunar
+  'Arqueira Lunar': 'Moon Archer', 'Arco Lunar': 'Moon Bow', 'Brilha mais nas noites sem lua.': 'Shines brighter on moonless nights.',
+  'Chuva de Flechas': 'Arrow Rain', 'CHUVA DE FLECHAS': 'ARROW RAIN', 'Uma chuva de flechas cai do céu sobre o alvo e à volta dele': 'A rain of arrows falls from the sky on and around the target',
+  '+20% alcance, +8% crítico e as flechas atravessam mais 1 monstro': '+20% range, +8% crit and arrows pierce 1 more monster',
+  'Caçadora de Estrelas': 'Star Huntress', '+35% alcance, +15% crítico e as flechas atravessam mais 2 monstros': '+35% range, +15% crit and arrows pierce 2 more monsters',
+  'Uma chuva enorme de flechas cai sobre o alvo': 'A huge rain of arrows falls on the target',
+  'Leque de Flechas': 'Arrow Fan', 'Disparas 5 flechas em leque que atravessam os monstros': 'Shoot 5 arrows in a fan that pierce monsters',
+  'Flecha Explosiva': 'Explosive Arrow', 'Uma flecha que explode e queima tudo à volta (dano x2.5)': 'An arrow that explodes and burns everything around (x2.5 damage)',
+  'Salto Atrás': 'Back Leap', 'Saltas para trás, empurras os monstros perto e ficas invencível um instante': 'Leap back, push nearby monsters away and be invincible for a moment',
   // guia: modos que se abrem e dicas da primeira vez
   'MODO NOVO NO MENU': 'NEW MODE IN THE MENU', ' para abrir: ': ' to unlock: ',
   'Baú da sorte: a roleta pode dar do Lixo ao Mítico.': 'Lucky chest: the roulette can give anything from Junk to Mythic.',

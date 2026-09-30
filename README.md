@@ -178,6 +178,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Colosso | Manoplas do Titã | **Punho do Titã**: atordoa tudo à volta e levas -50% dano 4 s | +60 vida, +6 defesa |
   | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 30%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +2 vida/s, poções +15%, +30% poder mágico |
   | Mestre das Lâminas | Espadas Gémeas do Vento | **Corte do Vento**: leque de lâminas que atravessam | +15% velocidade |
+  | **Arqueira Lunar** | Arco Lunar | **Chuva de Flechas**: flechas caem do céu sobre o alvo e à volta dele | +20% alcance, +8% crítico, as flechas atravessam mais 1 monstro |
   | **Guardião do Tempo** (único) | Cetro das Horas | **Parar o Tempo**: 3 s em que os monstros e os tiros deles ficam parados e levam +50% dano (os bosses resistem mais) | +20% vel. de ataque, +5% crítico, recargas 15% mais rápidas |
 
   **Cada caçador só usa as suas magias e habilidades** (as outras nem aparecem):
@@ -191,6 +192,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Colosso | — | Investida, Grito de Guerra, Onda de Choque |
   | Curandeiro Supremo | Cura Divina, Relâmpago | Barreira Sagrada, Julgamento |
   | Mestre das Lâminas | — | Redemoinho, Tornado, Furtividade |
+  | Arqueira Lunar | Nova de Gelo | **Leque de Flechas** (5 flechas que atravessam), **Flecha Explosiva** (dano x2.5 em área), **Salto Atrás** (foges e empurras os monstros) |
   | Guardião do Tempo | Nova de Gelo | **Acelerar** (5 s a andar e atacar 50% mais depressa), **Rebobinar** (voltas 3 segundos atrás: ao sítio e à vida que tinhas), Tornado |
 
   Só o Caçador das Sombras tem o Exército das Sombras. Os Livros de Feitiço só trazem magias do teu caçador. Curar-se ficou mais difícil: a Cura Divina é só do Curandeiro e cura menos, as poções curam 35% e têm 3 s de recarga, o roubo de vida vai no máximo a 10% e a regeneração fica a metade enquanto estás em combate.

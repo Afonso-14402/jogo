@@ -39,13 +39,17 @@ const CLASSES = {
     hab: 'corte', habNome: 'Corte do Vento', habDesc: 'Lança um leque de lâminas de vento que atravessam os monstros',
     passiva: '+15% velocidade', mana: 12, cd: 5, vel: 0.15,
     feit: [], habs: ['redemoinho', 'tornado', 'furtivo'] },
+  arqueiro: { nome: 'Arqueira Lunar', cor: '#c8b4ff', arma: 'Arco Lunar',
+    hab: 'chuvaFlechas', habNome: 'Chuva de Flechas', habDesc: 'Uma chuva de flechas cai do céu sobre o alvo e à volta dele',
+    passiva: '+20% alcance, +8% crítico e as flechas atravessam mais 1 monstro', mana: 25, cd: 10, crit: 0.08, alcance: 0.2,
+    feit: ['gelo'], habs: ['leque', 'explosiva', 'recuo'] },
   // o único que mexe no tempo: para-o, acelera-o e volta atrás
   cronos: { nome: 'Guardião do Tempo', cor: '#7df9ff', arma: 'Cetro das Horas', unico: true,
     hab: 'parar', habNome: 'Parar o Tempo', habDesc: 'O tempo para durante 3 s: os monstros e os tiros ficam gelados e levam +50% dano',
     passiva: '+20% vel. de ataque, +5% crítico e recargas 15% mais rápidas', mana: 35, cd: 18, velAtaque: 0.2, crit: 0.05,
     feit: ['gelo'], habs: ['acelerar', 'rebobinar', 'tornado'] },
 };
-const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento', 'cronos'];
+const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento', 'arqueiro', 'cronos'];
 
 // Mudança de classe (nível 30 + Provação): novo nome, passiva mais forte e habilidade única melhorada
 const EVOLUCOES = {
@@ -58,6 +62,7 @@ const EVOLUCOES = {
   titan: { nome: 'Rei Titã', hp: 160, def: 12, passiva: '+160 vida e +12 defesa, -10% velocidade', habDesc: 'Esmaga o chão num raio enorme e levas -50% dano durante 4 s' },
   cura: { nome: 'Santo', regen: 4, cura: 0.2, magia: 0.5, passiva: '+4 vida/s, poções +20% e +50% poder mágico', habDesc: 'Cura 40% da vida e queima os monstros à volta (x2 em mortos-vivos)' },
   vento: { nome: 'Senhor da Tempestade', vel: 0.25, passiva: '+25% velocidade', habDesc: 'Um leque de 9 lâminas de vento' },
+  arqueiro: { nome: 'Caçadora de Estrelas', crit: 0.15, alcance: 0.35, cd: 8, passiva: '+35% alcance, +15% crítico e as flechas atravessam mais 2 monstros', habDesc: 'Uma chuva enorme de flechas cai sobre o alvo' },
   cronos: { nome: 'Senhor do Tempo', velAtaque: 0.3, crit: 0.1, cd: 14, passiva: '+30% vel. de ataque, +10% crítico e recargas 15% mais rápidas', habDesc: 'O tempo para durante 5 s em toda a sala' },
 };
 const cacheClasseEvo = {};
@@ -71,7 +76,7 @@ const MORTOS_VIVOS = ['esqueleto', 'zumbi', 'fantasma', 'mumia', 'necromante', '
 // Bónus passivos do caçador (entram nos stats)
 function bonusClasse() {
   const C = classeJ(), b = { hp: C.hp || 0, def: C.def || 0, velAtaque: C.velAtaque || 0, crit: C.crit || 0, magia: C.magia || 0,
-    vel: C.vel || 0, regen: C.regen || 0, cura: C.cura || 0, xp: C.xp || 0, danoPct: 0, roubo: 0 };
+    vel: C.vel || 0, regen: C.regen || 0, cura: C.cura || 0, xp: C.xp || 0, alcance: C.alcance || 0, danoPct: 0, roubo: 0 };
   if (J.formaBestial > 0) { b.danoPct += 0.5; b.vel += 0.3; b.roubo += 0.05; }
   if (J.furia > 0) b.danoPct += 0.25;
   if (J.acelerado > 0) { b.velAtaque += 0.5; b.vel += 0.35; } // Acelerar (Guardião do Tempo)
@@ -93,7 +98,7 @@ function usarHabilidadeClasse() {
   if (!C.hab) return;
   if ((J.cdClasse || 0) > 0) return;
   if (J.mana < C.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
-  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte, heroi: habHeroi, parar: habParar })[C.hab]();
+  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte, heroi: habHeroi, parar: habParar, chuvaFlechas: habChuvaFlechas })[C.hab]();
   if (!feito) return;
   J.mana -= C.mana;
   J.cdClasse = C.cd * (temRel('relogio') ? 0.7 : 1) * fatorRecarga();
@@ -228,6 +233,20 @@ function habCorte() {
       tipo: 'lamina', dono: 'jogador', dano, perfura: 3, atingidos: [] });
   }
   som(900, 0.2, 'triangle', 0.04, -600);
+  return true;
+}
+
+// ---------------------------------------------------------------------
+//  Arqueira Lunar
+// ---------------------------------------------------------------------
+// Flechas a mais que atravessam os monstros (passiva)
+const perfuraClasse = () => (J.classe === 'arqueiro' ? (J.evoluido ? 2 : 1) : 0);
+
+function habChuvaFlechas() {
+  const p = pontoAlvo(200);
+  chuvaDeFogo(p.x, p.y, J.evoluido ? 18 : 11, J.evoluido ? 170 : 120, rolarDano(1.2).dano, 42, '#c8b4ff', 'flecha');
+  texto(J.x, J.y - 40, 'CHUVA DE FLECHAS', '#c8b4ff', 16);
+  som(1200, 0.5, 'triangle', 0.04, -900);
   return true;
 }
 

@@ -151,6 +151,7 @@ const ITENS = [
   { tipo: 'arma', r: 'comum', nome: 'Lança de Madeira', dano: 7, vel: 1.0, alcance: 62, crit: 0.04, desc: 'Uma vara com ponta. Funciona.' },
   { tipo: 'arma', r: 'comum', nome: 'Foice Enferrujada', dano: 7, vel: 0.9, alcance: 56, crit: 0.04, desc: 'Encontrada num celeiro abandonado.' },
   { tipo: 'arma', r: 'comum', nome: 'Garra de Lobo', dano: 5, vel: 1.55, alcance: 32, crit: 0.1, desc: 'Arranhões rápidos.' },
+  { tipo: 'arma', r: 'comum', nome: 'Arco Lunar', dano: 5, vel: 1.15, alcance: 380, crit: 0.08, desc: 'Brilha mais nas noites sem lua.' },
   { tipo: 'arma', r: 'comum', nome: 'Cetro das Horas', dano: 6, vel: 1.15, alcance: 44, crit: 0.05, magia: 0.2, desc: 'Os ponteiros andam ao contrário.' },
   { tipo: 'arma', r: 'raro', nome: 'Machado Duplo', dano: 16, vel: 0.85, alcance: 50, crit: 0.07, desc: 'Duas lâminas, zero paciência.' },
   { tipo: 'arma', r: 'raro', nome: 'Cajado de Gelo', dano: 9, vel: 1.0, alcance: 46, crit: 0.05, magia: 0.35, desc: 'Fica sempre frio ao toque.' },
