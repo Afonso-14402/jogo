@@ -568,12 +568,9 @@ function atualizarStatus(dt) {
   }
 }
 
+// Janela azul do [Sistema]: a mesma moldura de todas as janelas, com as cores do Sistema
 function janelaSistema(x, y, w, h) {
-  ctx.fillStyle = 'rgba(6,20,40,0.94)';
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = '#4dc3ff';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  painel(x, y, w, h, 'rgba(6,20,40,0.94)', '#4dc3ff');
   ctx.fillStyle = 'rgba(77,195,255,0.12)';
   ctx.fillRect(x + 4, y + 4, w - 8, 3);
 }

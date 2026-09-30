@@ -216,6 +216,7 @@ function renderizarMapa(m, andar) {
       if (!vizinhoChao) continue;
       if (!solido(m, x, y + 1)) {
         g.drawImage(Math.abs(h) % 7 === 3 ? L.faceAlt : L.face, px, py);
+        detalheParedeExtra(g, px, py, T, zonaDoAndar(andar), Math.abs(h)); // rachaduras, correntes, estandartes...
         if (!m.eBoss && Math.abs(h) % 19 === 0) m.tochas.push({ x: (x + 0.5) * TILE, y: y * TILE + 12 });
       } else g.drawImage(L.topo, px, py);
     }

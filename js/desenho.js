@@ -87,11 +87,21 @@ function painel(x, y, w, h, cor = 'rgba(14,11,22,0.9)', borda = '#5a4d74') {
   ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
   ctx.fillStyle = cor;
   ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,0.035)'; // luz suave na metade de cima
+  ctx.fillRect(x + 2, y + 2, w - 4, Math.round(h / 2) - 2);
   ctx.fillStyle = borda;
   ctx.fillRect(x, y, w, 2); ctx.fillRect(x, y + h - 2, w, 2);
   ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(x + 2, y + 2, w - 4, 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.45)'; // linha escura por dentro da moldura
+  ctx.fillRect(x + 2, y + h - 3, w - 4, 1); ctx.fillRect(x + w - 3, y + 2, 1, h - 4);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(x + 2, y + 2, w - 4, 1); ctx.fillRect(x + 2, y + 2, 1, h - 4);
+  if (w > 40 && h > 24) { // cantos decorados
+    ctx.fillStyle = borda;
+    for (const [cx, cy] of [[x - 1, y - 1], [x + w - 3, y - 1], [x - 1, y + h - 3], [x + w - 3, y + h - 3]]) ctx.fillRect(cx, cy, 4, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (const [cx, cy] of [[x, y], [x + w - 2, y], [x, y + h - 2], [x + w - 2, y + h - 2]]) ctx.fillRect(cx, cy, 2, 2);
+  }
 }
 
 function barra(x, y, w, h, frac, cor, fundo = '#2a2030') {
@@ -144,9 +154,16 @@ function botoesMenuToque(comInstalar) {
   }
 }
 
-function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)') {
+function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)', icone = null) {
   const sobre = rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
+  if (!icone && typeof BOTAO_VOLTAR !== 'undefined' && r === BOTAO_VOLTAR) { icone = 'voltar'; txt = String(txt).replace(/^<\s*/, ''); }
+  if (!icone && typeof BOTAO_FECHAR !== 'undefined' && r === BOTAO_FECHAR) icone = 'fechar';
   painel(r.x, r.y, r.w, r.h, sobre ? 'rgba(50,42,72,0.97)' : fundo, sobre ? '#ffffff' : cor);
+  if (icone && typeof iconeUI === 'function' && r.w > 70) {
+    iconeUI(icone, r.x + 18, r.y + r.h / 2, cor, r.h < 36 ? 1.5 : 2);
+    textoCentroAjustado(txt, r.x + r.w / 2 + 10, r.y + r.h / 2 + 1, 16, cor, r.w - 44);
+    return;
+  }
   textoCentro(txt, r.x + r.w / 2, r.y + r.h / 2 + 1, 16, cor);
 }
 
@@ -330,6 +347,7 @@ function desenharMundo(t) {
   desenharSalas();
   for (const a of armadilhas) desenharArmadilha(a);
   desenharPocas(t);
+  desenharAnimados(t);
   desenharCadaveres(t);
   desenharEscada(t);
   for (const p of perigos) desenharPerigo(p);
@@ -403,7 +421,7 @@ function desenharLuz(t) {
   };
   luz(J.x, J.y, 330 + Math.sin(t * 7) * 6, 1);
   if (pet && J.pet && J.pet.tipo !== 'lobo') luz(pet.x, pet.y, 70, 0.6);
-  for (const tc of mapa.tochas) luz(tc.x, tc.y + 20, 150 + Math.sin(t * 9 + tc.x) * 8, 0.85);
+  for (const tc of mapa.tochas) luz(tc.x, tc.y + 20, 150 + tremorTocha(t, tc.x), 0.85);
   for (const o of objetos) {
     if (o.tipo === 'cristal') luz(o.x, o.y, 110, o.fase === 'feito' ? 0.3 : 0.8);
     else if (o.tipo === 'altar' && !o.usado) luz(o.x, o.y, 110, 0.7);
@@ -434,8 +452,12 @@ function desenharLuz(t) {
     ctxMundo.drawImage(manchaLuz(rgb), bx - raio, by - raio, raio * 2, raio * 2);
     ctxMundo.globalAlpha = 1;
   };
-  for (const tc of mapa.tochas) if (explorado(tc.x, tc.y + TILE)) brilho(tc.x, tc.y + 10, 34, bioma().brilho, 0.16);
-  for (const l of mapa.luzes || []) if (explorado(l.x, l.y)) brilho(l.x, l.y, 22, hexRgb(l.cor).join(','), 0.22);
+  for (const tc of mapa.tochas) if (explorado(tc.x, tc.y + TILE)) {
+    const tr = tremorTocha(t, tc.x);
+    brilho(tc.x, tc.y + 10, 34 + tr * 0.4, bioma().brilho, 0.16);
+    brilho(tc.x, tc.y + 46, 50 + tr, bioma().brilho, 0.07 + tr * 0.003); // luz a tremer no chão
+  }
+  for (const l of mapa.luzes || []) if (explorado(l.x, l.y)) brilho(l.x, l.y, 22 + tremorTocha(t, l.x) * 0.3, hexRgb(l.cor).join(','), 0.22);
   ctxMundo.globalCompositeOperation = 'source-over';
 }
 
@@ -728,6 +750,7 @@ function desenharInimigo(e, t) {
 
   // animação: respirar, inclinar ao andar, amassar ao levar um golpe, crescer ao atacar e ao aparecer
   const pe = y + h / 2 - 2;
+  let PA = null;
   ctx.save();
   {
     const resp = Math.sin(t * 3 + e.x * 0.05);
@@ -739,8 +762,10 @@ function desenharInimigo(e, t) {
     if (e.preparar > 0 || e.prepInv > 0 || e.golpeT > 0 || e.ceifaT > 0 || (e.boss && e.investida > 0)) { sx *= 1.08; sy *= 1.08; }
     const idade = tempoJogo - (e.nasceu ?? -9);
     if (idade >= 0 && idade < 0.35) { const k = 0.2 + 0.8 * idade / 0.35; sx *= k; sy *= k; }
-    ctx.translate(x, pe);
-    ctx.rotate(e.boss ? e.incl * 0.4 : e.incl);
+    PA = poseAtaque(e); // prepara-se antes de atacar e golpeia
+    sx *= PA.sx; sy *= PA.sy;
+    ctx.translate(x + PA.ox, pe + PA.oy);
+    ctx.rotate((e.boss ? e.incl * 0.4 : e.incl) + PA.rot);
     ctx.scale(sx, sy);
     ctx.translate(-x, -pe);
   }
@@ -771,6 +796,7 @@ function desenharInimigo(e, t) {
   else if (e.lento > 0) sprCor(s.c, x, y, flip, '#7fd8ff', 0.4);
   else if (e.queima > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.3);
   ctx.restore();
+  if (PA) desenharEfeitoAtaque(e, PA, t);
 
   if (e.tipo === 'dragao' && e.sopro > 0) {
     const ang = Math.atan2(J.y - e.y, J.x - e.x);
@@ -1677,7 +1703,7 @@ function desenharTitulo(t) {
   // botões do menu
   botoesTitulo().forEach((b, i) => {
     const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : '#ddd';
-    botao(b, b.txt, cor);
+    botao(b, b.txt, cor, undefined, { continuar: 'jogar', novo: 'novo' }[b.id] || b.id);
   });
   if (saveInfo) {
     const rs = (RACAS[saveInfo.J.raca] ? RACAS[saveInfo.J.raca].nome : '') + (DIFICULDADES[saveInfo.J.dificuldade] ? ` · ${DIFICULDADES[saveInfo.J.dificuldade].nome}` : '');
@@ -1727,9 +1753,9 @@ function desenharPausa() {
   textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
   if (!confirmarDesistir) { botaoIdioma(); botoesMenuToque(false); }
   const B = BOTOES_PAUSA;
-  botao(B.continuar, modoToque ? 'Continuar' : 'Continuar (P)', '#5dff7a');
-  botao(B.guardar, modoToque ? 'Guardar e sair' : 'Guardar e sair (G)', '#ffe680');
-  botao(B.desistir, modoToque ? 'Desistir' : 'Desistir (X)', '#ff6060');
+  botao(B.continuar, modoToque ? 'Continuar' : 'Continuar (P)', '#5dff7a', undefined, 'jogar');
+  botao(B.guardar, modoToque ? 'Guardar e sair' : 'Guardar e sair (G)', '#ffe680', undefined, 'guardar');
+  botao(B.desistir, modoToque ? 'Desistir' : 'Desistir (X)', '#ff6060', undefined, 'desistir');
   const D = dif();
   textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
@@ -1771,25 +1797,30 @@ function desenharMorte() {
   const D = dif();
   textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · ${D.nome}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 178, 16, D.cor);
   if (!J.desistiu && J.causa) textoCentro(`Morto por: ${J.causa}`, LARGURA / 2, 200, 14, '#ff8080', false);
+  const dica = dicaMorte();
+  if (dica) { // dica ligada ao que te matou
+    painel(LARGURA / 2 - 330, 212, 660, 26, 'rgba(30,24,10,0.9)', '#ffe14d');
+    textoCentroAjustado(`Dica: ${traduzir(dica)}`, LARGURA / 2, 226, 12, '#ffe680', 640, false);
+  }
   const linhas = [
     `Andar alcançado: ${andar}`,
     `Nível: ${J.nivel}`,
     `Inimigos derrotados: ${J.kills}`,
     `Baús abertos: ${J.bausAbertos}`,
   ];
-  linhas.forEach((l, i) => textoCentro(l, LARGURA / 2, 228 + i * 28, 20, '#eee', false));
+  linhas.forEach((l, i) => textoCentro(l, LARGURA / 2, 258 + i * 22, 17, '#eee', false));
   if (J.melhorItem) {
-    textoCentro('Melhor item encontrado:', LARGURA / 2, 350, 16, '#aaa', false);
-    desenharIcone(J.melhorItem, LARGURA / 2, 392, 48);
-    textoCentro(J.melhorItem.nome, LARGURA / 2, 432, 20, RARIDADES[J.melhorItem.r].cor);
+    textoCentro('Melhor item encontrado:', LARGURA / 2, 368, 15, '#aaa', false);
+    desenharIcone(J.melhorItem, LARGURA / 2, 402, 44);
+    textoCentro(J.melhorItem.nome, LARGURA / 2, 440, 18, RARIDADES[J.melhorItem.r].cor);
   }
-  if (J.novoRecorde) textoCentro('NOVO RECORDE!', LARGURA / 2, 476, 26, '#ffe14d');
-  else textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 476, 18, '#7ec8ff');
+  if (J.novoRecorde) textoCentro('NOVO RECORDE!', LARGURA / 2, 478, 24, '#ffe14d');
+  else textoCentro(`Recorde: Andar ${recorde}`, LARGURA / 2, 478, 18, '#7ec8ff');
   textoCentro(`+${J.almasGanhas || 0} almas  (tens ${meta.almas})`, LARGURA / 2, 514, 20, '#b48cff');
   textoCentro('Gasta-as no Altar das Almas, no menu inicial', LARGURA / 2, 540, 12, '#aaa', false);
-  if (J.modo === 'diario') textoCentro(`Desafio Diário: ${J.pontosDiario} pontos${J.recordeDiario ? ' · NOVO RECORDE DE HOJE!' : ''}`, LARGURA / 2, 330, 16, '#ffae00');
-  if (J.modo === 'torre') textoCentro(`Torre: chegaste ao andar ${andar}/100 (recorde ${meta.torreMax || andar})`, LARGURA / 2, 330, 16, '#ff8080');
-  if (J.modo === 'bossrush') textoCentro(J.venceuRush ? `Tempo: ${relogioRush(tempoJogo)}${J.recordeRush ? ' · NOVO RECORDE!' : ''}` : `Boss Rush: chegaste ao boss ${Math.ceil(andar / 5)}/${BOSSES.length}`, LARGURA / 2, 330, 16, '#ffae00');
-  botao(BOTOES_MORTE.denovo, modoToque ? 'Tentar outra vez' : 'ENTER: Outra vez', '#5dff7a');
-  botao(BOTOES_MORTE.menu, modoToque ? 'Menu' : 'Esc: Menu', '#ddd');
+  if (J.modo === 'diario') textoCentro(`Desafio Diário: ${J.pontosDiario} pontos${J.recordeDiario ? ' · NOVO RECORDE DE HOJE!' : ''}`, LARGURA / 2, 346, 15, '#ffae00');
+  if (J.modo === 'torre') textoCentro(`Torre: chegaste ao andar ${andar}/100 (recorde ${meta.torreMax || andar})`, LARGURA / 2, 346, 15, '#ff8080');
+  if (J.modo === 'bossrush') textoCentro(J.venceuRush ? `Tempo: ${relogioRush(tempoJogo)}${J.recordeRush ? ' · NOVO RECORDE!' : ''}` : `Boss Rush: chegaste ao boss ${Math.ceil(andar / 5)}/${BOSSES.length}`, LARGURA / 2, 346, 15, '#ffae00');
+  botao(BOTOES_MORTE.denovo, modoToque ? 'Tentar outra vez' : 'ENTER: Outra vez', '#5dff7a', undefined, 'jogar');
+  botao(BOTOES_MORTE.menu, modoToque ? 'Menu' : 'Esc: Menu', '#ddd', undefined, 'menu');
 }

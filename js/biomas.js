@@ -448,6 +448,7 @@ function decorarMapa(m, g, T, nAndar) {
   const decos = SPR.decor[z];
   m.luzes = [];
   m.lama = new Set();
+  criarAnimados(m, z); // gotas, teias, lava, água... (cenario.js)
   if (m.eBoss) return;
   const perto = (x, y, p, d) => Math.hypot((x + 0.5) * TILE - p.x, (y + 0.5) * TILE - p.y) < d;
   if (z === 4) { // poças de lama em algumas salas

@@ -204,6 +204,10 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   - **Monstros mais espertos**: alguns fogem quando estão quase a morrer, os outros aproximam-se de lado para te cercar e já não ficam presos nas paredes.
   - **Curva de dificuldade** afinada com o bot, do andar 1 ao 60 (múmias, golems de cristal e monstros finais mais justos).
   - **Mais rápido**: a luz é calculada a metade da resolução (−60% de tempo), o minimapa é guardado em cache e há um limite de partículas.
+- **Monstros que avisam antes de atacar**: cada monstro prepara o golpe à sua maneira. Uns agacham-se e **saltam** (slimes, aranhas, lobos), outros **erguem-se** e desferem um corte branco (esqueletos, orcs, cavaleiros), outros **encolhem como uma mola** e disparam-se, e os que atiram de longe **carregam uma esfera de energia** antes de disparar. Assim dá para ver o ataque a chegar e esquivar.
+- **Cenários mais ricos**: paredes com rachas, correntes, estandartes da cor da zona, nichos com caveiras e velas e musgo a pingar. Coisas que mexem em cada zona: poças de **lava** a borbulhar, **água** com ondas, **teias** a abanar, gotas a cair, velas, brilhos e **fendas** do vazio. As tochas **tremeluzem** e iluminam o chão à volta.
+- **Interface com um estilo só**: todas as janelas usam a mesma moldura (cantos decorados, brilho em cima, contorno interior), incluindo as janelas do [Sistema]. Os botões do menu, da pausa, da morte e os de voltar/fechar têm **ícones**.
+- **Morte que ensina**: o ecrã de morte dá uma **dica** conforme o que te matou (cada monstro, boss, armadilha, fogo no chão ou a estátua do templo).
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
 - **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo ou Senhor da Tempestade. Cada evolução tem uma passiva mais forte e melhora a habilidade única.
@@ -288,6 +292,7 @@ js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
 js/polimento.js     peso dos golpes, herói mais vivo, mira e joystick, comparar itens, monstros mais espertos, luz rápida
+js/cenario.js       animação dos ataques dos monstros, detalhes das paredes, coisas que mexem (lava, água, teias), ícones da interface e dicas de morte
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
 js/ecras.js         Altar das Almas, Coleção, Conquistas, Mochila, controlos de toque, companheiro

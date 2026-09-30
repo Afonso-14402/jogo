@@ -849,6 +849,7 @@ function matarInimigo(e) {
 function danoJogador(d, fx, fy, fonte = null) {
   if (J.invuln > 0 || J.dashT > 0 || estado !== 'jogo') return;
   J.causa = fonte ? fonte.nome : (J.causaProxima || (boss ? boss.nome : 'uma armadilha'));
+  J.causaTipo = fonte ? fonte.tipo : (!J.causaProxima && boss ? boss.tipo : null);
   J.causaProxima = null;
   if (nPerk('escudo') > 0 && J.escudoCd <= 0) {
     J.escudoCd = 10;
@@ -1295,6 +1296,7 @@ function atualizarJogador(dt) {
 
 function atualizarInimigo(e, dt) {
   e.t += dt; e.cd -= dt; e.flash -= dt;
+  atualizarAnimAtaque(e, dt);
   const dx = J.x - e.x, dy = J.y - e.y;
   const d = Math.hypot(dx, dy) || 1;
   const ux = dx / d, uy = dy / d;
@@ -1416,7 +1418,7 @@ function atualizarInimigo(e, dt) {
   if (d < e.r + J.r - 2 && !(e.enterrado > 0) && !(e.tipo === 'goblin' && e.roubou)) {
     const hp0 = J.hp;
     danoJogador(e.dano * (e.carga > 0 ? 1.5 : e.inv > 0 ? 1.3 : 1), e.x, e.y, e);
-    if (J.hp < hp0) aoAcertarJogador(e, hp0 - J.hp);
+    if (J.hp < hp0) { aoAcertarJogador(e, hp0 - J.hp); e.atacouT = 0.22; }
   }
 }
 
