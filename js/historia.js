@@ -1,10 +1,10 @@
 'use strict';
 // =====================================================================
 //  HISTÓRIA E CHEFE FINAL
-//  - Falas do [Sistema] e do Monarca do Vazio ao longo da descida
-//  - Zonas finais: Cidadela Celeste (41-50) e Trono do Monarca (51-60)
+//  - Falas do [Destino] e do Soberano do Vazio ao longo da descida
+//  - Zonas finais: Cidadela Celeste (41-50) e Trono do Soberano (51-60)
 //    (os monstros e bosses delas estão em bossesFinais.js)
-//  - Andar 60: o Monarca do Vazio. Vencê-lo mostra o final do jogo.
+//  - Andar 60: o Soberano do Vazio. Vencê-lo mostra o final do jogo.
 // =====================================================================
 
 // ---------------------------------------------------------------------
@@ -12,27 +12,27 @@
 // ---------------------------------------------------------------------
 let falas = [];
 const QUEM = {
-  sistema: { nome: '[Sistema]', cor: '#4dc3ff' },
-  monarca: { nome: 'Monarca do Vazio', cor: '#b44dff' },
+  sistema: { nome: '[Destino]', cor: '#4dc3ff' },
+  monarca: { nome: 'Soberano do Vazio', cor: '#b44dff' },
   arcanjo: { nome: 'Arcanjo Caído', cor: '#ffe680' },
   anciao: { nome: 'Ancião', cor: '#e8e2cf' },
 };
 function falar(quem, txt) { falas.push({ quem, txt, t: 0, dur: 3 + txt.length * 0.045 }); }
 
 const HISTORIA = {
-  1: [['sistema', 'Bem-vindo, Jogador. Foste escolhido pelo Sistema.'], ['sistema', 'Desce a Masmorra do Destino. No fundo, algo espera por ti.']],
+  1: [['sistema', 'Bem-vindo, caçador. O Destino escolheu-te.'], ['sistema', 'Desce a Masmorra do Destino. No fundo, algo espera por ti.']],
   5: [['monarca', 'Mais um caçador... Vamos ver quanto tempo duras.']],
   10: [['sistema', 'Aviso: a energia do Vazio está a crescer. Os portais abrem cada vez mais.']],
   15: [['monarca', 'Os meus servos dizem que és teimoso. Gosto disso.']],
   20: [['sistema', 'Missão principal: descobre quem controla os portais.']],
   25: [['monarca', 'Cada monstro que matas volta para mim. Estás só a alimentar o Vazio.']],
-  30: [['sistema', 'Missão atualizada: o Monarca do Vazio está no andar 60.']],
+  30: [['sistema', 'Missão atualizada: o Soberano do Vazio está no andar 60.']],
   35: [['monarca', 'Sinto o teu poder a crescer. Continua... vem até mim.']],
   40: [['monarca', 'Chegaste ao fim do meu reino. Por cima dele, a minha cidadela.']],
   41: [['sistema', 'Entraste na Cidadela Celeste. Os anjos caídos guardam o caminho para o trono.']],
-  45: [['arcanjo', 'Humano! O Monarca prometeu-nos o céu. Não passarás!']],
+  45: [['arcanjo', 'Humano! O Soberano prometeu-nos o céu. Não dás nem mais um passo!']],
   50: [['arcanjo', 'Eu caí uma vez... não vou cair outra!']],
-  51: [['sistema', 'Trono do Monarca. Daqui não há volta.'], ['monarca', 'Sente o chão a tremer? Sou eu a acordar.']],
+  51: [['sistema', 'Trono do Soberano. Daqui não há volta.'], ['monarca', 'Sente o chão a tremer? Sou eu a acordar.']],
   55: [['monarca', 'O meu general vai tratar de ti. Não me faças descer.']],
   60: [['monarca', 'Finalmente, frente a frente. Mostra-me o teu verdadeiro poder, Jogador!']],
 };
@@ -103,16 +103,16 @@ function desenharFim(t) {
   ctx.globalAlpha = a;
   ctx.fillStyle = '#05030a'; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   for (let k = 0; k < 60; k++) { ctx.fillStyle = k % 3 ? '#fff6c8' : '#b44dff'; ctx.fillRect((k * 157 + t * 20 * (k % 5)) % LARGURA, (k * 89 - t * 30 * ((k % 4) + 1) + 2000) % ALTURA, 2, 2); }
-  textoCentro('O MONARCA DO VAZIO CAIU', LARGURA / 2, 110, 36, '#ffe14d');
+  textoCentro('O SOBERANO DO VAZIO CAIU', LARGURA / 2, 110, 36, '#ffe14d');
   const linhas = [
     'Os portais começam a fechar-se, um a um.',
     'As pessoas da Cidade dos Caçadores saem à rua para ver o céu limpo.',
     `${traduzir(classeJ().nome)}: o teu nome vai ficar na história.`,
     '',
-    '[Sistema] Missão principal concluída.',
-    '[Sistema] Recompensa: o título "Vencedor do Vazio".',
+    '[Destino] Missão principal concluída.',
+    '[Destino] Recompensa: o título "Vencedor do Vazio".',
   ];
-  linhas.forEach((l, i) => { if (fimUI.t > 1 + i * 0.6) textoCentro(l, LARGURA / 2, 190 + i * 34, 17, l.startsWith('[Sistema]') ? '#4dc3ff' : '#ddd', false); });
+  linhas.forEach((l, i) => { if (fimUI.t > 1 + i * 0.6) textoCentro(l, LARGURA / 2, 190 + i * 34, 17, l.startsWith('[Destino]') ? '#4dc3ff' : '#ddd', false); });
   if (fimUI.t > 5) {
     textoCentro(`Andar ${andar} · Nível ${J.nivel} · ${J.kills} monstros · ${Math.floor(tempoJogo / 60)} min`, LARGURA / 2, 430, 15, '#aaa', false);
     textoCentro('FIM... ou talvez não.', LARGURA / 2, 480, 22, '#b44dff');

@@ -1,15 +1,15 @@
 'use strict';
 // =====================================================================
-//  MASMORRA DUPLA: o templo da estátua gigante e as suas três regras
+//  SANTUÁRIO DO VIGIA: o templo da estátua gigante e as suas três regras
 //  Uma Porta Antiga rara leva a um templo com uma estátua gigante.
-//  As regras: "Venera o deus. Louva o deus. Prova a tua fé."
+//  As regras: "Ajoelha-te. Não te mexas quando ele olhar. Aguenta."
 //  - Os olhos da estátua ficam vermelhos: NÃO TE MEXAS (ou és castigado)
 //  - Raios, chuvas de pedra e guardiões de pedra
 //  Sobrevive 50 segundos e a estátua desfaz-se: prémios enormes.
 // =====================================================================
 
 const DURACAO_TEMPLO = 50;
-const REGRAS_TEMPLO = ['Regra 1: Venera o deus.', 'Regra 2: Louva o deus.', 'Regra 3: Prova a tua fé.'];
+const REGRAS_TEMPLO = ['Regra 1: Ajoelha-te perante o Vigia.', 'Regra 2: Quando ele olhar, não te mexas.', 'Regra 3: Aguenta até a pedra se partir.'];
 
 // Às vezes (a partir do andar 6) aparece uma Porta Antiga numa sala normal
 function criarPortaDupla(salas) {
@@ -35,7 +35,7 @@ function entrarTemplo(o) {
   cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
   levantarExercito();
   criarPetEntidade();
-  mostrarBanner('MASMORRA DUPLA', REGRAS_TEMPLO[0], '#e8e2cf');
+  mostrarBanner('SANTUÁRIO DO VIGIA', REGRAS_TEMPLO[0], '#e8e2cf');
   tremor = 14;
   som(40, 2, 'sawtooth', 0.06, 30);
 }
@@ -48,14 +48,14 @@ function atualizarTemplo(dt) {
   T.t += dt;
   // as regras aparecem uma a uma
   const r = Math.min(2, Math.floor(T.t / 4));
-  if (r > T.regra) { T.regra = r; mostrarBanner('MASMORRA DUPLA', REGRAS_TEMPLO[r], '#e8e2cf'); }
+  if (r > T.regra) { T.regra = r; mostrarBanner('SANTUÁRIO DO VIGIA', REGRAS_TEMPLO[r], '#e8e2cf'); }
   const fase = Math.min(1, T.t / DURACAO_TEMPLO); // fica mais difícil com o tempo
   // Olhos vermelhos: não te podes mexer
   if (T.olhar > 0) {
     T.olhar -= dt;
     const mexeu = Math.hypot(J.x - T.px, J.y - T.py) > 6;
     if (mexeu && T.olhar < 2.3 && !(J.invuln > 0)) {
-      J.causaProxima = 'a Estátua do Deus';
+      J.causaProxima = 'o Vigia de Pedra';
       danoJogador(danoTemplo(), mapa.posBoss.x, mapa.posBoss.y);
       raios.push({ x1: mapa.posBoss.x, y1: mapa.posBoss.y - 40, x2: J.x, y2: J.y, t: 0.3 });
       T.px = J.x; T.py = J.y;
@@ -123,7 +123,7 @@ function temploVencido() {
   salvarMeta();
   J.pocoes += 2;
   objetos.push({ tipo: 'saidaPortal', x: E.x, y: E.y + 220, t: 0 });
-  mostrarBanner('PROVASTE A TUA FÉ!', '+30 almas · a estátua desfez-se: abre os baús e sai', '#ffe14d');
+  mostrarBanner('O VIGIA DESFEZ-SE!', '+30 almas · a estátua desfez-se: abre os baús e sai', '#ffe14d');
   fanfarra([392, 523, 659, 784, 1046, 1318, 1568], 0.06);
   desbloquear('templo');
 }

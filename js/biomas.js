@@ -18,7 +18,7 @@ const BIOMAS = [
   { escuro: 0.87, chama: ['#5ae0ff', '#e8fcff'], brilho: '100,230,255', ar: 'brilho' },   // Caverna de Cristal
   { escuro: 0.92, chama: ['#c04dff', '#f0c8ff'], brilho: '190,80,255', ar: 'vazio' },     // Reino do Vazio
   { escuro: 0.72, chama: ['#ffe680', '#ffffff'], brilho: '255,240,180', ar: 'pena' },     // Cidadela Celeste (41-50)
-  { escuro: 0.94, chama: ['#6a3aff', '#d0c0ff'], brilho: '120,80,255', ar: 'vazio' },     // Trono do Monarca (51-60)
+  { escuro: 0.94, chama: ['#6a3aff', '#d0c0ff'], brilho: '120,80,255', ar: 'vazio' },     // Trono do Soberano (51-60)
 ];
 
 // Até ao andar 40 muda a cada 5 andares; 41-50 e 51-60 são as zonas finais; depois repete tudo
@@ -421,7 +421,7 @@ function gerarDecoracoes(z) {
       }
       pedras('#c8c0e0');
       break;
-    case 9: // Trono do Monarca: ossos, caveiras e runas
+    case 9: // Trono do Soberano: ossos, caveiras e runas
       ossos(); caveira();
       { const g = novo(), c = '#8a6aff';
         for (let a = 0; a < 16; a++) pixel(g, 8 + Math.round(Math.cos(a / 16 * Math.PI * 2) * 5), 9 + Math.round(Math.sin(a / 16 * Math.PI * 2) * 3), c);

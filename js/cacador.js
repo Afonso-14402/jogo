@@ -52,7 +52,7 @@ function subirAtributo(id) {
 // ---------------------------------------------------------------------
 // Todas as habilidades que existem. Cada caçador só recebe as suas (ver CLASSES em classes.js)
 const TODAS_HABILIDADES = {
-  ergue:      { nome: 'Ergue-te!',         mana: 30, cd: 6,  cor: '#8a6aff', desc: 'Os monstros que mataste há pouco levantam-se como soldados sombra' },
+  ergue:      { nome: 'Serve-me!',         mana: 30, cd: 6,  cor: '#8a6aff', desc: 'Os monstros que mataste há pouco levantam-se como soldados sombra' },
   sede:       { nome: 'Sede de Sangue',    mana: 20, cd: 18, cor: '#ff3b3b', desc: 'Os monstros à tua volta ficam paralisados de medo e levam +30% dano' },
   mao:        { nome: 'Mão Invisível',     mana: 15, cd: 8,  cor: '#9fdcff', desc: 'Uma força invisível esmaga e empurra os monstros à tua frente' },
   furtivo:    { nome: 'Furtividade',       mana: 25, cd: 20, cor: '#b0a8c8', desc: 'Ficas invisível 5 s e o golpe seguinte faz dano x3' },
@@ -115,7 +115,7 @@ function habErgue() {
         if (vs) sombras.splice(sombras.indexOf(vs), 1);
       }
       nome = nomeGeneral(c.tipo);
-      avisar(`[Sistema] Novo general: ${nome}`, 'Um boss juntou-se ao teu Exército das Sombras', '#8a6aff');
+      avisar(`[Destino] Novo general: ${nome}`, 'Um boss juntou-se ao teu Exército das Sombras', '#8a6aff');
       desbloquear('general');
     } else if (J.sombras.filter(s => !s.boss).length >= max) continue;
     const s = { tipo: c.tipo, boss: c.boss, elite: c.elite, nome: nome || (c.elite ? 'Cavaleiro Sombrio' : null) };
@@ -126,7 +126,7 @@ function habErgue() {
     n++;
   }
   if (!n) { texto(J.x, J.y - 30, `Exército cheio (${max})`, '#aaaaaa', 13); return false; }
-  texto(J.x, J.y - 40, 'ERGUE-TE!', '#8a6aff', 22);
+  texto(J.x, J.y - 40, 'SERVE-ME!', '#8a6aff', 22);
   ondas.push({ x: J.x, y: J.y, r: 220, t: 0.5, dur: 0.5, cor: '#6a4aff' });
   som(90, 0.6, 'sawtooth', 0.05, 60);
   if (J.sombras.length >= 10) desbloquear('exercito');
@@ -361,8 +361,8 @@ function aoSubirNivelCacador() {
   verificarProvacao();
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
   const h = habsJ().find(x => x.nivel === J.nivel);
-  if (h) avisar(`[Sistema] Nova habilidade: ${h.nome}`, `${modoToque ? 'Novo botão' : `Tecla ${5 + habsJ().indexOf(h)}`} · ${h.desc}`, '#4dc3ff');
-  else if (J.nivel === 2) avisar('[Sistema] Tens pontos de atributo', `Abre a Janela de Estado (${modoToque ? 'botão do herói' : 'tecla U'}) para os usar`, '#4dc3ff');
+  if (h) avisar(`[Destino] Nova habilidade: ${h.nome}`, `${modoToque ? 'Novo botão' : `Tecla ${5 + habsJ().indexOf(h)}`} · ${h.desc}`, '#4dc3ff');
+  else if (J.nivel === 2) avisar('[Destino] Tens pontos de atributo', `Abre a Janela de Estado (${modoToque ? 'botão do herói' : 'tecla U'}) para os usar`, '#4dc3ff');
 }
 
 // ---------------------------------------------------------------------
@@ -370,7 +370,7 @@ function aoSubirNivelCacador() {
 // ---------------------------------------------------------------------
 let cadaveres = [], sombras = [];
 const maxSombras = () => Math.min(10, 2 + Math.floor(J.nivel / 8)) + extraSombras();
-// Generais: bosses erguidos, com nome próprio (mais com o nível e com o Monarca das Sombras)
+// Generais: bosses erguidos, com nome próprio (mais com o nível e com o Senhor da Legião)
 const maxGenerais = () => Math.min(5, 1 + Math.floor(J.nivel / 15) + (J.evoluido ? 1 : 0));
 const NOMES_GENERAIS = {
   reiSlime: 'Gelatinoso', lich: 'Arquimago Negro', dragao: 'Asa da Noite', golem: 'Rocha Eterna',
@@ -604,7 +604,7 @@ function atualizarStatus(dt) {
   }
 }
 
-// Janela azul do [Sistema]: a mesma moldura de todas as janelas, com as cores do Sistema
+// Janela azul do [Destino]: a mesma moldura de todas as janelas, com as cores do Sistema
 function janelaSistema(x, y, w, h) {
   painel(x, y, w, h, 'rgba(6,20,40,0.94)', '#4dc3ff');
   ctx.fillStyle = 'rgba(77,195,255,0.12)';
@@ -676,7 +676,7 @@ function desenharStatus(t) {
     const c = spriteSombra(s), esc = Math.max(1, Math.floor(26 / Math.max(c.width, c.height)));
     sprEcra(c, 72 + i * 38, 584, Math.min(2, esc));
   });
-  if (!n && temErgue()) textoEsq('Mata monstros e usa "Ergue-te!" (tecla 5) perto dos corpos', 60, 584, 12, '#889', 'normal');
+  if (!n && temErgue()) textoEsq('Mata monstros e usa "Serve-me!" (tecla 5) perto dos corpos', 60, 584, 12, '#889', 'normal');
   textoCentro(modoToque ? 'Toca fora dos botões para voltar' : 'U / Esc para voltar', LARGURA / 2, ALTURA - 14, 12, '#667', false);
 }
 

@@ -387,8 +387,8 @@ function partilharXp(q) {
 function subirNivelParceiro() {
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
   const h = habsJ().find(x => x.nivel === J.nivel);
-  if (h) enviarCoop({ t: 'aviso', titulo: `[Sistema] Nova habilidade: ${h.nome}`, sub: h.desc, cor: '#4dc3ff' });
-  else if (J.nivel === 2) enviarCoop({ t: 'aviso', titulo: '[Sistema] Tens pontos de atributo', sub: 'Toca no botão do herói → Estado para os usar', cor: '#4dc3ff' });
+  if (h) enviarCoop({ t: 'aviso', titulo: `[Destino] Nova habilidade: ${h.nome}`, sub: h.desc, cor: '#4dc3ff' });
+  else if (J.nivel === 2) enviarCoop({ t: 'aviso', titulo: '[Destino] Tens pontos de atributo', sub: 'Toca no botão do herói → Estado para os usar', cor: '#4dc3ff' });
 }
 
 // Cada baú aberto dá também um prémio ao outro herói

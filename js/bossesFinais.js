@@ -1,11 +1,11 @@
 'use strict';
 // =====================================================================
 //  BOSSES E MONSTROS DAS ZONAS FINAIS (desenho e ataques próprios)
-//  - Arcanjo Caído (45), General do Monarca (50), Carrasco do Vazio (55)
-//    e o Monarca do Vazio (60, chefe final)
+//  - Arcanjo Caído (45), General do Soberano (50), Carrasco do Vazio (55)
+//    e o Soberano do Vazio (60, chefe final)
 //  - Monstros novos: Anjo Guerreiro, Arqueiro Celeste, Querubim,
 //    Cavaleiro do Vazio, Mago do Vazio e Devorador
-//  - A estátua do templo da Masmorra Dupla
+//  - A estátua do Santuário do Vigia
 //  - Luz e sombra automáticas em todos os sprites de monstros
 // =====================================================================
 
@@ -48,9 +48,9 @@ for (const [tipo, z] of [['espiritoCristal', 8], ['elementalGelo', 8], ['sombra'
 // ---------------------------------------------------------------------
 BOSSES.push(
   { id: 'arcanjo',        nome: 'Arcanjo Caído',      hp: 1250, dano: 28, vel: 110, r: 34, xp: 1100, cor: '#ffe680' },
-  { id: 'generalMonarca', nome: 'General do Monarca', hp: 1450, dano: 30, vel: 95,  r: 32, xp: 1250, cor: '#8a4aff' },
+  { id: 'generalMonarca', nome: 'General do Soberano', hp: 1450, dano: 30, vel: 95,  r: 32, xp: 1250, cor: '#8a4aff' },
   { id: 'carrasco',       nome: 'Carrasco do Vazio',  hp: 1750, dano: 34, vel: 60,  r: 40, xp: 1400, cor: '#6a3a8a' },
-  { id: 'monarca',        nome: 'Monarca do Vazio',   hp: 2300, dano: 32, vel: 85,  r: 36, xp: 2500, cor: '#b44dff' },
+  { id: 'monarca',        nome: 'Soberano do Vazio',   hp: 2300, dano: 32, vel: 85,  r: 36, xp: 2500, cor: '#b44dff' },
 );
 const BOSSES_FINAIS = ['arcanjo', 'generalMonarca', 'carrasco', 'monarca'];
 
@@ -130,7 +130,7 @@ function gerarMonarca(f) {
   return gradeParaCanvas(g);
 }
 
-// Estátua do deus (Masmorra Dupla)
+// Vigia de Pedra (Santuário do Vigia)
 function gerarEstatuaDeus() {
   const g = novaGrade(64, 76);
   const pedra = (x, y) => ((x * 7 + y * 13) % 19 === 0 ? '#5a554c' : null);
@@ -261,7 +261,7 @@ function atualizarBossFinal(e, dt, d, ux, uy, ru, fase2) {
     return { vx: ru.x * e.vel * (fase2 ? 1.4 : 1), vy: ru.y * e.vel * (fase2 ? 1.4 : 1) };
   }
 
-  // Monarca do Vazio (chefe final): 3 fases
+  // Soberano do Vazio (chefe final): 3 fases
   const fase3 = e.hp < e.maxHp * 0.25;
   if (fase3 && !e.fase3) {
     e.fase3 = true; e.vel *= 1.2;
@@ -285,7 +285,7 @@ function atualizarBossFinal(e, dt, d, ux, uy, ru, fase2) {
     e.cdC = 8 * k3;
     if (teletransportar(e, 200, 280)) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; disparar(e.x, e.y, Math.cos(a), Math.sin(a), 210, Math.round(e.dano * 0.5), '#ff4dff', 7, 'bola', 3); }
   }
-  if (e.cdD <= 0) { // o exército do Monarca
+  if (e.cdD <= 0) { // o exército do Soberano
     e.cdD = 13 * k3;
     if (inimigos.filter(o => !o.boss && !o.morto).length < 5) for (let k = 0; k < 3; k++) invocar(k % 2 ? 'cavaleiroVazio' : 'sombra', e, 90);
   }

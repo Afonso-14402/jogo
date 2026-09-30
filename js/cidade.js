@@ -4,7 +4,7 @@
 //  Depois de cada boss aparece uma escada para cima, para a cidade. Lá andas à
 //  vontade entre as casas e os habitantes e entras nos edifícios:
 //  - A tua Casa: descansar (vida e mana cheias) e guardar o jogo
-//  - Associação de Caçadores: reavaliação de rank e contratos
+//  - Guilda dos Caçadores: reavaliação de rank e contratos
 //  - Ferreiro: afiar a arma e reforçar a armadura (sem falhar)
 //  - Alquimista: poções e elixires de vida e de mana
 //  A escada da praça desce para o andar seguinte.
@@ -18,7 +18,7 @@ function metaCidade() {
 const naCidade = () => !!(mapa && mapa.cidade);
 
 // ---------------------------------------------------------------------
-//  Rank de caçador (reavaliação na Associação)
+//  Rank de caçador (reavaliação na Guilda)
 // ---------------------------------------------------------------------
 const bonusRankCacador = () => ({ dano: 0.03 * (meta.rankCacador || 0), hp: 0.03 * (meta.rankCacador || 0) });
 // Poder que tens de ter mostrado para passar ao rank k
@@ -47,7 +47,7 @@ function reavaliar() {
 }
 
 // ---------------------------------------------------------------------
-//  Contratos da Associação (acumulam entre partidas, dão almas)
+//  Contratos da Guilda (acumulam entre partidas, dão almas)
 // ---------------------------------------------------------------------
 const CONTRATOS = [
   { id: 'matar',       desc: 'Mata {n} monstros',          n: [100, 300, 800, 2000], almas: [15, 30, 60, 120] },
@@ -71,7 +71,7 @@ function progressoContratos(evento, q) {
     if (acabado) continue;
     const antes = e.prog >= C.n[e.nivel];
     e.prog = C.maximo ? Math.max(e.prog, q) : e.prog + q;
-    if (!antes && e.prog >= C.n[e.nivel]) avisar('Contrato cumprido!', 'Recebe o prémio na Associação, na Cidade dos Caçadores', '#4dc3ff');
+    if (!antes && e.prog >= C.n[e.nivel]) avisar('Contrato cumprido!', 'Recebe o prémio na Guilda, na Cidade dos Caçadores', '#4dc3ff');
   }
 }
 function receberContrato(C) {
@@ -118,7 +118,7 @@ function pagar(preco) {
 // ---------------------------------------------------------------------
 const EDIFICIOS = [
   { id: 'casa',       nome: 'A tua Casa',              cor: '#ffae00', parede: '#6a4a2a', telhado: '#8a2a1a', tx: 3 },
-  { id: 'assoc',      nome: 'Associação de Caçadores', cor: '#4dc3ff', parede: '#2a3a5a', telhado: '#1a2a4a', tx: 13 },
+  { id: 'assoc',      nome: 'Guilda dos Caçadores', cor: '#4dc3ff', parede: '#2a3a5a', telhado: '#1a2a4a', tx: 13 },
   { id: 'ferreiro',   nome: 'Ferreiro',                cor: '#ff9b45', parede: '#4a3020', telhado: '#5a2418', tx: 27 },
   { id: 'alquimista', nome: 'Alquimista',              cor: '#5dff7a', parede: '#2a4a30', telhado: '#1a3a24', tx: 37 },
 ];
@@ -189,13 +189,13 @@ const HABITANTES = [
   { nome: 'Inês', papel: 'conversa', raca: 'gnomo', skin: 'real' },
   { nome: 'Duarte', papel: 'conversa', raca: 'vampiro', skin: 'infinito' },
 ];
-const CONVERSAS = ['Bom dia, caçador! Hoje o céu está calmo.', 'Os preços do ferreiro estão pela hora da morte.', 'Vi um portal vermelho ontem... fugi a correr.',
+const CONVERSAS = ['Bom dia, caçador! Hoje o céu está calmo.', 'Os preços do ferreiro estão pela hora da morte.', 'Vi um portal maldito ontem... fugi a correr.',
   'A fonte da praça tem água benta. Ou assim dizem.', 'Cuidado com os baús que mordem!', 'O meu avô dizia que a masmorra não tem fundo.',
   'Se vires uma porta antiga, não te mexas quando a estátua olhar para ti.'];
 const LORE_ANCIAO = [
   [10, 'Dizem que no fundo da masmorra vive um rei feito de sombra.'],
   [20, 'Os portais começaram a abrir no dia em que o Vazio acordou.'],
-  [30, 'O Monarca do Vazio já foi um caçador, como tu. O poder mudou-o.'],
+  [30, 'O Soberano do Vazio já foi um caçador, como tu. O poder mudou-o.'],
   [40, 'Acima do reino dele há uma cidadela de anjos que lhe juraram lealdade.'],
   [59, 'O trono fica no andar 60. Leva poções. Muitas poções.'],
   [9999, 'Venceste-o... ou vais vencer. Para nós já és uma lenda, caçador.'],
@@ -432,7 +432,7 @@ function desenharPainelCidade(t) {
   textoDir(`Ouro: ${J.ouro}`, 840, 164, 18, '#ffd23f');
   const info = {
     casa: 'A tua casa na cidade. Aqui descansas e guardas o jogo.',
-    assoc: `A Associação mede o teu poder. Rank atual: ${RANKS[meta.rankCacador || 0].letra} (cada rank: +3% dano e vida para sempre)`,
+    assoc: `A Guilda mede o teu poder. Rank atual: ${RANKS[meta.rankCacador || 0].letra} (cada rank: +3% dano e vida para sempre)`,
     ferreiro: 'O ferreiro melhora o teu equipamento sem nunca falhar (até +5).',
     alquimista: 'Poções e elixires que duram até ao fim da partida.',
   }[E.id];
@@ -469,7 +469,7 @@ function desenharPainelCidade(t) {
     ctx.globalAlpha = al;
     ctx.fillStyle = a.cor; ctx.beginPath(); ctx.arc(LARGURA / 2, 280, 60 + Math.sin(t * 8) * 6, 0, Math.PI * 2); ctx.fill();
     textoCentro(a.letra, LARGURA / 2, 284, a.letra.length > 2 ? 30 : 64, '#07060a');
-    textoCentro('[Sistema] Reavaliação concluída', LARGURA / 2, 390, 22, '#9fdcff');
+    textoCentro('[Destino] Reavaliação concluída', LARGURA / 2, 390, 22, '#9fdcff');
     textoCentro(`Rank ${a.letra}`, LARGURA / 2, 424, 28, a.cor);
     ctx.globalAlpha = 1;
   }

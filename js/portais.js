@@ -3,7 +3,7 @@
 //  PORTAIS (Gates): dentro das masmorras aparecem portais de rank
 //  E, D, C, B, A, S, SS ou SSS. Entras, derrotas as ondas de monstros e o
 //  boss do portal e ganhas prémios melhores quanto maior o rank.
-//  Um Portal Vermelho fecha-se atrás de ti: só sais depois de matar o boss.
+//  Um Portal Maldito fecha-se atrás de ti: só sais depois de matar o boss.
 // =====================================================================
 
 const RANKS_PORTAL = [
@@ -28,7 +28,7 @@ function sortearRankPortal() {
 
 // Força dos monstros do portal em relação ao andar
 const multPortal = gi => Math.max(0.6, Math.pow(1.4, gi - rankIndiceAndar(andar)));
-// Tempo até à Rutura do Portal (Dungeon Break) se ninguém o fechar
+// Tempo até à Rutura do Portal se ninguém o fechar
 const TEMPO_RUTURA = 180;
 
 // Em todos os andares abre pelo menos um portal (às vezes dois)
@@ -91,7 +91,7 @@ function entrarPortal(o) {
   levantarExercito();
   criarPetEntidade();
   if (!o.vermelho) objetos.push({ tipo: 'saidaPortal', x: J.x + 70, y: J.y, t: 0 });
-  mostrarBanner(`PORTAL RANK ${R.letra}`, o.vermelho ? 'PORTAL VERMELHO! Não há saída até matares o boss' : 'Derrota as ondas e o boss do portal', o.vermelho ? '#ff3b3b' : R.cor);
+  mostrarBanner(`PORTAL RANK ${R.letra}`, o.vermelho ? 'PORTAL MALDITO! Não há saída até matares o boss' : 'Derrota as ondas e o boss do portal', o.vermelho ? '#ff3b3b' : R.cor);
   tremor = 10;
   som(60, 1, 'sawtooth', 0.06, 200);
   lancarOndaPortal();
@@ -216,7 +216,7 @@ function desenharInfoPortal(o, sx, sy) {
   }
   const R = RANKS_PORTAL[o.gi], mult = multPortal(o.gi);
   const perigo = mult >= 4 ? 'MORTAL' : mult >= 1.8 ? 'MUITO PERIGOSO' : mult >= 1.3 ? 'Perigoso' : mult <= 0.8 ? 'Fácil' : 'Normal';
-  textoCentro(`${o.vermelho ? 'PORTAL VERMELHO' : 'Portal'} Rank ${R.letra}`, sx, sy - 40, 18, o.vermelho ? '#ff3b3b' : R.cor);
+  textoCentro(`${o.vermelho ? 'PORTAL MALDITO' : 'Portal'} Rank ${R.letra}`, sx, sy - 40, 18, o.vermelho ? '#ff3b3b' : R.cor);
   textoCentro(`${perigo} · monstros x${mult.toFixed(1)} · boss: ${BOSSES.find(b => b.id === R.boss).nome}`, sx, sy - 20, 12, '#ddd');
   textoCentro(`${usar}: Entrar   ·   Rutura em ${relogioPortal(o.rutura)}`, sx, sy, 15, '#ffe680');
 }

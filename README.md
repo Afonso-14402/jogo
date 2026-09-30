@@ -171,10 +171,10 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Caçador | Arma inicial | Habilidade (F) | Passiva |
   |---|---|---|---|
   | Aventureiro | Espada de Treino | — | +10% XP |
-  | Caçador das Sombras | Presa Venenosa (paralisa) | **Troca de Sombra**: troca de lugar com a sombra mais longe e o exército fica +50% mais forte | "Ergue-te!" desde o nível 1 e +2 sombras |
+  | Caçador das Sombras | Presa Venenosa (paralisa) | **Passo Sombrio**: troca de lugar com a sombra mais longe e o exército fica +50% mais forte | "Serve-me!" desde o nível 1 e +2 sombras |
   | Dançarina da Espada | Espada Celeste | **Dança da Espada**: atravessa os monstros num relâmpago (dano x3) | +15% vel. de ataque, +5% crítico |
   | Imperador das Chamas | Cajado Flamejante | **Chuva de Meteoros** | +60% poder mágico, Bola de Fogo nível 2 |
-  | Tigre Branco | Garras de Tigre | **Forma Bestial**: 8 s com +50% dano, +30% velocidade e roubo de vida | +40 vida |
+  | Garra Selvagem | Garras de Tigre | **Forma Bestial**: 8 s com +50% dano, +30% velocidade e roubo de vida | +40 vida |
   | Colosso | Manoplas do Titã | **Punho do Titã**: atordoa tudo à volta e levas -50% dano 4 s | +60 vida, +6 defesa |
   | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 30%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +2 vida/s, poções +15%, +30% poder mágico |
   | Mestre das Lâminas | Espadas Gémeas do Vento | **Corte do Vento**: leque de lâminas que atravessam | +15% velocidade |
@@ -184,10 +184,10 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Caçador | Magias (1-4) | Habilidades (5-8, nos níveis 3, 8, 14 e 20) |
   |---|---|---|
   | Aventureiro | Bola de Fogo, Relâmpago, Nova de Gelo | Redemoinho, Investida |
-  | Caçador das Sombras | — | Ergue-te! (nível 1), Sede de Sangue, Mão Invisível, Furtividade |
+  | Caçador das Sombras | — | Serve-me! (nível 1), Sede de Sangue, Mão Invisível, Furtividade |
   | Dançarina da Espada | — | Mil Cortes, Redemoinho, Investida |
   | Imperador das Chamas | Bola de Fogo, Relâmpago | Rio de Chamas, Supernova |
-  | Tigre Branco | — | Rugido, Investida, Redemoinho |
+  | Garra Selvagem | — | Rugido, Investida, Redemoinho |
   | Colosso | — | Investida, Grito de Guerra, Onda de Choque |
   | Curandeiro Supremo | Cura Divina, Relâmpago | Barreira Sagrada, Julgamento |
   | Mestre das Lâminas | — | Redemoinho, Tornado, Furtividade |
@@ -199,15 +199,15 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 - **Música e som**: cada zona tem a sua música (gerada no momento, sem ficheiros), e há músicas próprias para o menu, a cidade, os bosses, os portais e o templo. As explosões e os golpes têm sons com ruído. A tecla **M** (ou Opções no telemóvel) muda entre *tudo*, *só efeitos* e *desligado*.
 - **Cidade dos Caçadores** (dentro do jogo): depois de cada boss aparece, ao lado dos baús, uma **escada para cima**. Sobes e chegas a uma cidade onde andas à vontade, com praça, fonte, candeeiros, árvores e habitantes a passear. Vais até à porta de cada edifício e carregas **E** (ou USAR):
   - **A tua Casa**: descansar (vida e mana cheias, uma vez por visita) e guardar o jogo.
-  - **Associação de Caçadores**: **reavaliação de rank** (o cristal mede o melhor poder que já mostraste; cada rank, de E a Nacional, dá +3% dano e +3% vida para sempre, e o Rank S dá +1 poção no início) e **contratos** que acumulam entre partidas e dão almas.
+  - **Guilda dos Caçadores**: **reavaliação de rank** (o cristal mede o melhor poder que já mostraste; cada rank, de E a Nacional, dá +3% dano e +3% vida para sempre, e o Rank S dá +1 poção no início) e **contratos** que acumulam entre partidas e dão almas.
   - **Ferreiro**: afia a arma e reforça a armadura (+1, sem falhar, até +5), pago com ouro.
   - **Alquimista**: poções e elixires de vida (+8%) e de mana (+20), até 3 de cada por partida.
   - A **escada da praça** desce para o andar seguinte. Se guardares na cidade, continuas nesse andar.
-- **História e chefe final**: o [Sistema] e o vilão, o **Monarca do Vazio**, falam contigo ao longo da descida numa caixa de diálogo, sem parar o jogo. As últimas zonas são a **Cidadela Celeste** (andares 41-50) e o **Trono do Monarca** (51-60), com monstros próprios (Anjo Guerreiro, Arqueiro Celeste, Querubim, Cavaleiro do Vazio, Mago do Vazio e Devorador) e 4 bosses novos, cada um com desenho, animação e ataques próprios:
+- **História e chefe final**: o [Destino] e o vilão, o **Soberano do Vazio**, falam contigo ao longo da descida numa caixa de diálogo, sem parar o jogo. As últimas zonas são a **Cidadela Celeste** (andares 41-50) e o **Trono do Soberano** (51-60), com monstros próprios (Anjo Guerreiro, Arqueiro Celeste, Querubim, Cavaleiro do Vazio, Mago do Vazio e Devorador) e 4 bosses novos, cada um com desenho, animação e ataques próprios:
   - **Arcanjo Caído** (45): leque de penas, pilares de luz e investidas pelo ar.
-  - **General do Monarca** (50): ondas de espada, saltos esmagadores e cortes giratórios.
+  - **General do Soberano** (50): ondas de espada, saltos esmagadores e cortes giratórios.
   - **Carrasco do Vazio** (55): ceifa em arco, correntes que te puxam e poças do Vazio.
-  - **Monarca do Vazio** (60, chefe final): três fases, anéis de esferas, chuva do Vazio, espirais de lâminas e o seu exército.
+  - **Soberano do Vazio** (60, chefe final): três fases, anéis de esferas, chuva do Vazio, espirais de lâminas e o seu exército.
 
   Vencê-lo mostra o **final do jogo**; depois podes continuar a descer (modo infinito).
 - **Animações**: todos os monstros e bosses respiram, inclinam-se ao andar, amassam quando levam um golpe, crescem ao preparar um ataque, aparecem a crescer e desfazem-se ao morrer. Os sprites ganharam luz e sombra automáticas e os bosses brilham à volta. Ao matar um boss o tempo abranda e há um clarão; os críticos têm números maiores.
@@ -230,20 +230,20 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   - **Mais rápido**: a luz é calculada a metade da resolução (−60% de tempo), o minimapa é guardado em cache e há um limite de partículas.
 - **Monstros que avisam antes de atacar**: cada monstro prepara o golpe à sua maneira. Uns agacham-se e **saltam** (slimes, aranhas, lobos), outros **erguem-se** e desferem um corte branco (esqueletos, orcs, cavaleiros), outros **encolhem como uma mola** e disparam-se, e os que atiram de longe **carregam uma esfera de energia** antes de disparar. Assim dá para ver o ataque a chegar e esquivar.
 - **Cenários mais ricos**: paredes com rachas, correntes, estandartes da cor da zona, nichos com caveiras e velas e musgo a pingar. Coisas que mexem em cada zona: poças de **lava** a borbulhar, **água** com ondas, **teias** a abanar, gotas a cair, velas, brilhos e **fendas** do vazio. As tochas **tremeluzem** e iluminam o chão à volta.
-- **Interface com um estilo só**: todas as janelas usam a mesma moldura (cantos decorados, brilho em cima, contorno interior), incluindo as janelas do [Sistema]. Os botões do menu, da pausa, da morte e os de voltar/fechar têm **ícones**.
+- **Interface com um estilo só**: todas as janelas usam a mesma moldura (cantos decorados, brilho em cima, contorno interior), incluindo as janelas do [Destino]. Os botões do menu, da pausa, da morte e os de voltar/fechar têm **ícones**.
 - **Morte que ensina**: o ecrã de morte dá uma **dica** conforme o que te matou (cada monstro, boss, armadilha, fogo no chão ou a estátua do templo).
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
-- **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo, Senhor da Tempestade ou Senhor do Tempo (o tempo para 5 s na sala toda). Cada evolução tem uma passiva mais forte e melhora a habilidade única.
+- **Mudança de classe (nível 30)**: o [Destino] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Senhor da Legião, Espada Santa, Fénix Eterna, Rei das Feras, Rei Titã, Santo, Senhor da Tempestade ou Senhor do Tempo (o tempo para 5 s na sala toda). Cada evolução tem uma passiva mais forte e melhora a habilidade única.
 - **Generais sombra**: com o Caçador das Sombras, os bosses que ergues tornam-se **generais com nome próprio** (Gelatinoso, Asa da Noite, Rocha Eterna...). Podes ter vários (1 + 1 a cada 15 níveis, até 5), e os elites erguidos tornam-se Cavaleiros Sombrios, mais fortes do que os soldados.
-- **Masmorra Dupla**: a partir do andar 6 pode aparecer uma **Porta Antiga**. Lá dentro está um templo com uma estátua gigante e três regras: *venera o deus, louva o deus, prova a tua fé*. Quando os olhos da estátua ficam vermelhos **não te podes mexer**. Pelo meio há raios, chuvas de pedra, anéis de fogo e guardiões de pedra. Se sobreviveres 50 segundos, a estátua desfaz-se e ganhas 3 Baús Dourados, uma relíquia, ouro, poções e almas.
-- **Portais (Gates) dentro das masmorras**: em **todos os andares** (menos nos de boss) abre pelo menos um portal, às vezes dois, e sentes onde estão: piscam sempre no minimapa. O rank (**E, D, C, B, A, S, SS ou SSS**) **não depende do andar**: um SSS pode abrir logo no andar 1 e podes entrar em qualquer um... se morreres, morreste. O rank e o tempo aparecem por cima e, ao chegares perto, vês o perigo (até MORTAL) e o boss. Se não entrares a tempo (3 minutos) dá-se a **Rutura do Portal** (Dungeon Break): os monstros do portal saem para a masmorra. Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Vermelho** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
+- **Santuário do Vigia**: a partir do andar 6 pode aparecer uma **Porta Antiga**. Lá dentro está um templo com uma estátua gigante e três regras: *ajoelha-te, não te mexas quando ele olhar, aguenta*. Quando os olhos da estátua ficam vermelhos **não te podes mexer**. Pelo meio há raios, chuvas de pedra, anéis de fogo e guardiões de pedra. Se sobreviveres 50 segundos, a estátua desfaz-se e ganhas 3 Baús Dourados, uma relíquia, ouro, poções e almas.
+- **Portais (Gates) dentro das masmorras**: em **todos os andares** (menos nos de boss) abre pelo menos um portal, às vezes dois, e sentes onde estão: piscam sempre no minimapa. O rank (**E, D, C, B, A, S, SS ou SSS**) **não depende do andar**: um SSS pode abrir logo no andar 1 e podes entrar em qualquer um... se morreres, morreste. O rank e o tempo aparecem por cima e, ao chegares perto, vês o perigo (até MORTAL) e o boss. Se não entrares a tempo (3 minutos) dá-se a **Rutura do Portal**: os monstros do portal saem para a masmorra. Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Maldito** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
 - **Caçador** (inspirado em manhwas como Solo Leveling):
   - **Atributos**: em cada nível ganhas 2 pontos para pôr em Força, Agilidade, Vitalidade, Inteligência ou Perceção, na **Janela de Estado** (tecla **U**, ou no ecrã de personagem → Estado).
   - **Habilidades de Caçador** (teclas **5 a 8**; no telemóvel aparece uma segunda fila de botões):
     | Nível | Habilidade | O que faz |
     |---|---|---|
-    | 5 | **Ergue-te!** | os monstros que mataste há pouco levantam-se como **soldados sombra** e lutam contigo |
+    | 5 | **Serve-me!** | os monstros que mataste há pouco levantam-se como **soldados sombra** e lutam contigo |
     | 10 | **Sede de Sangue** | os monstros à tua volta ficam paralisados de medo e levam +30% dano |
     | 15 | **Mão Invisível** | uma força invisível esmaga e empurra os monstros à tua frente |
     | 20 | **Furtividade** | ficas invisível 5 s e o golpe seguinte faz dano x3 |
@@ -313,8 +313,8 @@ js/classes.js       caçadores jogáveis (arma e habilidade única de cada um)
 js/portais.js       portais E a SSS dentro das masmorras (ondas, boss e prémios), Portais Vermelhos
 js/modos.js         Desafio Diário (semente do dia) e Torre dos 100 Andares
 js/cidade.js        Cidade dos Caçadores (mapa, casas, habitantes): casa, reavaliação de rank, contratos, ferreiro e alquimista
-js/templo.js        Masmorra Dupla: o templo da estátua e as suas regras
-js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o final do jogo
+js/templo.js        Santuário do Vigia: o templo da estátua e as suas regras
+js/historia.js      falas do [Destino] e do Soberano, bosses das zonas finais e o final do jogo
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
 js/polimento.js     peso dos golpes, herói mais vivo, mira e joystick, comparar itens, monstros mais espertos, luz rápida

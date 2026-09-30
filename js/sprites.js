@@ -1039,7 +1039,7 @@ const ZONAS = [
   { chao: '#1f2a3a', parede: '#34406a', topo: '#0c1020', musgo: '#4a8aa8', det: 'cristal' },  // Caverna de Cristal
   { chao: '#1a1026', parede: '#2e1a40', topo: '#07040c', musgo: '#4a2a6a', det: 'runa' },     // Reino do Vazio
   { chao: '#6a6488', parede: '#b8b0d8', topo: '#2a2448', musgo: '#ffd27a', det: 'hieroglifo' }, // Cidadela Celeste
-  { chao: '#120a1a', parede: '#281838', topo: '#040208', musgo: '#5a2aff', det: 'runa' },     // Trono do Monarca
+  { chao: '#120a1a', parede: '#281838', topo: '#040208', musgo: '#5a2aff', det: 'runa' },     // Trono do Soberano
 ];
 
 // Detalhe pintado por cima de uma parede

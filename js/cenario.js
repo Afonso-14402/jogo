@@ -119,7 +119,7 @@ const ANIMADOS_ZONA = [
   { parede: [], chao: ['brilho', 'agua'] },           // Caverna de Cristal
   { parede: [], chao: ['fenda', 'vela'] },            // Reino do Vazio
   { parede: [], chao: ['brilho', 'agua'] },           // Cidadela Celeste
-  { parede: ['teia'], chao: ['fenda', 'lavaRoxa'] },  // Trono do Monarca
+  { parede: ['teia'], chao: ['fenda', 'lavaRoxa'] },  // Trono do Soberano
 ];
 
 function criarAnimados(m, z) {
@@ -302,12 +302,12 @@ const DICAS_MORTE = {
   arcanjo: 'O Arcanjo avisa os pilares de luz com círculos: não pares dentro deles.',
   generalMonarca: 'O General salta para onde estás: quando o círculo aparecer, corre para fora.',
   carrasco: 'O Carrasco puxa-te com correntes: esquiva-te logo a seguir para fugir à ceifa.',
-  monarca: 'O Monarca tem três fases: guarda as poções e as habilidades para o fim.',
+  monarca: 'O Soberano tem três fases: guarda as poções e as habilidades para o fim.',
 };
 const DICAS_CAUSA = {
   'uma armadilha': 'Os espinhos do chão avisam antes de subir: passa quando estiverem em baixo.',
   'o fogo no chão': 'Não lutes em cima do fogo: puxa os monstros para fora das poças.',
-  'a Estátua do Deus': 'Quando os olhos da estátua ficam vermelhos, larga tudo e não te mexas.',
+  'o Vigia de Pedra': 'Quando os olhos da estátua ficam vermelhos, larga tudo e não te mexas.',
 };
 function dicaMorte() {
   if (J.desistiu) return null;

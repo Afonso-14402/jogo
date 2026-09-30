@@ -126,7 +126,7 @@ Os textos (título e descrições) estão mais abaixo.
 >
 > ⚔️ **9 caçadores diferentes**, cada um com a sua arma, habilidade única e habilidades próprias: do Caçador das Sombras, que ergue um exército dos monstros que derrota, ao Guardião do Tempo, que para o tempo e volta atrás.
 >
-> 🐉 **60 andares e 12 bosses**: dragões, liches, rainhas aranha, anjos caídos e o Monarca do Vazio no fim de tudo. Cada zona tem monstros, armadilhas e cenários próprios.
+> 🐉 **60 andares e 12 bosses**: dragões, liches, rainhas aranha, anjos caídos e o Soberano do Vazio no fim de tudo. Cada zona tem monstros, armadilhas e cenários próprios.
 >
 > 🎁 **Baús da sorte**: cada baú gira uma roleta que pode dar o PIOR ou o MELHOR item do jogo. Há mais de 100 itens para colecionar, do Lixo ao Mítico, com encantamentos e maldições.
 >
@@ -150,7 +150,7 @@ Os textos (título e descrições) estão mais abaixo.
 >
 > ⚔️ **9 different hunters**, each with their own weapon, unique ability and skills: from the Shadow Hunter, who raises an army from defeated monsters, to the Time Guardian, who stops time and rewinds it.
 >
-> 🐉 **60 floors and 12 bosses**: dragons, liches, spider queens, fallen angels and the Void Monarch at the very bottom. Every zone has its own monsters, traps and scenery.
+> 🐉 **60 floors and 12 bosses**: dragons, liches, spider queens, fallen angels and the Void Sovereign at the very bottom. Every zone has its own monsters, traps and scenery.
 >
 > 🎁 **Lucky chests**: every chest spins a roulette that can give the WORST or the BEST item in the game. More than 100 items to collect, from Junk to Mythic, with enchantments and curses.
 >

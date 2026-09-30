@@ -425,7 +425,7 @@ const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo', 'inferno']
 // ---------------------------------------------------------------------
 //  ZONAS: cada 5 andares mudam as cores e os inimigos
 // ---------------------------------------------------------------------
-const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado', 'Pântano Venenoso', 'Templo do Deserto', 'Caverna de Cristal', 'Reino do Vazio', 'Cidadela Celeste', 'Trono do Monarca'];
+const NOMES_ZONAS = ['Masmorra', 'Cemitério', 'Cavernas de Lava', 'Abismo Gelado', 'Pântano Venenoso', 'Templo do Deserto', 'Caverna de Cristal', 'Reino do Vazio', 'Cidadela Celeste', 'Trono do Soberano'];
 
 // ---------------------------------------------------------------------
 //  MALDIÇÕES: os itens dos Baús Amaldiçoados são fortes mas trazem uma destas.
@@ -516,19 +516,19 @@ const CONQUISTAS = [
   { id: 'nacional',  nome: 'Nível Nacional',     desc: 'Chega ao Rank Nacional',                almas: 100 },
   { id: 'portalS',   nome: 'Portal S',           desc: 'Conquista um Portal de Rank S ou maior', almas: 50 },
   { id: 'portalSSS', nome: 'Além do Limite',     desc: 'Conquista um Portal de Rank SSS',       almas: 150 },
-  { id: 'portalVermelho', nome: 'Portal Vermelho', desc: 'Sobrevive a um Portal Vermelho',      almas: 40 },
+  { id: 'portalVermelho', nome: 'Portal Maldito', desc: 'Sobrevive a um Portal Maldito',      almas: 40 },
   { id: 'reavaliadoS', nome: 'Caçador de Rank S',  desc: 'Passa a Rank S na reavaliação',       almas: 60 },
   { id: 'diario10',  nome: 'Desafiante',         desc: 'Chega ao andar 10 no Desafio Diário',   almas: 30 },
   { id: 'torre25',   nome: 'Alpinista',          desc: 'Chega ao andar 25 da Torre',            almas: 40 },
   { id: 'torre100',  nome: 'Senhor da Torre',    desc: 'Conquista os 100 andares da Torre',     almas: 200 },
   { id: 'evolucao',  nome: 'Mudança de Classe',  desc: 'Passa a provação do nível 30',          almas: 50 },
   { id: 'general',   nome: 'Primeiro General',   desc: 'Ergue um boss como general sombra',     almas: 40 },
-  { id: 'final',     nome: 'Vencedor do Vazio',  desc: 'Derrota o Monarca do Vazio no andar 60', almas: 300 },
+  { id: 'final',     nome: 'Vencedor do Vazio',  desc: 'Derrota o Soberano do Vazio no andar 60', almas: 300 },
   { id: 'petEvo',    nome: 'Evolução Animal',    desc: 'Um companheiro chega ao nível 10',      almas: 40 },
   { id: 'bossrush',  nome: 'Caçador de Bosses',  desc: 'Completa o Boss Rush',                  almas: 100 },
   { id: 'ajudante',  nome: 'Amigo da Cidade',    desc: 'Cumpre 5 pedidos dos habitantes',       almas: 40 },
   { id: 'conjunto',  nome: 'Conjunto Completo',  desc: 'Usa as 3 peças de um conjunto',         almas: 50 },
-  { id: 'templo',    nome: 'Masmorra Dupla',     desc: 'Sobrevive ao Templo da Masmorra Dupla', almas: 60 },
+  { id: 'templo',    nome: 'Santuário do Vigia',     desc: 'Sobrevive ao Santuário do Vigia', almas: 60 },
 ];
 
 // ---------------------------------------------------------------------

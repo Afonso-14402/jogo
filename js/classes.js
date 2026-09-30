@@ -12,8 +12,8 @@ const CLASSES = {
     hab: null, habNome: '—', habDesc: 'Sem habilidade especial', passiva: '+10% XP', xp: 0.1,
     feit: ['fogo', 'raio', 'gelo'], habs: ['redemoinho', 'investida'] },
   sombras: { nome: 'Caçador das Sombras', cor: '#8a6aff', arma: 'Presa Venenosa',
-    hab: 'troca', habNome: 'Troca de Sombra', habDesc: 'Trocas de lugar com a tua sombra mais longe e o exército fica +50% mais forte',
-    passiva: '"Ergue-te!" desde o nível 1 e +2 sombras', mana: 20, cd: 10,
+    hab: 'troca', habNome: 'Passo Sombrio', habDesc: 'Trocas de lugar com a tua sombra mais longe e o exército fica +50% mais forte',
+    passiva: '"Serve-me!" desde o nível 1 e +2 sombras', mana: 20, cd: 10,
     feit: [], habs: ['ergue', 'sede', 'mao', 'furtivo'] },
   espada: { nome: 'Dançarina da Espada', cor: '#ffd23f', arma: 'Espada Celeste',
     hab: 'danca', habNome: 'Dança da Espada', habDesc: 'Atravessa os monstros num relâmpago e corta todos pelo caminho (dano x3)',
@@ -23,7 +23,7 @@ const CLASSES = {
     hab: 'meteoros', habNome: 'Chuva de Meteoros', habDesc: 'Faz cair meteoros de fogo à volta do alvo',
     passiva: '+60% poder mágico e Bola de Fogo nível 2', mana: 35, cd: 12, magia: 0.6,
     feit: ['fogo', 'raio'], habs: ['paredeFogo', 'supernova'] },
-  besta: { nome: 'Tigre Branco', cor: '#f0f0f0', arma: 'Garras de Tigre',
+  besta: { nome: 'Garra Selvagem', cor: '#f0f0f0', arma: 'Garras de Tigre',
     hab: 'forma', habNome: 'Forma Bestial', habDesc: 'Transformas-te em fera durante 8 s: +50% dano, +30% velocidade e roubo de vida',
     passiva: '+40 vida', mana: 20, cd: 20, hp: 40,
     feit: [], habs: ['rugido', 'investida', 'redemoinho'] },
@@ -51,9 +51,9 @@ const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'tit
 const EVOLUCOES = {
   aventureiro: { nome: 'Herói Lendário', xp: 0.2, hp: 60, hab: 'heroi', habNome: 'Golpe Heróico', habDesc: 'Um corte enorme em leque à tua frente (dano x4)',
     passiva: '+20% XP e +60 vida', mana: 20, cd: 8 },
-  sombras: { nome: 'Monarca das Sombras', cd: 5, passiva: '+7 sombras e as sombras fazem +40% dano', habDesc: 'Trocas de lugar com a tua sombra mais longe (recarga 5 s)' },
+  sombras: { nome: 'Senhor da Legião', cd: 5, passiva: '+7 sombras e as sombras fazem +40% dano', habDesc: 'Trocas de lugar com a tua sombra mais longe (recarga 5 s)' },
   espada: { nome: 'Espada Santa', velAtaque: 0.25, crit: 0.12, passiva: '+25% vel. de ataque e +12% crítico', habDesc: 'Atravessa os monstros num relâmpago (dano x5)' },
-  fogo: { nome: 'Monarca das Chamas', magia: 1.0, passiva: '+100% poder mágico', habDesc: 'Uma chuva de 14 meteoros de fogo' },
+  fogo: { nome: 'Fénix Eterna', magia: 1.0, passiva: '+100% poder mágico', habDesc: 'Uma chuva de 14 meteoros de fogo' },
   besta: { nome: 'Rei das Feras', hp: 120, passiva: '+120 vida', habDesc: 'Forma de fera durante 14 s: +50% dano, +30% velocidade e roubo de vida' },
   titan: { nome: 'Rei Titã', hp: 160, def: 12, passiva: '+160 vida e +12 defesa, -10% velocidade', habDesc: 'Esmaga o chão num raio enorme e levas -50% dano durante 4 s' },
   cura: { nome: 'Santo', regen: 4, cura: 0.2, magia: 0.5, passiva: '+4 vida/s, poções +20% e +50% poder mágico', habDesc: 'Cura 40% da vida e queima os monstros à volta (x2 em mortos-vivos)' },
@@ -136,7 +136,7 @@ function habTroca() {
   J.invuln = Math.max(J.invuln, 0.5);
   J.buffSombras = 5;
   revelar(mapa, J.x, J.y, 7);
-  texto(J.x, J.y - 40, 'TROCA DE SOMBRA', '#8a6aff', 16);
+  texto(J.x, J.y - 40, 'PASSO SOMBRIO', '#8a6aff', 16);
   som(200, 0.4, 'sine', 0.05, 600);
   return true;
 }
@@ -289,7 +289,7 @@ function habHeroi() {
 function verificarProvacao() {
   if (J.nivel >= 30 && !J.evoluido && !J.provacao) {
     J.provacao = 'pendente';
-    avisar('[Sistema] Missão de Mudança de Classe', 'O próximo andar é a tua Provação. Vence-a para evoluir!', '#4dc3ff');
+    avisar('[Destino] Missão de Mudança de Classe', 'O próximo andar é a tua Provação. Vence-a para evoluir!', '#4dc3ff');
   }
 }
 // Chamado pelo proximoAndar: o andar da provação é uma arena com um boss
@@ -312,7 +312,7 @@ function concluirProvacao() {
   J.hp = S.maxHp;
   const C = classeJ();
   mostrarBanner('MUDANÇA DE CLASSE!', `${C.base} → ${C.nome}`, C.cor);
-  avisar(`[Sistema] Agora és ${C.nome}`, C.passiva, '#4dc3ff');
+  avisar(`[Destino] Agora és ${C.nome}`, C.passiva, '#4dc3ff');
   desbloquear('evolucao');
   explosao(J.x, J.y, C.cor, 60, 320, 7);
   fanfarra([392, 523, 659, 784, 1046, 1318, 1568], 0.06);
@@ -322,9 +322,9 @@ function concluirProvacao() {
 const reducaoClasse = () => (J.escudoTitan > 0 ? 0.5 : 1) * (J.grito > 0 ? 0.6 : 1);
 // Magias que o caçador pode usar (teclas 1 a 4, pela ordem da lista)
 const feiticosJ = () => classeJ().feit || [];
-// As sombras ficam mais fortes depois da Troca de Sombra
+// As sombras ficam mais fortes depois do Passo Sombrio
 const bonusSombras = () => (J.buffSombras > 0 ? 1.5 : 1) * (J.evoluido && J.classe === 'sombras' ? 1.4 : 1);
-// O Caçador das Sombras tem o "Ergue-te!" desde o início e mais sombras
+// O Caçador das Sombras tem o "Serve-me!" desde o início e mais sombras
 const extraSombras = () => (J.classe === 'sombras' ? (J.evoluido ? 7 : 2) : 0);
 
 // Botão de toque da habilidade de classe
