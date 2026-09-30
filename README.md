@@ -51,13 +51,16 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 3. Quem criou a sala carrega em **Novo jogo** ou **Continuar** (pode começar já; o amigo entra quando quiser).
 
 Como funciona:
-- O jogo corre no telemóvel de quem criou a sala, que envia a **imagem e o som** ao outro. O convidado tem o seu joystick e os seus botões (atacar, esquiva, poção, ★, magias e habilidades) e controla o **2.º herói** (com anel da cor do caçador e "J2" por cima).
+- O jogo corre no telemóvel de quem criou a sala, que envia ao outro a **vista dele**: o mundo (a mesma câmara), o painel do herói dele e os menus dele, mais o som. Os menus de quem criou a sala não aparecem ao convidado.
+- O convidado tem o seu joystick e os seus botões (atacar, esquiva, poção, **usar**, ★, magias, habilidades, **herói** e **mochila**) e controla o **2.º herói** (com anel da cor do caçador e "J2" por cima).
+- **Cada um tem os seus menus**: o convidado abre baús (a roleta aparece no telemóvel dele), compra nas lojas, usa a mesa de encantamentos, os altares e os edifícios da cidade, e tem a sua mochila e a sua Janela de Estado (pontos de atributo). Portais, escadas e a cidade levam os dois.
+- **O mundo não para** quando um de vocês está num menu (só a pausa para os dois). Quem está num menu fica parado e não leva dano, e aparece "(menu)" por cima dele.
 - Os **monstros atacam o herói mais perto**. A **câmara segue os dois**, por isso não se podem afastar demasiado.
-- A **XP é partilhada**: o parceiro sobe de nível contigo e escolhe as melhorias no telemóvel dele. O ouro vai para a equipa.
-- Cada **baú** que abres também dá um prémio ao parceiro (se não for melhor do que o que ele tem, é vendido e o ouro fica para a equipa).
+- A **XP e o ouro são da equipa**: o parceiro sobe de nível contigo e escolhe as melhorias no telemóvel dele.
+- Cada **baú** aberto por um dá também um prémio ao outro (vai para a mochila; se estiver cheia, é vendido).
 - Se um **cair**, o outro reanima-o ficando ao lado dele uns segundos. Só perdem se caírem os dois.
-- Quando abres um menu (mochila, loja, pausa...) o jogo para para os dois.
-- O parceiro entra ao teu nível e com equipamento do andar. O Caçador das Sombras fica só para quem cria a sala.
+- Os dois podem ser **Caçador das Sombras**: cada um tem o seu exército.
+- A imagem vai com mais qualidade (até 3 Mb/s, sem baixar a resolução) e o telemóvel do convidado mostra cada imagem logo que chega, para haver menos atraso.
 
 A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJS](https://peerjs.com), licença MIT, em `js/lib/`). Precisa de internet nos dois e só funciona no site do jogo (não dentro do Claude).
 
@@ -348,7 +351,7 @@ node testes/equilibrio.js 5,10,20 2   # vários andares
 node testes/caca_bugs.js
 ```
 
-`testes/jogar_a_2.js` liga dois browsers (um no PC a criar a sala e outro num "telemóvel" a entrar) através de um servidor PeerJS local e verifica o modo a 2: o código, a imagem e o som, mexer e atacar, as habilidades, a XP partilhada, as melhorias, os baús, cair e reanimar, mudar de andar, sala cheia e código errado:
+`testes/jogar_a_2.js` liga dois browsers (um no PC a criar a sala e outro num "telemóvel" a entrar) através de um servidor PeerJS local e verifica o modo a 2: o código, a imagem e o som, mexer e atacar, as habilidades, a XP partilhada, as melhorias escolhidas com um toque, os baús, a loja e a mochila do convidado, o mundo que não para nos menus, a pausa, cair e reanimar, mudar de andar, sala cheia, código errado e o Caçador das Sombras no convidado:
 
 ```
 npm install playwright peer

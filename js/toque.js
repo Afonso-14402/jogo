@@ -43,7 +43,7 @@ function botoesToque() {
   const habs = emJogo ? feits.concat(botoesHabilidadeToque().filter(b => temHabilidade(habsJ()[b.hab]))) : [];
   if (J && estado !== 'titulo' && classeJ().hab) habs.push(botaoClasseToque()); // habilidade única do caçador
   // a jogar a 2, o convidado só tem os botões de lutar
-  const base = estado === 'convidado' ? BOTOES_BASE.filter(b => ['atacar', 'dash', 'pocao'].includes(b.id)) : BOTOES_BASE;
+  const base = estado === 'convidado' ? BOTOES_BASE.filter(b => b.id !== 'pausa') : BOTOES_BASE; // o convidado não tem pausa
   return base.concat(habs).map(b => {
     const [ax, ay] = b.ancora;
     const n = Object.assign({}, b, { x: ax + (b.x - ax) * k, y: ay + (b.y - ay) * k, r: Math.round(b.r * k) });
@@ -72,7 +72,7 @@ canvas.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     const p = posToque(t);
     rato.x = p.x; rato.y = p.y;
-    if (estado === 'jogo' || (estado === 'convidado' && !escolha)) {
+    if (estado === 'jogo' || (estado === 'convidado' && coop.menu === 'jogo')) {
       if (estado === 'convidado' && noRet(p, BOTAO_SAIR_COOP)) { premidas['rato'] = true; continue; }
       if (estado === 'jogo' && tutorial && noRet(p, BOTAO_SALTAR_TUTORIAL)) { acabarTutorial(); continue; }
       if (estado === 'jogo' && noRet(p, retMinimapa())) { estado = 'mapa'; continue; } // tocar no minimapa abre o mapa grande
@@ -415,6 +415,7 @@ function avancarTutorial() {
 }
 // Chamado pelo jogo quando fazes alguma coisa
 function tutorialEvento(ev) {
+  if (J && J.remoto) return; // o tutorial é de quem criou a sala
   if (!tutorial) return;
   const P = PASSOS_TUTORIAL[tutorial.passo];
   if (P.ev === ev) avancarTutorial();

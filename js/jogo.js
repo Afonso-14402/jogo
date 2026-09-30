@@ -43,7 +43,7 @@ function lerSave() {
 let saveInfo = lerSave();
 
 function guardarJogo() {
-  if (!J || J.hp <= 0) return;
+  if (!J || J.hp <= 0 || J.remoto) return; // o herói do parceiro não é guardado
   const dados = { v: 1, andar: naCidade() ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade, continuas no andar seguinte
   for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
   try { localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e) { /* sem storage */ }
@@ -131,7 +131,7 @@ canvas.addEventListener('mousedown', e => { rato.baixo = true; premidas['rato'] 
 addEventListener('mouseup', () => { rato.baixo = false; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-const premiu = (...ks) => !(J && J.remoto) && ks.some(k => premidas[k]); // o herói do convidado não usa o teu teclado
+const premiu = (...ks) => !(J && J.remoto && !coop.menuP2) && ks.some(k => premidas[k]); // o herói do convidado não usa o teu teclado (só nos menus dele)
 
 // ---------------------------------------------------------------------
 //  Itens
@@ -855,7 +855,7 @@ function matarInimigo(e) {
 }
 
 function danoJogador(d, fx, fy, fonte = null) {
-  if (J.invuln > 0 || J.dashT > 0 || J.caido || estado !== 'jogo') return;
+  if (J.invuln > 0 || J.dashT > 0 || J.caido || J.emMenu || estado !== 'jogo') return;
   J.causa = fonte ? fonte.nome : (J.causaProxima || (boss ? boss.nome : 'uma armadilha'));
   J.causaTipo = fonte ? fonte.tipo : (!J.causaProxima && boss ? boss.tipo : null);
   J.causaProxima = null;
@@ -1078,6 +1078,7 @@ function atualizar(dt) {
     else if (J.objPerto) usarObjeto(J.objPerto);
     else if (J.escadaPerto && mapa.escada.ativa) proximoAndar();
   }
+  usarParceiroPendente(); // o parceiro carregou em USAR
 }
 
 const danoArmadilha = () => Math.round(8 * escalaAndar(andar).dano * dif().dano);
@@ -1251,7 +1252,7 @@ function comprar(i) {
 
 // R: os comandos que chegam do telemóvel do parceiro (a jogar a 2); sem R usa o teclado e o toque
 function atualizarJogador(dt, R = null) {
-  if (J.caido) { J.andando = false; J.golpe = null; return; } // caído: espera que o parceiro o reanime
+  if (J.caido || J.emMenu) { J.andando = false; J.golpe = null; return; } // caído (espera que o parceiro o reanime) ou num menu
   let mx = 0, my = 0;
   let forca = 1;
   if (R) { mx = R.mx; my = R.my; forca = R.forca || 1; }
@@ -2321,6 +2322,7 @@ function loop(agora) {
   if (premiu('m')) mudarSom();
   atualizarMusica();
   atualizarRedeCoop(dt);
+  atualizarMenuParceiro(dt); // os menus do parceiro (a jogar a 2)
 
   if (estado === 'titulo') {
     let acao = null;
@@ -2374,7 +2376,7 @@ function loop(agora) {
     atualizarCriacao(dt);
   } else if (estado === 'encantar') {
     atualizarMesa(dt);
-    atualizarEfeitos(dt);
+    if (!parceiroAtivo()) atualizarEfeitos(dt);
   } else if (estado === 'jogo') {
     if (premiu('p', 'escape') || clicou(BOTAO_PAUSA)) { estado = 'pausa'; rato.baixo = false; }
     else if (premiu('c')) estado = 'personagem';
@@ -2384,7 +2386,7 @@ function loop(agora) {
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
     atualizarEscolha(dt);
-    atualizarEfeitos(dt);
+    if (!parceiroAtivo()) atualizarEfeitos(dt);
   } else if (estado === 'pausa') {
     atualizarPausa();
   } else if (estado === 'personagem') {
@@ -2394,20 +2396,22 @@ function loop(agora) {
     atualizarStatus(dt);
   } else if (estado === 'loja') {
     atualizarLoja(dt);
-    atualizarEfeitos(dt);
+    if (!parceiroAtivo()) atualizarEfeitos(dt);
   } else if (estado === 'bau') {
     atualizarRoleta(dt);
-    atualizarEfeitos(dt);
+    if (!parceiroAtivo()) atualizarEfeitos(dt);
   } else if (estado === 'morto') {
     atualizarEfeitos(dt);
     if (premiu('enter') || clicou(BOTOES_MORTE.denovo)) { if (J.modo === 'diario') iniciarDiario(); else { modoProximo = J.modo; novoJogo(); } }
     else if (premiu('escape') || clicou(BOTOES_MORTE.menu)) estado = 'titulo';
   }
+  mundoEmMenu(dt); // a jogar a 2, o mundo não para enquanto estás num menu
   if (estado !== 'jogo') toque.atacar = false;
   atualizarEfeitosEcra(dt);
   atualizarAvisos(dt);
 
   desenhar(agora / 1000);
+  desenharVistaParceiro(agora / 1000); // o que o parceiro vê no telemóvel dele
   for (const k in premidas) delete premidas[k];
   requestAnimationFrame(loop);
 }

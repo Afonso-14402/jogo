@@ -7,8 +7,10 @@
 //  PeerJS): o jogo não precisa de servidor próprio.
 //  - os monstros atacam o herói mais perto
 //  - a câmara segue os dois (não se podem afastar demasiado)
-//  - a XP é partilhada; cada baú dá também um prémio ao parceiro
+//  - a XP e o ouro são partilhados; cada baú dá também um prémio ao outro
 //  - quem cai pode ser reanimado pelo outro; só perdem se caírem os dois
+//  - cada um tem os seus menus (baús, lojas, mochila...) no seu telemóvel
+//    e o mundo não para enquanto um deles está num menu (só a pausa para)
 // =====================================================================
 
 const coop = {
@@ -21,15 +23,26 @@ const coop = {
   escolhaP2: null,    // { classe, raca, skin } que o convidado escolheu
   entrada: { mx: 0, my: 0, forca: 1, atk: false },
   acoes: [],          // botões carregados pelo convidado (esquiva, poção...)
-  oferta: null,       // melhorias à espera que o convidado escolha
   principal: null,    // o herói de quem criou a sala (enquanto se joga com o outro)
+  principalS: null,
+  // os menus do convidado correm no anfitrião, com estas variáveis no lugar das tuas
+  ctxP2: { estado: 'jogo', roleta: null, escolha: null, loja: null, mesa: null, mochilaUI: null, cidade: null, menuMeta: null, voltarStatus: 'jogo',
+    rato: { x: 0, y: 0, baixo: false, movido: -1e9 }, premidas: {} },
+  menuP2: false,      // a correr um menu do convidado
+  usar: false,        // o convidado carregou em USAR
+  menu: 'jogo', rectVideo: null, ultRato: '',
   partilhando: false,
   hudT: 0, envioT: 0, ultimaEntrada: '', imagemT: 0,
   classeConvidado: 'aventureiro',
 };
 const PREFIXO_SALA = 'masmorra-do-destino-';
 const LETRAS_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const CLASSES_CONVIDADO = ORDEM_CLASSES.filter(c => c !== 'sombras'); // as sombras são só do herói principal
+const CLASSES_CONVIDADO = ORDEM_CLASSES;
+// Menus do convidado e estados em que o mundo continua (a jogar a 2 só a pausa para os dois)
+const MENUS_P2 = ['bau', 'loja', 'encantar', 'mochila', 'nivel', 'personagem', 'status', 'cidade', 'mapa'];
+const ESTADOS_MUNDO_VIVO = MENUS_P2;
+// Objetos que mudam o sítio dos dois (usam-se sempre com o teu herói)
+const OBJETOS_DA_EQUIPA = ['portal', 'saidaPortal', 'portaDupla', 'escadaCidade', 'escadaMasmorra', 'gaiola', 'aldeao', 'estatua'];
 const DIST_REANIMAR = 56, TEMPO_REANIMAR = 2.5;
 
 // ---------------------------------------------------------------------
@@ -39,10 +52,43 @@ const DIST_REANIMAR = 56, TEMPO_REANIMAR = 2.5;
 function comHeroi(h, fn) {
   if (!h || h === J) return fn();
   const J0 = J, S0 = S;
-  if (J0 && !J0.remoto) coop.principal = J0;
+  if (J0 && !J0.remoto) { coop.principal = J0; coop.principalS = S0; }
+  // o ouro é da equipa e cada um tem o seu exército de sombras
+  const par = J0 && (h.remoto || J0.remoto);
+  if (par) { h.ouro = J0.ouro; J0.sombrasMundo = sombras; sombras = h.sombrasMundo || (h.sombrasMundo = []); }
   J = h;
   S = h.remoto ? (h._S || stats()) : stats();
-  try { return fn(); } finally { h._S = S; J = J0; S = S0; }
+  try { return fn(); } finally {
+    h._S = S;
+    if (par) { J0.ouro = h.ouro; h.sombrasMundo = sombras; sombras = J0.sombrasMundo; }
+    J = J0; S = S0;
+  }
+}
+
+// Corre fn com o herói do convidado e com os menus dele (estado, roleta, loja, rato...)
+function comContextoP2(fn) {
+  const p2 = coop.p2, C = coop.ctxP2;
+  if (!p2) return;
+  return comHeroi(p2, () => {
+    const guarda = { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta, voltarStatus };
+    const rato0 = Object.assign({}, rato), prem0 = Object.assign({}, premidas);
+    const usar = C => { estado = C.estado; roleta = C.roleta; escolha = C.escolha; loja = C.loja; mesa = C.mesa; mochilaUI = C.mochilaUI; cidade = C.cidade; menuMeta = C.menuMeta; voltarStatus = C.voltarStatus; };
+    usar(C);
+    Object.assign(rato, C.rato);
+    for (const k in premidas) delete premidas[k];
+    Object.assign(premidas, C.premidas);
+    coop.menuP2 = true;
+    try { return fn(); } finally {
+      coop.menuP2 = false;
+      Object.assign(C, { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta, voltarStatus });
+      if (!MENUS_P2.includes(C.estado)) C.estado = 'jogo'; // (por ex. "guardar e sair" não é para o convidado)
+      C.rato = Object.assign({}, rato);
+      usar(guarda);
+      Object.assign(rato, rato0);
+      for (const k in premidas) delete premidas[k];
+      Object.assign(premidas, prem0);
+    }
+  });
 }
 const heroiPrincipal = () => (J && J.remoto ? coop.principal : J);
 const parceiroAtivo = () => (coop.p2 && coop.conn && coop.p2.mapa === mapa && coop.p2.dono === heroiPrincipal() ? coop.p2 : null);
@@ -52,8 +98,8 @@ function heroisVivos() {
   const P1 = heroiPrincipal(), p2 = parceiroAtivo();
   if (!p2) return [P1];
   const l = [];
-  if (!P1.caido) l.push(P1);
-  if (!p2.caido) l.push(p2);
+  if (!P1.caido && !P1.emMenu) l.push(P1);
+  if (!p2.caido && !p2.emMenu) l.push(p2); // quem está num menu não leva dano
   return l.length ? l : [P1];
 }
 
@@ -132,6 +178,17 @@ function juntarParceiro(p2) {
   p2.x = J.x; p2.y = J.y;
 }
 
+// O exército de sombras do parceiro (se for Caçador das Sombras) aparece à volta dele
+function levantarExercitoParceiro(p2) {
+  if (p2.classe !== 'sombras') p2.sombras = [];
+  p2.sombrasMundo = (p2.sombras || []).map((s, i) => {
+    const a = i / Math.max(1, p2.sombras.length) * Math.PI * 2;
+    let x = p2.x + Math.cos(a) * 40, y = p2.y + Math.sin(a) * 40;
+    if (colideCirculo(mapa, x, y, 10)) { x = p2.x; y = p2.y; }
+    return criarSombra(s, x, y);
+  });
+}
+const sombrasParceiro = () => { const p2 = parceiroAtivo(); return p2 && p2.sombrasMundo ? p2.sombrasMundo : []; };
 // ---------------------------------------------------------------------
 //  Atualização do parceiro (chamada pelo atualizar() com J = o teu herói)
 // ---------------------------------------------------------------------
@@ -140,15 +197,17 @@ function atualizarCoop(dt) {
   const P1 = J;
   if (!coop.p2 || coop.p2.dono !== P1) { criarParceiro(); enviarCoop({ t: 'aviso', titulo: 'Entraste no jogo!', sub: 'Luta ao lado do teu parceiro', cor: '#5dff7a' }); }
   const p2 = coop.p2;
-  if (p2.mapa !== mapa) juntarParceiro(p2);
+  if (p2.mapa !== mapa) { juntarParceiro(p2); levantarExercitoParceiro(p2); }
+  const C = coop.ctxP2;
+  p2.emMenu = C.estado !== 'jogo';
 
   // o que o convidado carregou desde a última vez
   const A = coop.acoes; coop.acoes = [];
-  const R = Object.assign({}, coop.entrada, { dash: A.includes('dash'), pocao: A.includes('pocao') });
+  const R = p2.emMenu ? { mx: 0, my: 0, forca: 1, atk: false } : Object.assign({}, coop.entrada, { dash: A.includes('dash'), pocao: A.includes('pocao') });
   comHeroi(p2, () => {
     S = stats();
     atualizarJogador(dt, R);
-    if (!J.caido) {
+    if (!J.caido && !J.emMenu) {
       atualizarClasse(dt);
       atualizarCacador(dt);
       atualizarVeneno(dt);
@@ -160,9 +219,19 @@ function atualizarCoop(dt) {
         else if (a[0] === 'f') { const id = feiticosJ()[+a.slice(1)]; if (id && J.feiticos[id]) lancarFeitico(id); }
       }
       revelar(mapa, J.x, J.y, 7);
-      apanharDrops(P1);
+      apanharDrops();
     }
   });
+  // os menus do convidado (abrem no telemóvel dele)
+  if (!p2.caido && !p2.emMenu) {
+    if (A.includes('usar')) coop.usar = true; // trata-se no fim do atualizar()
+    else if (A.includes('mochila')) comContextoP2(() => abrirMochila());
+    else if (A.includes('personagem')) comContextoP2(() => { estado = 'personagem'; });
+    else if (A.includes('status')) comContextoP2(() => abrirStatus());
+    else if (A.includes('mapa')) comContextoP2(() => { estado = 'mapa'; });
+    else if (p2.escolhasPendentes > 0) comContextoP2(() => abrirEscolha()); // subiu de nível: escolhe a melhoria
+  }
+  p2.perto = !!(bauPerto(p2) || objetoPerto(p2) || (mapa.escada.ativa && Math.hypot(mapa.escada.x - p2.x, mapa.escada.y - p2.y) < 40));
 
   // não se podem afastar demasiado: o teu herói puxa o do parceiro
   const lx = vistaW() - 110, ly = vistaH() - 110;
@@ -182,23 +251,62 @@ function atualizarCoop(dt) {
     } else H.reviver = Math.max(0, H.reviver - dt * 0.5);
   }
 
-  // melhorias ao subir de nível: o convidado escolhe no telemóvel dele
-  if (coop.oferta) {
-    coop.oferta.t += dt;
-    if (coop.oferta.t > 25) aplicarPerkParceiro(0); // demorou muito: fica com a primeira
-  } else if (p2.escolhasPendentes > 0) {
-    comHeroi(p2, () => {
-      const disp = PERKS.filter(p => nPerk(p.id) < p.max), ids = [];
-      while (ids.length < 3 && ids.length < disp.length) ids.push(escolher(disp.filter(p => !ids.includes(p.id))).id);
-      if (!ids.length) { J.escolhasPendentes = 0; return; }
-      coop.oferta = { ids, t: 0 };
-      enviarCoop({ t: 'perks', ids, perks: J.perks, nivel: J.nivel });
-    });
+}
+
+const bauPerto = h => { let b = null, md = 46; for (const x of baus) { const d = Math.hypot(x.x - h.x, x.y - h.y); if (d < md) { md = d; b = x; } } return b; };
+const objetoPerto = h => { let o = null, md = 52; for (const x of objetos) { const d = Math.hypot(x.x - h.x, x.y - h.y); if (d < md) { md = d; o = x; } } return o; };
+
+// O convidado carregou em USAR (chamado no fim do atualizar(), com J = o teu herói)
+function usarParceiroPendente() {
+  if (!coop.usar) return;
+  coop.usar = false;
+  const p2 = parceiroAtivo();
+  if (!p2 || p2.caido || p2.emMenu) return;
+  const b = bauPerto(p2);
+  if (b) { comContextoP2(() => abrirBau(b)); return; }
+  const o = objetoPerto(p2);
+  if (o) {
+    if (OBJETOS_DA_EQUIPA.includes(o.tipo)) usarObjeto(o); // portais, escadas...: vão os dois
+    else comContextoP2(() => usarObjeto(o)); // lojas, mesas, altares...: são para ele
+    return;
   }
+  if (mapa.escada.ativa && Math.hypot(mapa.escada.x - p2.x, mapa.escada.y - p2.y) < 40) proximoAndar();
+}
+
+// Os menus do convidado (chamado todas as vezes no loop do anfitrião)
+function atualizarMenuParceiro(dt) {
+  const p2 = parceiroAtivo();
+  if (!p2 || coop.ctxP2.estado === 'jogo') return;
+  comContextoP2(() => {
+    const F = {
+      bau: () => atualizarRoleta(dt), loja: () => atualizarLoja(dt), encantar: () => atualizarMesa(dt), mochila: () => atualizarMochila(dt),
+      nivel: () => atualizarEscolha(dt), status: () => atualizarStatus(dt), cidade: () => atualizarCidade(dt), mapa: () => { if (premiu('tab', 'escape', 'rato', 'm')) estado = 'jogo'; },
+      personagem: () => { if (clicou(BOTAO_STATUS) || premiu('u')) abrirStatus(); else if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo'; },
+    }[estado];
+    if (F) F();
+  });
+  coop.ctxP2.premidas = {};
+  p2.emMenu = coop.ctxP2.estado !== 'jogo';
+}
+
+// A jogar a 2, o mundo não para quando abres um menu (o teu herói fica parado e não leva dano)
+function mundoEmMenu(dt) {
+  if (!ESTADOS_MUNDO_VIVO.includes(estado) || !J || !mapa || !parceiroAtivo()) return false;
+  const e0 = estado, prem0 = Object.assign({}, premidas), at = toque.atacar, rb = rato.baixo;
+  for (const k in premidas) delete premidas[k];
+  toque.atacar = false; rato.baixo = false;
+  J.emMenu = true;
+  estado = 'jogo';
+  try { atualizar(dt * ritmoJogo()); } finally {
+    J.emMenu = false;
+    if (estado === 'jogo') estado = e0; // se aconteceu alguma coisa (morreste, o fim...), fica o novo estado
+    Object.assign(premidas, prem0); toque.atacar = at; rato.baixo = rb;
+  }
+  return true;
 }
 
 // O parceiro também apanha ouro (vai para a equipa) e poções (para ele)
-function apanharDrops(P1) {
+function apanharDrops() {
   for (const d of drops) {
     if (d.morto) continue;
     const dd = Math.hypot(d.x - J.x, d.y - J.y);
@@ -207,7 +315,7 @@ function apanharDrops(P1) {
     if (d.tipo === 'ouro') {
       d.morto = true;
       const v = Math.max(1, Math.round(d.valor * S.ouroMult));
-      P1.ouro += v;
+      J.ouro += v; // o ouro é da equipa (volta para o teu herói no fim)
       texto(d.x, d.y - 10, `+${v} ouro`, '#ffd23f', 13);
       som(1300, 0.05, 'square', 0.02, 300);
     } else if (d.tipo === 'pocao') {
@@ -258,39 +366,27 @@ function partilharXp(q) {
   try { comHeroi(J.remoto ? coop.principal : coop.p2, () => ganharXp(q)); } finally { coop.partilhando = false; }
 }
 
-// Subir de nível do parceiro: os pontos vão sozinhos para os atributos da classe
+// Subir de nível do parceiro: ganha pontos de atributo (usa-os na Janela de Estado)
 function subirNivelParceiro() {
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
-  distribuirPontos();
   const h = habsJ().find(x => x.nivel === J.nivel);
   if (h) enviarCoop({ t: 'aviso', titulo: `[Sistema] Nova habilidade: ${h.nome}`, sub: h.desc, cor: '#4dc3ff' });
+  else if (J.nivel === 2) enviarCoop({ t: 'aviso', titulo: '[Sistema] Tens pontos de atributo', sub: 'Toca no botão do herói → Estado para os usar', cor: '#4dc3ff' });
 }
 
-function aplicarPerkParceiro(i) {
-  const of = coop.oferta, p2 = coop.p2;
-  coop.oferta = null;
-  if (!of || !p2) return;
-  const p = PERKS.find(x => x.id === of.ids[clamp(i, 0, of.ids.length - 1)]);
-  if (!p) return;
-  comHeroi(p2, () => {
-    J.perks[p.id] = nPerk(p.id) + 1;
-    if (p.id === 'vitalidade') J.hp += 30;
-    if (p.id === 'pocoes') J.pocoes += 2;
-    J.escolhasPendentes = Math.max(0, J.escolhasPendentes - 1);
-    S = stats();
-    texto(J.x, J.y - 30, p.nome + '!', p.cor, 18);
-    explosao(J.x, J.y, p.cor, 20, 180, 4);
-  });
-}
-
-// Cada baú aberto dá também um prémio ao parceiro (se não for melhor, vende-o)
+// Cada baú aberto dá também um prémio ao outro herói
 function presenteParceiro(tipoBau) {
   const p2 = parceiroAtivo();
   if (!p2) return;
-  const P1 = heroiPrincipal();
-  comHeroi(p2, () => {
+  const outro = J.remoto ? heroiPrincipal() : p2;
+  comHeroi(outro, () => {
     const it = sortearItem(tipoBau);
     if (!it || !['arma', 'armadura', 'amuleto'].includes(it.tipo)) return;
+    if (!J.remoto) { // tu: vai para a mochila (ou é vendido se estiver cheia)
+      if (J.mochila.length < TAMANHO_MOCHILA) { J.mochila.push(it); avisar('O teu parceiro abriu um baú', `Também ganhaste ${traduzir(it.nome)} (está na mochila)`, RARIDADES[it.r].cor); }
+      else { const v = valorVenda(it); J.ouro += v; avisar('O teu parceiro abriu um baú', `Também ganhaste ${v} ouro`, '#ffd23f'); }
+      return;
+    }
     const velho = J[it.tipo], antes = poderJogador();
     J[it.tipo] = it; S = stats();
     const depois = poderJogador();
@@ -299,9 +395,12 @@ function presenteParceiro(tipoBau) {
       equipar(it);
       texto(J.x, J.y - 34, it.nome, RARIDADES[it.r].cor, 15);
       enviarCoop({ t: 'aviso', titulo: `Novo equipamento: ${traduzir(it.nome)}`, sub: `${traduzir(RARIDADES[it.r].nome)} · ${idioma === 'en' ? 'Power' : 'Poder'} +${depois - antes}`, cor: RARIDADES[it.r].cor });
+    } else if (J.mochila.length < TAMANHO_MOCHILA) {
+      J.mochila.push(it);
+      enviarCoop({ t: 'aviso', titulo: `Guardado na mochila: ${traduzir(it.nome)}`, sub: traduzir(RARIDADES[it.r].nome), cor: RARIDADES[it.r].cor });
     } else {
       const v = valorVenda(it);
-      P1.ouro += v;
+      J.ouro += v;
       enviarCoop({ t: 'aviso', titulo: `Vendeste ${traduzir(it.nome)}`, sub: `+${v} ouro para a equipa`, cor: '#ffd23f' });
     }
   });
@@ -352,23 +451,24 @@ function desenharCaido(t) {
 function desenharEtiquetasCoop(t) {
   const p2 = parceiroAtivo();
   if (!p2 || estado === 'morto') return;
-  const cor = CLASSES[p2.classe] ? CLASSES[p2.classe].cor : '#fff';
-  textoCentro('J2', ecraX(p2.x), ecraY(p2.y) - 40, 12, cor);
+  const P1 = heroiPrincipal(), cor = CLASSES[p2.classe] ? CLASSES[p2.classe].cor : '#fff';
+  textoCentro(p2.emMenu ? 'J2 (menu)' : 'J2', ecraX(p2.x), ecraY(p2.y) - 40, 12, cor);
+  if (ESTADOS_MUNDO_VIVO.includes(estado)) textoCentro('J1 (menu)', ecraX(P1.x), ecraY(P1.y) - 40, 12, '#ffe14d');
   for (const H of [J, p2]) if (H.caido) textoCentro(Math.floor(t * 2) % 2 ? 'AJUDA!' : 'Reanima-me!', ecraX(H.x), ecraY(H.y) - 44, 13, '#ff8080');
 }
 
-// Painel do parceiro, por baixo do teu (no canto esquerdo)
+// Painel do outro herói, por baixo do teu (no canto esquerdo)
 function desenharHudParceiro(y, t) {
   if (coop.papel !== 'anfitriao') return;
-  const p2 = parceiroAtivo();
+  const p2 = J.remoto ? heroiPrincipal() : parceiroAtivo(); // na vista do convidado mostra o teu
   if (!p2) {
     painel(10, y, 250, 30);
     textoEsq(coop.conn ? 'O parceiro está a entrar...' : `À espera do parceiro · sala ${coop.codigo}`, 20, y + 15, 12, '#9fdcff', 'normal');
     return;
   }
-  const S2 = p2._S || S, C = CLASSES[p2.classe] || CLASSES.aventureiro;
+  const S2 = (J.remoto ? coop.principalS : p2._S) || S, C = CLASSES[p2.classe] || CLASSES.aventureiro;
   painel(10, y, 250, 52);
-  textoEsq(`J2 · Nv ${p2.nivel}`, 20, y + 14, 13, '#ffe14d');
+  textoEsq(`${J.remoto ? 'J1' : 'J2'} · Nv ${p2.nivel}`, 20, y + 14, 13, '#ffe14d');
   textoEsq(C.nome, 106, y + 14, 11, C.cor, 'normal');
   barra(20, y + 26, 230, 12, p2.caido ? 0 : p2.hp / S2.maxHp, p2.caido ? '#555' : p2.hp / S2.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
   textoCentro(p2.caido ? 'CAÍDO' : `${Math.ceil(p2.hp)} / ${S2.maxHp}`, 135, y + 32, 11, '#fff');
@@ -461,15 +561,55 @@ function receberNoAnfitriao(m, c) {
     coop.entrada = { mx: clamp(+m.mx || 0, -1, 1), my: clamp(+m.my || 0, -1, 1), forca: clamp(+m.forca || 1, 0.3, 1), atk: !!m.atk };
   } else if (m.t === 'acao') {
     if (coop.acoes.length < 20 && typeof m.a === 'string') coop.acoes.push(m.a);
-  } else if (m.t === 'perk') {
-    aplicarPerkParceiro(+m.i || 0);
+  } else if (m.t === 'rato') { // o dedo (ou o rato) do convidado num menu dele
+    const R = coop.ctxP2.rato;
+    R.x = clamp(+m.u || 0, 0, 1) * TELA_W - MARGEM_X; R.y = clamp(+m.v || 0, 0, 1) * ALTURA; R.movido = performance.now();
+    if (m.clique) coop.ctxP2.premidas.rato = true;
+  } else if (m.t === 'tecla') {
+    if (typeof m.k === 'string' && m.k.length < 12) coop.ctxP2.premidas[m.k] = true;
   }
 }
 
-// Envia a imagem do jogo (e o som) ao convidado
+// A vista do convidado: o mundo (a mesma câmara), o painel do herói dele e os
+// menus dele. Os teus menus não aparecem lá.
+function desenharVistaParceiro(t) {
+  const c = coop.telaP2;
+  if (!c || coop.papel !== 'anfitriao' || !coop.conn) return;
+  if (c.width !== TELA_W || c.height !== ALTURA) { c.width = TELA_W; c.height = ALTURA; }
+  const ctx0 = ctx;
+  ctx = c.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#07060a';
+  ctx.fillRect(0, 0, TELA_W, ALTURA);
+  if (mundoAtivoCoop()) {
+    ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
+    ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
+    desenharTextosMundo();
+    desenharEtiquetasCoop(t);
+    comContextoP2(() => {
+      desenharHUD(t, true);
+      const D = { bau: () => desenharRoleta(t), nivel: () => desenharEscolha(t), loja: () => desenharLoja(t), encantar: () => desenharMesa(t),
+        personagem: () => desenharPersonagem(), mochila: () => desenharMochila(), status: () => desenharStatus(t), cidade: () => desenharPainelCidade(t), mapa: () => desenharMapaGrande() }[estado];
+      if (D) D();
+    });
+  }
+  ctx = ctx0;
+}
+// O convidado pode jogar? (não quando estás na pausa, no menu inicial ou morreste)
+const mundoAtivoCoop = () => !!(parceiroAtivo() && (estado === 'jogo' || ESTADOS_MUNDO_VIVO.includes(estado)));
+
+// Envia a vista do convidado (e o som) para o telemóvel dele
 function streamJogo() {
   if (coop.stream) return coop.stream;
-  const s = canvas.captureStream(30);
+  const c = document.createElement('canvas');
+  c.width = TELA_W; c.height = ALTURA;
+  c.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+  document.body.appendChild(c);
+  coop.telaP2 = c;
+  const s = c.captureStream(30);
+  const v = s.getVideoTracks()[0];
+  if (v && 'contentHint' in v) v.contentHint = 'detail'; // pixel art: mais vale nitidez do que suavidade
   try {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
     const d = actx.createMediaStreamDestination();
@@ -481,14 +621,34 @@ function streamJogo() {
   return s;
 }
 function ligarImagem(id) {
-  try { coop.peer.call(id, streamJogo()); } catch (e) { avisar('Não foi possível enviar a imagem', 'Tentem outra vez', '#ff6060'); }
+  try {
+    const ch = coop.peer.call(id, streamJogo());
+    // imagem mais nítida: mais bits por segundo e sem baixar a resolução
+    const melhorar = () => {
+      const pc = ch && ch.peerConnection;
+      if (!pc) return;
+      for (const snd of pc.getSenders()) {
+        if (!snd.track || snd.track.kind !== 'video') continue;
+        try {
+          const P = snd.getParameters();
+          if (!P.encodings || !P.encodings.length) P.encodings = [{}];
+          P.encodings[0].maxBitrate = 3000000;
+          P.encodings[0].maxFramerate = 30;
+          P.degradationPreference = 'maintain-resolution';
+          snd.setParameters(P).catch(() => {});
+        } catch (e) { /* browser antigo */ }
+      }
+    };
+    setTimeout(melhorar, 1500); setTimeout(melhorar, 5000);
+  } catch (e) { avisar('Não foi possível enviar a imagem', 'Tentem outra vez', '#ff6060'); }
 }
 
 function saiuConvidado(c) {
   if (c !== coop.conn) return;
   coop.conn = null;
   coop.entrada = { mx: 0, my: 0, forca: 1, atk: false };
-  coop.oferta = null;
+  coop.ctxP2 = Object.assign(coop.ctxP2, { estado: 'jogo', roleta: null, escolha: null, loja: null, mesa: null, mochilaUI: null, cidade: null, menuMeta: null, premidas: {} });
+  if (coop.p2) coop.p2.emMenu = false;
   const P1 = heroiPrincipal();
   if (P1 && P1.caido) { P1.caido = false; P1.hp = Math.max(1, Math.round((S ? S.maxHp : 100) * 0.3)); P1.invuln = 2; }
   avisar('O teu parceiro saiu', `A sala continua aberta (código ${coop.codigo})`, '#ffae00');
@@ -497,7 +657,8 @@ function saiuConvidado(c) {
 function fecharSala() {
   fecharRede();
   if (coop.stream) { for (const tr of coop.stream.getTracks()) tr.stop(); coop.stream = null; }
-  coop.papel = null; coop.p2 = null; coop.escolhaP2 = null; coop.codigo = ''; coop.oferta = null;
+  if (coop.telaP2) { coop.telaP2.remove(); coop.telaP2 = null; }
+  coop.papel = null; coop.p2 = null; coop.escolhaP2 = null; coop.codigo = '';
 }
 
 // Envia ao convidado o que ele precisa para desenhar os botões (10 vezes por segundo)
@@ -511,7 +672,7 @@ function atualizarRedeCoop(dt) {
   enviarCoop({ t: 'hud', classe: p2.classe, evoluido: !!p2.evoluido, nivel: p2.nivel, feiticos: p2.feiticos, cdFeitico: p2.cdFeitico,
     cdHab: p2.cdHab, cdClasse: p2.cdClasse || 0, mana: p2.mana, maxMana: p2._S.maxMana, pocoes: p2.pocoes, arma: p2.arma,
     cdDash: p2.cdDash, dashT: p2.dashT, cdDashMax: p2._S.cdDash, raca: p2.raca, skin: p2.skin, hp: p2.hp, maxHp: p2._S.maxHp,
-    caido: !!p2.caido, jogo: estado === 'jogo' && parceiroAtivo() === p2 });
+    caido: !!p2.caido, jogo: mundoAtivoCoop(), pausa: estado === 'pausa', menu: coop.ctxP2.estado, perto: !!p2.perto });
 }
 
 // --- quem entra na sala ---
@@ -532,7 +693,11 @@ function entrarSala() {
     });
     peer.on('call', ch => {
       ch.answer();
-      ch.on('stream', s => mostrarImagem(s));
+      ch.on('stream', s => {
+        mostrarImagem(s);
+        // menos atraso: mostra cada imagem logo que chega
+        try { for (const r of ch.peerConnection.getReceivers()) { r.playoutDelayHint = 0; r.jitterBufferTarget = 0; } } catch (e) { /* browser antigo */ }
+      });
     });
     peer.on('error', err => {
       if (estado === 'convidado') { perdeuLigacao(); return; }
@@ -576,16 +741,14 @@ function receberNoConvidado(m) {
     fecharRede();
   } else if (m.t === 'hud' && J) {
     coop.espera = !!m.espera || !m.jogo;
+    coop.pausa = !!m.pausa;
     if (m.espera) return;
     for (const k of ['classe', 'evoluido', 'nivel', 'feiticos', 'cdFeitico', 'cdHab', 'cdClasse', 'mana', 'pocoes', 'arma', 'cdDash', 'dashT', 'raca', 'skin', 'hp', 'caido']) J[k] = m[k];
+    J.bauPerto = m.perto; // o botão USAR acende
+    const menu = m.menu || 'jogo';
+    if (menu !== coop.menu) { toque.joy = null; toque.atacar = false; toque.botoes = {}; }
+    coop.menu = menu;
     S = { cdDash: m.cdDashMax || 0.9, maxMana: m.maxMana || 50, maxHp: m.maxHp || 100 };
-  } else if (m.t === 'perks' && J) {
-    const ops = (m.ids || []).map(id => PERKS.find(p => p.id === id)).filter(Boolean);
-    if (!ops.length) return;
-    J.perks = m.perks || {};
-    J.nivel = m.nivel || J.nivel;
-    escolha = { opcoes: ops, t: 0 };
-    fanfarra([523, 659, 784, 1046], 0.04);
   } else if (m.t === 'aviso') {
     avisar(m.titulo, m.sub, m.cor);
   } else if (m.t === 'vib') {
@@ -598,7 +761,7 @@ function perdeuLigacao() {
   const noJogo = estado === 'convidado';
   fecharRede();
   if (coop.video) { coop.video.srcObject = null; }
-  escolha = null;
+  coop.menu = 'jogo';
   estado = 'coop';
   coop.ecra = 'entrar';
   coop.msg = { txt: noJogo ? 'A ligação caiu. Podes voltar a entrar com o mesmo código.' : 'Não foi possível entrar na sala.', cor: '#ff6060' };
@@ -609,7 +772,7 @@ function sairConvidado() {
   fecharRede();
   if (coop.video) { coop.video.srcObject = null; }
   coop.papel = null;
-  escolha = null;
+  coop.menu = 'jogo';
   J = null;
   estado = 'titulo';
 }
@@ -618,14 +781,15 @@ function sairConvidado() {
 const BOTAO_SAIR_COOP = { x: LARGURA / 2 - 75, y: 6, w: 150, h: 30 };
 function atualizarConvidado(dt) {
   coop.imagemT += dt;
-  if (clicou(BOTAO_SAIR_COOP) && !escolha) { sairConvidado(); return; }
-  if (escolha) { // melhoria a escolher
-    escolha.t += dt;
-    if (escolha.t < 0.35) return;
-    let i = -1;
-    if (premiu('1')) i = 0; else if (premiu('2')) i = 1; else if (premiu('3')) i = 2;
-    if (premiu('rato')) escolha.opcoes.forEach((_, k) => { if (dentro(retCartaPerk(k, escolha.opcoes.length))) i = k; });
-    if (i >= 0 && i < escolha.opcoes.length) { enviarCoop({ t: 'perk', i }); escolha = null; som(660, 0.2, 'triangle', 0.05, 300); }
+  if (clicou(BOTAO_SAIR_COOP)) { sairConvidado(); return; }
+  if (coop.menu !== 'jogo') { // um menu teu (baú, loja, mochila...): os toques vão para o telemóvel do parceiro, onde ele corre
+    const R = coop.rectVideo;
+    if (R) {
+      const u = +((rato.x + MARGEM_X - R.x) / R.w).toFixed(4), v = +((rato.y - R.y) / R.h).toFixed(4), clique = premiu('rato');
+      if (clique || `${u},${v}` !== coop.ultRato) { enviarCoop({ t: 'rato', u, v, clique }); coop.ultRato = `${u},${v}`; }
+    }
+    for (const k in premidas) if (k !== 'rato') enviarCoop({ t: 'tecla', k });
+    if (coop.ultimaEntrada !== 'parado') { enviarCoop({ t: 'in', mx: 0, my: 0, forca: 1, atk: false }); coop.ultimaEntrada = 'parado'; }
     return;
   }
   let mx = 0, my = 0, forca = 1;
@@ -646,6 +810,11 @@ function atualizarConvidado(dt) {
   if (premiu('f')) acao('classe');
   for (let i = 0; i < 4; i++) if (premiu(String(1 + i))) acao('f' + i);
   for (let i = 0; i < 4; i++) if (premiu(String(5 + i))) acao('h' + i);
+  if (premiu('e')) acao('usar');
+  if (premiu('i')) acao('mochila');
+  if (premiu('c')) acao('personagem');
+  if (premiu('u')) acao('status');
+  if (premiu('tab')) acao('mapa');
 }
 
 function desenharConvidado(t) {
@@ -656,8 +825,9 @@ function desenharConvidado(t) {
   const v = coop.video;
   if (v && v.readyState >= 2 && v.videoWidth) {
     const k = Math.min(TELA_W / v.videoWidth, ALTURA / v.videoHeight), w = v.videoWidth * k, h = v.videoHeight * k;
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(v, (TELA_W - w) / 2, (ALTURA - h) / 2, w, h);
+    coop.rectVideo = { x: (TELA_W - w) / 2, y: (ALTURA - h) / 2, w, h };
+    ctx.imageSmoothingEnabled = k < 1; // a aumentar fica em pixel art; a diminuir fica mais suave
+    ctx.drawImage(v, coop.rectVideo.x, coop.rectVideo.y, w, h);
     ctx.imageSmoothingEnabled = false;
   }
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
@@ -665,14 +835,13 @@ function desenharConvidado(t) {
     textoCentro('A receber a imagem do teu parceiro...', LARGURA / 2, ALTURA / 2 - 10, 20, '#ddd');
     if (coop.imagemT > 12) textoCentro('Está a demorar: tentem os dois estar no mesmo Wi-Fi', LARGURA / 2, ALTURA / 2 + 24, 14, '#ffae00', false);
   }
-  if (J && J.arma && !coop.espera) {
+  if (J && J.arma && !coop.espera && coop.menu === 'jogo') {
     if (modoToque) desenharControlosToque(t);
-    else textoCentro('WASD mover · Espaço atacar · Shift esquiva · Q poção · F ★ · 1-4 magias · 5-8 habilidades', LARGURA / 2, ALTURA - 14, 12, '#ccc', false);
+    else textoCentro('WASD mover · Espaço atacar · Shift esquiva · Q poção · F ★ · E usar · I mochila · C herói', LARGURA / 2, ALTURA - 14, 12, '#ccc', false);
   }
-  if (coop.espera && v && v.videoWidth) textoCentro('O teu parceiro está nos menus...', LARGURA / 2, 60, 14, '#ffe680');
+  if (coop.espera && v && v.videoWidth) textoCentro(coop.pausa ? 'O teu parceiro pôs o jogo em pausa' : 'O teu parceiro está nos menus...', LARGURA / 2, ALTURA / 2, 18, '#ffe680');
   if (J && J.caido && Math.floor(t * 2) % 2) textoCentro('CAÍSTE! O teu parceiro pode reanimar-te', LARGURA / 2, 110, 18, '#ff6060');
-  botao(BOTAO_SAIR_COOP, 'Sair da sala', '#ff8080', 'rgba(18,14,28,0.85)', 'fechar');
-  if (escolha) desenharEscolha(t);
+  if (coop.menu === 'jogo') botao(BOTAO_SAIR_COOP, 'Sair da sala', '#ff8080', 'rgba(18,14,28,0.85)', 'fechar');
 }
 
 // ---------------------------------------------------------------------
@@ -783,7 +952,6 @@ function desenharLobby(t) {
     }
   } else if (E === 'classe') {
     textoCentro(`Escolhe o teu caçador (sala ${coop.codigo})`, LARGURA / 2, 110, 18, '#ccc', false);
-    textoCentro('(o Caçador das Sombras é só para quem cria a sala)', LARGURA / 2, 138, 12, '#888', false);
     CLASSES_CONVIDADO.forEach((id, i) => desenharCartaoClasse(retClasseCoop(i), id, coop.classeConvidado === id));
     botao(BOTOES_COOP.entrarJogo, 'Entrar no jogo', '#5dff7a', undefined, 'jogar');
   }

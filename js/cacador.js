@@ -313,9 +313,10 @@ function atualizarCacador(dt) {
   if (J.grito > 0) J.grito -= dt;
   if (J.furia > 0) { J.furia -= dt; if (J.furia <= 0) S = stats(); }
   if (J.barreiraT > 0) { J.barreiraT -= dt; if (J.barreiraT <= 0) J.barreira = 0; }
-  if (J.remoto) return; // o exército e os corpos são do herói principal
-  for (const c of cadaveres) c.t -= dt;
-  cadaveres = cadaveres.filter(c => c.t > 0);
+  if (!J.remoto) { // os corpos só contam o tempo uma vez
+    for (const c of cadaveres) c.t -= dt;
+    cadaveres = cadaveres.filter(c => c.t > 0);
+  }
   atualizarSombras(dt);
 }
 

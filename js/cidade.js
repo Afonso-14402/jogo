@@ -336,7 +336,7 @@ function linhasCidade() {
   if (id === 'casa') return [
     { tipo: 'descansar', txt: J.visitaCidade && J.visitaCidade.descansou ? 'Já descansaste nesta visita' : 'Descansar (vida e mana cheias)' },
     { tipo: 'guardar', txt: 'Guardar o jogo e sair para o menu' },
-  ];
+  ].filter(l => !(J.remoto && l.tipo === 'guardar')); // o parceiro não guarda o teu jogo
   if (id === 'assoc') {
     const k = (meta.rankCacador || 0) + 1;
     const l = [{ tipo: 'reav', txt: k < RANKS.length ? `Reavaliação de rank (precisas de poder ${poderParaRank(k)})` : 'Reavaliação: rank máximo' }];

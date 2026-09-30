@@ -368,6 +368,7 @@ function desenharMundo(t) {
   entidadesCidade(lista);
   if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
   for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
+  for (const s of sombrasParceiro()) lista.push({ y: s.y, f: () => desenharSombra(s, t) }); // a jogar a 2
   for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
   if (estado !== 'morto') lista.push({ y: J.y, f: () => desenharJogador(t) });
   if (estado !== 'morto' && parceiroAtivo()) lista.push({ y: coop.p2.y, f: () => desenharParceiro(t) });
@@ -895,7 +896,7 @@ function desenharTextosMundo() {
 // ---------------------------------------------------------------------
 //  HUD
 // ---------------------------------------------------------------------
-function desenharHUD(t) {
+function desenharHUD(t, soTopo = false) { // soTopo: só o painel e o minimapa (na vista do parceiro)
   ctx.save();
   ctx.translate(-MARGEM_X, 0); // painel da vida no canto esquerdo do ecrã
   painel(10, 10, 280, 112);
@@ -925,6 +926,7 @@ function desenharHUD(t) {
 
   ctx.restore();
   desenharMinimapa();
+  if (soTopo) return;
 
   if (modoToque) { desenharHUDFinal(t); desenharControlosToque(t); return; }
 
