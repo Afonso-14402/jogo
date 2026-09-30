@@ -12,6 +12,7 @@ try {
 } catch (e) { /* sem storage */ }
 
 function salvarMeta() {
+  if (coop.papel === 'convidado' && coop.metaGuardada) return; // a jogar no jogo do parceiro não se guarda nada aqui
   try { localStorage.setItem(CHAVE_META, JSON.stringify(meta)); } catch (e) { /* sem storage */ }
 }
 

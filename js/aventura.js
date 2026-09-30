@@ -112,6 +112,7 @@ const luaDeSangue = () => !!(mapa && mapa.evento === 'luaSangue' && ['jogo', 'pa
 // ---------------------------------------------------------------------
 let restos = [];
 function guardarResto(e) {
+  marcarMorto(e); // a jogar a 2, o parceiro também o vê desfazer-se
   try {
     const s = spriteInimigo(e, tempoJogo);
     restos.push({ c: s.c, x: e.x, y: e.y + (s.y || 0), flip: !!s.flip, t: e.boss ? 1.2 : 0.45, dur: e.boss ? 1.2 : 0.45, boss: e.boss, cor: e.cor });

@@ -136,7 +136,7 @@ function tocarPasso(id, passo, t0, colcheia) {
 
 // Que música deve estar a tocar agora
 function faixaDesejada() {
-  if (estado === 'convidado') return null; // o som vem do telemóvel do parceiro
+  if (estado === 'convidado' && !convidadoPronto()) return null; // a jogar a 2 no telemóvel do convidado: a música é a do sítio onde estão
   if (['titulo', 'coop', 'criar', 'almas', 'colecao', 'conquistas', 'pacto', 'registo', 'diario'].includes(estado)) return 'titulo';
   if (!mapa || !J) return 'titulo';
   if (estado === 'cidade' || mapa.cidade) return 'cidade';
@@ -165,6 +165,7 @@ function atualizarMusica() {
 
 // Efeito de ruído (explosões, golpes)
 function ruido(dur, vol = 0.05, freq = 800) {
+  if (capturarSom(['r', dur, vol, freq])) return;
   if (!somLigado || !actx || !iniciarAudioMusica()) return;
   try {
     const t0 = actx.currentTime;

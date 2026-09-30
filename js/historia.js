@@ -54,7 +54,7 @@ function atualizarFalas(dt) {
 }
 
 function desenharFalas() {
-  if (!falas.length || estado !== 'jogo') return;
+  if (!falas.length || (estado !== 'jogo' && estado !== 'convidado')) return;
   const f = falas[0], Q = QUEM[f.quem], a = Math.min(1, f.t * 4, (f.dur - f.t) * 3);
   ctx.globalAlpha = Math.max(0, a);
   const x = LARGURA / 2 - 330, y = 452;

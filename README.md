@@ -1,6 +1,6 @@
 # Masmorra do Destino
 
-RPG 2D de masmorras em pixel art que corre direto no browser. Não precisa de instalar nada: é HTML5 Canvas com JavaScript puro, sem bibliotecas e sem ficheiros de imagem. Todos os sprites são desenhados pixel a pixel no código (`js/sprites.js`).
+RPG 2D de masmorras em pixel art que corre direto no browser. Não precisa de instalar nada: é HTML5 Canvas com JavaScript puro, sem ficheiros de imagem e sem bibliotecas (só o modo a 2 usa a PeerJS para ligar os telemóveis). Todos os sprites são desenhados pixel a pixel no código (`js/sprites.js`).
 
 ## Como jogar
 
@@ -51,7 +51,9 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
 3. Quem criou a sala carrega em **Novo jogo** ou **Continuar** (pode começar já; o amigo entra quando quiser).
 
 Como funciona:
-- O jogo corre no telemóvel de quem criou a sala, que envia ao outro a **vista dele**: o mundo (a mesma câmara), o painel do herói dele e os menus dele, mais o som. Os menus de quem criou a sala não aparecem ao convidado.
+- O jogo (monstros, dano, baús...) corre no telemóvel de quem criou a sala, que envia ao outro o **estado do jogo** 15 vezes por segundo: onde está cada monstro, tiro, objeto e herói, e os sons. O telemóvel do convidado **desenha tudo sozinho** (a imagem fica perfeita, com o painel dele, a mochila dele e os menus dele) e faz tudo deslizar entre as mensagens.
+- **Sem atraso no herói do convidado**: ele mexe-se, esquiva-se e golpeia logo no telemóvel dele, sem esperar pela rede; o outro telemóvel segue a posição dele. Os empurrões, as habilidades que o fazem saltar e os portais vêm do telemóvel de quem criou a sala.
+- Para gastar pouca internet só vai o que mudou (uma cópia completa de 2 em 2 segundos): uns 10 a 30 KB/s, conforme os monstros que houver no ecrã.
 - O convidado tem o seu joystick e os seus botões (atacar, esquiva, poção, **usar**, ★, magias, habilidades, **herói** e **mochila**) e controla o **2.º herói** (com anel da cor do caçador e "J2" por cima).
 - **Cada um tem os seus menus**: o convidado abre baús (a roleta aparece no telemóvel dele), compra nas lojas, usa a mesa de encantamentos, os altares e os edifícios da cidade, e tem a sua mochila e a sua Janela de Estado (pontos de atributo). Portais, escadas e a cidade levam os dois.
 - **O mundo não para** quando um de vocês está num menu (só a pausa para os dois). Quem está num menu fica parado e não leva dano, e aparece "(menu)" por cima dele.
@@ -60,7 +62,7 @@ Como funciona:
 - Cada **baú** aberto por um dá também um prémio ao outro (vai para a mochila; se estiver cheia, é vendido).
 - Se um **cair**, o outro reanima-o ficando ao lado dele uns segundos. Só perdem se caírem os dois.
 - Os dois podem ser **Caçador das Sombras**: cada um tem o seu exército.
-- A imagem vai com mais qualidade (até 3 Mb/s, sem baixar a resolução) e o telemóvel do convidado mostra cada imagem logo que chega, para haver menos atraso.
+- O botão de pausa do convidado pergunta se quer sair da sala (o jogo continua para o outro).
 
 A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJS](https://peerjs.com), licença MIT, em `js/lib/`). Precisa de internet nos dois e só funciona no site do jogo (não dentro do Claude).
 
@@ -312,7 +314,7 @@ js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
 js/polimento.js     peso dos golpes, herói mais vivo, mira e joystick, comparar itens, monstros mais espertos, luz rápida
-js/coop.js          Jogar a 2: sala com código, 2.º herói, câmara dos dois, reanimar, envio da imagem e dos toques
+js/coop.js          Jogar a 2: sala com código, 2.º herói, câmara dos dois, reanimar, envio do estado do jogo e dos toques
 js/lib/peerjs.min.js  biblioteca PeerJS (MIT) para a ligação entre os dois telemóveis
 js/cenario.js       animação dos ataques dos monstros, detalhes das paredes, coisas que mexem (lava, água, teias), ícones da interface e dicas de morte
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
@@ -351,11 +353,12 @@ node testes/equilibrio.js 5,10,20 2   # vários andares
 node testes/caca_bugs.js
 ```
 
-`testes/jogar_a_2.js` liga dois browsers (um no PC a criar a sala e outro num "telemóvel" a entrar) através de um servidor PeerJS local e verifica o modo a 2: o código, a imagem e o som, mexer e atacar, as habilidades, a XP partilhada, as melhorias escolhidas com um toque, os baús, a loja e a mochila do convidado, o mundo que não para nos menus, a pausa, cair e reanimar, mudar de andar, sala cheia, código errado e o Caçador das Sombras no convidado:
+`testes/jogar_a_2.js` liga dois browsers (um no PC a criar a sala e outro num "telemóvel" a entrar) através de um servidor PeerJS local e verifica o modo a 2: o código, o mapa e os monstros no telemóvel do convidado, o herói dele a mexer-se logo, o som, a internet gasta, mexer e atacar, as habilidades, a XP partilhada, as melhorias escolhidas com um toque, os baús, a loja e a mochila do convidado, o mundo que não para nos menus, a pausa, cair e reanimar, mudar de andar, sala cheia, código errado e o Caçador das Sombras no convidado:
 
 ```
 npm install playwright peer
-node testes/jogar_a_2.js
+node testes/jogar_a_2.js           # inclui uma volta pelos 60 andares com o convidado ligado
+node testes/jogar_a_2.js rapido    # sem essa volta
 ```
 
 ## Jogar online (opcional)

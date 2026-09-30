@@ -86,6 +86,7 @@ function saidaSom() {
   return mestreSom;
 }
 function som(freq, dur, tipo = 'square', vol = 0.05, slide = 0, atraso = 0) {
+  if (capturarSom([freq, dur, tipo, vol, slide, atraso])) return; // a jogar a 2, também toca no telemóvel do parceiro
   if (!somLigado) return;
   try {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2411,7 +2412,6 @@ function loop(agora) {
   atualizarAvisos(dt);
 
   desenhar(agora / 1000);
-  desenharVistaParceiro(agora / 1000); // o que o parceiro vê no telemóvel dele
   for (const k in premidas) delete premidas[k];
   requestAnimationFrame(loop);
 }

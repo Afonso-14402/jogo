@@ -284,7 +284,7 @@ function desenhar(t) {
   ctxTela.fillRect(0, 0, TELA_W, ALTURA);
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
-  if (estado === 'convidado') { desenharConvidado(t); desenharAvisos(); desenharAvisoRodar(); return; } // a jogar a 2, no telemóvel do parceiro
+  if (estado === 'convidado' && !convidadoPronto()) { desenharConvidado(t); desenharAvisos(); desenharAvisoRodar(); return; } // a jogar a 2: à espera do jogo do parceiro
   if (estado === 'titulo' || estado === 'coop' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
       estado === 'pacto' || estado === 'registo' || estado === 'diario' || estado === 'transferir' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
@@ -323,7 +323,7 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
   desenharEtiquetasCoop(t);
-  if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado)) desenharHUD(t);
+  if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['status', 'cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
   desenharFalas();
 
@@ -340,6 +340,7 @@ function desenhar(t) {
   else if (estado === 'mapa') desenharMapaGrande();
   else if (estado === 'fim') desenharFim(t);
   else if (estado === 'morto') desenharMorte();
+  else if (estado === 'convidado') desenharExtrasConvidado(t); // a jogar a 2: os menus do convidado
   desenharClarao();
   desenharAvisos();
   desenharAvisoRodar();
@@ -896,7 +897,7 @@ function desenharTextosMundo() {
 // ---------------------------------------------------------------------
 //  HUD
 // ---------------------------------------------------------------------
-function desenharHUD(t, soTopo = false) { // soTopo: só o painel e o minimapa (na vista do parceiro)
+function desenharHUD(t) {
   ctx.save();
   ctx.translate(-MARGEM_X, 0); // painel da vida no canto esquerdo do ecrã
   painel(10, 10, 280, 112);
@@ -926,7 +927,6 @@ function desenharHUD(t, soTopo = false) { // soTopo: só o painel e o minimapa (
 
   ctx.restore();
   desenharMinimapa();
-  if (soTopo) return;
 
   if (modoToque) { desenharHUDFinal(t); desenharControlosToque(t); return; }
 
