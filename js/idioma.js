@@ -683,6 +683,7 @@ const EN = {
   'O teu parceiro entrou!': 'Your partner joined!', ' · joga no telemóvel dele': ' · playing on their phone',
   'O teu parceiro saiu': 'Your partner left', 'A sala continua aberta (código ': 'The room is still open (code ',
   'Apagar': 'Delete', 'Seguinte': 'Next',
+  'Tamanho da letra': 'Text size', 'Pequena': 'Small',
   'Sair da sala?': 'Leave the room?', 'O teu parceiro continua a jogar sozinho': 'Your partner keeps playing alone',
   'A carregar o jogo do teu parceiro...': "Loading your partner's game...", 'Fim do jogo! Espera que o teu parceiro recomece': 'Game over! Wait for your partner to restart',
   'Novo equipamento: ': 'New gear: ', 'Vendeste ': 'You sold ', ' ouro para a equipa': ' gold for the team',

@@ -339,16 +339,15 @@ function desenharCartaoClasse(r, id, sel) {
   const arma = ITENS.find(i => i.nome === (C.arma || C.icone));
   if (arma) desenharIcone(arma, r.x + 34, r.y + r.h / 2, 40);
   // o texto encolhe para caber no cartão
-  const cabe = (txt, tam, peso) => { ctx.font = fonte(tam, peso); return tam <= 7 || ctx.measureText(traduzir(txt)).width <= r.w - 72 ? tam : cabe(txt, tam - 1, peso); };
-  const k = r.h / 110; // cartões mais baixos quando há muitos caçadores
-  textoEsq(C.nome, r.x + 64, r.y + 20 * k, cabe(C.nome, 14, 'bold'), C.cor);
+  const k = r.h / 110, larg = r.w - 72; // cartões mais baixos quando há muitos caçadores
+  textoEsqAjustado(C.nome, r.x + 64, r.y + 20 * k, 14, C.cor, larg);
   const h = C.hab ? `F: ${C.habNome}` : 'Sem habilidade';
-  textoEsq(h, r.x + 64, r.y + 42 * k, cabe(h, 11, 'normal'), '#ffe680', 'normal');
-  textoEsq(C.passiva, r.x + 64, r.y + 62 * k, cabe(C.passiva, 10, 'normal'), '#7dff9a', 'normal');
-  if (C.arma) textoEsq(C.arma, r.x + 64, r.y + 86 * k, cabe(C.arma, 10, 'normal'), '#aaa', 'normal');
-  if (C.unico) { // caçador único: etiqueta a brilhar
+  textoEsqAjustado(h, r.x + 64, r.y + 42 * k, 11, '#ffe680', larg, 'normal');
+  textoEsqAjustado(C.passiva, r.x + 64, r.y + 62 * k, 10, '#7dff9a', larg, 'normal');
+  if (C.arma) textoEsqAjustado(C.arma, r.x + 64, r.y + 86 * k, 10, '#aaa', larg - (C.unico ? 50 : 0), 'normal');
+  if (C.unico) { // caçador único: etiqueta a brilhar (em baixo, para não tapar o nome)
     ctx.globalAlpha = 0.7 + 0.3 * Math.sin(performance.now() / 250);
-    textoDir('ÚNICO', r.x + r.w - 8, r.y + 12, 9, C.cor);
+    textoDir('ÚNICO', r.x + r.w - 8, r.y + 86 * k, 9, C.cor);
     ctx.globalAlpha = 1;
   }
 }

@@ -126,7 +126,7 @@ canvas.addEventListener('touchcancel', largarToque, { passive: false });
 //  OPÇÕES DE TELEMÓVEL (guardadas entre partidas)
 // =====================================================================
 const CHAVE_OPCOES = 'masmorra_opcoes';
-const opcoes = { tamanho: 1, visibilidade: 1, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
+const opcoes = { tamanho: 1, visibilidade: 1, letra: 1, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
 try { Object.assign(opcoes, JSON.parse(localStorage.getItem(CHAVE_OPCOES) || '{}')); } catch (e) { /* sem storage */ }
 function guardarOpcoes() {
   try { localStorage.setItem(CHAVE_OPCOES, JSON.stringify(opcoes)); } catch (e) { /* sem storage */ }
@@ -268,6 +268,12 @@ function ajustarTela() {
   TELA_W = largo ? Math.min(1800, Math.round(ALTURA * w / h / 2) * 2) : LARGURA;
   MARGEM_X = (TELA_W - LARGURA) / 2;
   ZOOM = modoToque ? 1.25 : 1;
+  // letras maiores quando o interface fica pequeno no ecrã (telemóvel deitado)
+  const kEcra = Math.min(w / TELA_W, h / ALTURA);
+  const base = !modoToque ? 1 : kEcra < 0.75 ? 1.3 : kEcra < 0.95 ? 1.15 : 1;
+  const letra = opcoes.letra == null ? 1 : opcoes.letra;
+  escalaLetra = [1, base, Math.max(1.25, base * 1.25)][letra];
+  alargarLetra = letra === 2 ? 1.4 : 1.18;
   if (canvas.width !== TELA_W) canvas.width = TELA_W;
   ajustarBuffers();
   const k = Math.min(w / TELA_W, h / ALTURA);
@@ -293,6 +299,7 @@ function abrirOpcoes() {
 
 function linhasOpcoes() {
   return [
+    { id: 'letra', nome: 'Tamanho da letra', valor: ['Pequena', 'Normal', 'Grande'][opcoes.letra == null ? 1 : opcoes.letra] },
     { id: 'tamanho', nome: 'Tamanho dos botões', valor: ['Pequeno', 'Normal', 'Grande'][opcoes.tamanho] },
     { id: 'visibilidade', nome: 'Visibilidade dos botões', valor: ['Transparente', 'Normal', 'Forte'][opcoes.visibilidade] },
     { id: 'canhoto', nome: 'Joystick', valor: opcoes.canhoto ? 'À direita (canhoto)' : 'À esquerda' },
@@ -303,7 +310,7 @@ function linhasOpcoes() {
     { id: 'tutorial', nome: 'Tutorial', valor: 'Ver outra vez' },
   ];
 }
-const retOpcao = i => ({ x: 170, y: 90 + i * 58, w: 620, h: 48 });
+const retOpcao = i => ({ x: 170, y: 88 + i * 52, w: 620, h: 44 });
 
 function atualizarOpcoes(dt) {
   menuOpcoes.t += dt;
@@ -313,7 +320,8 @@ function atualizarOpcoes(dt) {
   linhasOpcoes().forEach((l, i) => {
     if (!(premiu(String(i + 1)) || clicou(retOpcao(i)))) return;
     som(700, 0.05, 'square', 0.02);
-    if (l.id === 'tamanho') opcoes.tamanho = (opcoes.tamanho + 1) % 3;
+    if (l.id === 'letra') { opcoes.letra = ((opcoes.letra == null ? 1 : opcoes.letra) + 1) % 3; ajustarTela(); }
+    else if (l.id === 'tamanho') opcoes.tamanho = (opcoes.tamanho + 1) % 3;
     else if (l.id === 'visibilidade') opcoes.visibilidade = (opcoes.visibilidade + 1) % 3;
     else if (l.id === 'canhoto') opcoes.canhoto = !opcoes.canhoto;
     else if (l.id === 'vibracao') { opcoes.vibracao = !opcoes.vibracao; vibrar(80); }

@@ -8,7 +8,18 @@
 
 const FONTE = '"Tiny5", "Segoe UI", "Trebuchet MS", Arial, sans-serif';
 // no telemóvel as letras muito pequenas ficam um pouco maiores
-const fonte = (tam, peso = 'bold') => `${peso} ${typeof modoToque !== 'undefined' && modoToque && tam < 12 ? tam + 1 : tam}px ${FONTE}`;
+// No telemóvel o interface fica encolhido: as letras pequenas crescem (ver ajustarTela
+// e a opção "Tamanho da letra"); as grandes (títulos) ficam como estão.
+let escalaLetra = 1, alargarLetra = 1.18;
+const tamLetra = tam => (escalaLetra === 1 || tam >= 24 ? tam : Math.min(Math.round(tam * escalaLetra), Math.max(tam, 24)));
+const fonte = (tam, peso = 'bold') => `${peso} ${tamLetra(tam)}px ${FONTE}`;
+// Quanto a letra pode alargar (as letras crescem mais em altura do que em largura, para caberem nos painéis)
+const apertoLetra = tam => Math.min(1, alargarLetra * tam / tamLetra(tam));
+function escreverApertado(txt, x, y, tam, f) {
+  const sx = apertoLetra(tam);
+  if (sx >= 0.999) { f(txt, x, y); return; }
+  ctx.save(); ctx.translate(x, y); ctx.scale(sx, 1); f(txt, 0, 0); ctx.restore();
+}
 try { if (document.fonts) { document.fonts.load(fonte(16)); document.fonts.load(fonte(16, 'normal')); } } catch (e) { /* ignora */ }
 
 let LB = LARGURA / ESCALA, AB = ALTURA / ESCALA;
@@ -45,21 +56,26 @@ function textoCentro(txt, x, y, tam, cor, contorno = true) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   if (contorno) {
-    ctx.lineWidth = Math.max(3, tam / 5);
+    ctx.lineWidth = Math.max(3, tamLetra(tam) / 5);
     ctx.lineJoin = 'round';
     ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-    ctx.strokeText(txt, x, y);
+    escreverApertado(txt, x, y, tam, (a, b, c) => ctx.strokeText(a, b, c));
   }
   ctx.fillStyle = cor;
-  ctx.fillText(txt, x, y);
+  escreverApertado(txt, x, y, tam, (a, b, c) => ctx.fillText(a, b, c));
 }
 
 function textoCentroAjustado(txt, x, y, tamMax, cor, larguraMax, contorno = true) {
   txt = traduzir(txt);
   let tam = tamMax;
   ctx.font = fonte(tam);
-  while (tam > 9 && ctx.measureText(txt).width > larguraMax) { tam--; ctx.font = fonte(tam); }
-  textoCentro(txt, x, y, tam, cor, contorno);
+  while (tam > 9 && ctx.measureText(txt).width * apertoLetra(tam) > larguraMax) { tam--; ctx.font = fonte(tam); }
+  // com a letra grande, se nem no tamanho mínimo cabe, aperta só na largura
+  const larg = ctx.measureText(txt).width * apertoLetra(tam);
+  if (larg <= larguraMax) { textoCentro(txt, x, y, tam, cor, contorno); return; }
+  ctx.save(); ctx.translate(x, y); ctx.scale(larguraMax / larg, 1);
+  textoCentro(txt, 0, 0, tam, cor, contorno);
+  ctx.restore();
 }
 
 function textoEsq(txt, x, y, tam, cor, peso = 'bold') {
@@ -68,7 +84,20 @@ function textoEsq(txt, x, y, tam, cor, peso = 'bold') {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = cor;
-  ctx.fillText(txt, x, y);
+  escreverApertado(txt, x, y, tam, (a, b, c) => ctx.fillText(a, b, c));
+}
+
+// Texto à esquerda que encolhe (e, no limite, aperta na largura) para caber em larguraMax
+function textoEsqAjustado(txt, x, y, tamMax, cor, larguraMax, peso = 'bold') {
+  txt = traduzir(txt);
+  let tam = tamMax;
+  ctx.font = fonte(tam, peso);
+  while (tam > 8 && ctx.measureText(txt).width * apertoLetra(tam) > larguraMax) { tam--; ctx.font = fonte(tam, peso); }
+  const larg = ctx.measureText(txt).width * apertoLetra(tam);
+  if (larg <= larguraMax) { textoEsq(txt, x, y, tam, cor, peso); return; }
+  ctx.save(); ctx.translate(x, y); ctx.scale(larguraMax / larg, 1);
+  textoEsq(txt, 0, 0, tam, cor, peso);
+  ctx.restore();
 }
 
 function textoDir(txt, x, y, tam, cor, peso = 'bold') {
@@ -77,7 +106,7 @@ function textoDir(txt, x, y, tam, cor, peso = 'bold') {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = cor;
-  ctx.fillText(txt, x, y);
+  escreverApertado(txt, x, y, tam, (a, b, c) => ctx.fillText(a, b, c));
 }
 
 // Painel com moldura "pixel": borda dura de 2px e sombra por fora
@@ -1743,15 +1772,15 @@ function desenharTitulo(t) {
     ['P / Esc', 'Pausa'],
   ];
   controlos.forEach(([k, d], i) => {
-    textoEsq(k, 462, 262 + i * 28, 14, '#ffe680');
-    textoEsq(d, 640, 262 + i * 28, 13, '#ddd', 'normal');
+    textoEsqAjustado(k, 462, 262 + i * 28, 14, '#ffe680', 170);
+    textoEsqAjustado(d, 640, 262 + i * 28, 13, '#ddd', 248, 'normal');
   });
 
   desenharIcone(ITENS.find(i => i.nome === 'Colher Enferrujada'), 470, 530, 32);
   desenharIcone(ITENS.find(i => i.nome === 'Espada do Infinito'), 870, 530, 32);
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item!', 670, 530, 14, '#fff', false);
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
-  textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, 586, 13, '#7ec8ff', false);
+  textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, modoToque ? 608 : 586, 13, '#7ec8ff', false);
   if (!modoToque) textoCentro('ENTER: jogar · N: novo · D: diário · O: torre · B: boss rush · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);
   botaoIdioma();
   botoesMenuToque(true);
