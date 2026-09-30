@@ -436,7 +436,7 @@ function presenteParceiro(tipoBau) {
     if (depois > antes && !it.maldicao) {
       equipar(it);
       texto(J.x, J.y - 34, it.nome, RARIDADES[it.r].cor, 15);
-      enviarCoop({ t: 'aviso', titulo: `Novo equipamento: ${traduzir(it.nome)}`, sub: `${traduzir(RARIDADES[it.r].nome)} · ${idioma === 'en' ? 'Power' : 'Poder'} +${depois - antes}`, cor: RARIDADES[it.r].cor });
+      enviarCoop({ t: 'aviso', titulo: `Novo equipamento: ${traduzir(it.nome)}`, sub: `${traduzir(RARIDADES[it.r].nome)} · ${traduzir('Poder')} +${depois - antes}`, cor: RARIDADES[it.r].cor });
     } else if (J.mochila.length < TAMANHO_MOCHILA) {
       J.mochila.push(it);
       enviarCoop({ t: 'aviso', titulo: `Guardado na mochila: ${traduzir(it.nome)}`, sub: traduzir(RARIDADES[it.r].nome), cor: RARIDADES[it.r].cor });

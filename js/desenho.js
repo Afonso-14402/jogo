@@ -151,18 +151,17 @@ function barra(x, y, w, h, frac, cor, fundo = '#2a2030') {
 function botaoIdioma() {
   const b = BOTAO_IDIOMA, sobre = dentro(b);
   painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sobre ? '#ffffff' : '#5a4d74');
-  const meio = b.x + b.w / 2;
-  ctx.fillStyle = idioma === 'pt' ? '#ffe14d' : 'rgba(255,255,255,0.08)';
-  ctx.fillRect(b.x + 4, b.y + 4, b.w / 2 - 6, b.h - 8);
-  ctx.fillStyle = idioma === 'en' ? '#ffe14d' : 'rgba(255,255,255,0.08)';
-  ctx.fillRect(meio + 2, b.y + 4, b.w / 2 - 6, b.h - 8);
-  ctx.font = fonte(16);
+  const n = IDIOMAS.length, w = (b.w - 8) / n;
+  ctx.font = `bold 16px ${FONTE}`; // (sem aumentar: tem de caber)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = idioma === 'pt' ? '#15101e' : '#aaa';
-  ctx.fillText('PT', b.x + b.w / 4 + 1, b.y + b.h / 2 + 1);
-  ctx.fillStyle = idioma === 'en' ? '#15101e' : '#aaa';
-  ctx.fillText('EN', meio + b.w / 4 - 1, b.y + b.h / 2 + 1);
+  IDIOMAS.forEach((l, i) => {
+    const x = b.x + 4 + i * w;
+    ctx.fillStyle = idioma === l ? '#ffe14d' : 'rgba(255,255,255,0.08)';
+    ctx.fillRect(x + 1, b.y + 4, w - 2, b.h - 8);
+    ctx.fillStyle = idioma === l ? '#15101e' : '#aaa';
+    ctx.fillText(l.toUpperCase(), x + w / 2, b.y + b.h / 2 + 1);
+  });
 }
 
 // Botões extra só para ecrãs táteis: Opções, Instalar e Ecrã inteiro

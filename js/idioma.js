@@ -8,8 +8,10 @@
 //  "Longsword of the Vampire +3". O resultado fica em cache.
 // =====================================================================
 
+// pt: português (original) · br: português do Brasil · en: inglês · es: espanhol
+const IDIOMAS = ['pt', 'br', 'en', 'es'];
 let idioma = 'pt';
-try { if (localStorage.getItem('masmorra_idioma') === 'en') idioma = 'en'; } catch (e) { /* sem storage */ }
+try { const l = localStorage.getItem('masmorra_idioma'); if (IDIOMAS.includes(l)) idioma = l; } catch (e) { /* sem storage */ }
 
 const EN = {
   // ---------------- raridades e baús
@@ -540,7 +542,7 @@ const EN = {
   'Trono do Soberano. Daqui não há volta.': "Sovereign's Throne. There is no way back from here.",
   'Sente o chão a tremer? Sou eu a acordar.': 'Feel the ground shaking? That is me waking up.',
   'O meu general vai tratar de ti. Não me faças descer.': 'My general will deal with you. Do not make me come down.',
-  'Finalmente, frente a frente. Mostra-me o teu verdadeiro poder, Jogador!': 'Finally, face to face. Show me your true power, Player!',
+  'Finalmente, frente a frente. Mostra-me o teu verdadeiro poder, caçador!': 'Finally, face to face. Show me your true power, hunter!',
   'Não! Eu SOU o Vazio! Não podes vencer o nada!': 'No! I AM the Void! You cannot defeat nothingness!',
   'Modo infinito: a masmorra continua. Até onde consegues ir?': 'Endless mode: the dungeon goes on. How far can you go?',
   'Os portais começam a fechar-se, um a um.': 'The gates begin to close, one by one.',
@@ -783,7 +785,7 @@ const EN = {
   'Cura 40% da vida e queima os monstros à volta (x2 em mortos-vivos)': 'Heals 40% health and burns nearby monsters (x2 vs undead)',
   'Senhor da Tempestade': 'Storm Lord', '+25% velocidade': '+25% speed', 'Um leque de 9 lâminas de vento': 'A fan of 9 wind blades',
   '[Destino] Missão de Mudança de Classe': '[Fate] Class Change Trial', 'O próximo andar é a tua Provação. Vence-a para evoluir!': 'The next floor is your Trial. Win it to evolve!',
-  'Provação: ': 'Trial: ', 'PROVAÇÃO DE CLASSE': 'JOB CHANGE TRIAL', 'MUDANÇA DE CLASSE!': 'JOB CHANGE!', '[Destino] Agora és ': '[Fate] You are now ',
+  'Provação: ': 'Trial: ', 'PROVAÇÃO DE CLASSE': 'CLASS TRIAL', 'MUDANÇA DE CLASSE!': 'CLASS CHANGE!', '[Destino] Agora és ': '[Fate] You are now ',
   // generais sombra
   '[Destino] Novo general: ': '[Fate] New general: ', 'Um boss juntou-se ao teu Exército das Sombras': 'A boss joined your Shadow Army',
   'Cavaleiro Sombrio': 'Shadow Knight', 'Gelatinoso': 'Gelatinous', 'Arquimago Negro': 'Black Archmage', 'Asa da Noite': 'Nightwing',
@@ -802,7 +804,7 @@ const EN = {
   'Desafiante': 'Challenger', 'Chega ao andar 10 no Desafio Diário': 'Reach floor 10 in the Daily Challenge',
   'Alpinista': 'Climber', 'Chega ao andar 25 da Torre': 'Reach floor 25 of the Tower',
   'Senhor da Torre': 'Lord of the Tower', 'Conquista os 100 andares da Torre': 'Clear the 100 floors of the Tower',
-  'Mudança de Classe': 'Job Change', 'Passa a provação do nível 30': 'Pass the level 30 trial',
+  'Mudança de Classe': 'Class Change', 'Passa a provação do nível 30': 'Pass the level 30 trial',
   'Primeiro General': 'First General', 'Ergue um boss como general sombra': 'Raise a boss as a shadow general',
   'Santuário do Vigia': 'Sanctuary of the Watcher', 'Sobrevive ao Santuário do Vigia': 'Survive the Sanctuary of the Watcher',
   // magias e habilidades por caçador
@@ -857,6 +859,7 @@ const EN = {
   'Voltaste à sala!': 'You are back in the room!', 'Continuas com o mesmo herói': 'You keep the same hero',
   'Pode voltar com o código ': 'They can come back with the code ', ' (fica com o mesmo herói)': ' (keeping the same hero)',
   'A ligação caiu. A voltar a ligar... (': 'Connection lost. Reconnecting... (', 'A voltar a ligar à sala ': 'Reconnecting to room ',
+  'Poder': 'Power',
   // missões da semana
   'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',
   'Mudam daqui a ': 'New ones in ', ' dias': ' days',
@@ -902,29 +905,61 @@ const EN = {
   'Toca no herói e depois em Estado (no PC: tecla U).': 'Tap the hero and then Status (on PC: U key).',
 };
 
-const LISTA_EN = Object.entries(EN).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);
+// Lista de trocas de um idioma: das frases mais compridas para as mais curtas.
+// As palavras curtas soltas ("Tu", "Não") e todas as do Brasil só se trocam
+// quando são palavras inteiras (para "Tu" não estragar "Tutorial").
+const LETRA = /[\p{L}\p{N}]/u;
+function prepararLista(dic, sempreInteira) {
+  return Object.entries(dic).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length).map(([a, b]) => {
+    const inteira = sempreInteira || (a.length <= 4 && LETRA.test(a[0]) && LETRA.test(a[a.length - 1]));
+    const esc = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return [a, b, inteira ? new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'gu') : null];
+  });
+}
+const LISTAS_IDIOMA = {};
+function listaIdioma() {
+  if (!LISTAS_IDIOMA[idioma]) {
+    const dic = idioma === 'en' ? EN : idioma === 'es' ? ES : idioma === 'br' ? BR : {};
+    LISTAS_IDIOMA[idioma] = prepararLista(dic, idioma === 'br');
+  }
+  return LISTAS_IDIOMA[idioma];
+}
 const cacheTraducao = new Map();
+const jaTraduzidos = new Set(); // textos que já saíram do traduzir (não se traduzem duas vezes)
 
 function traduzir(txt) {
   if (idioma === 'pt' || txt == null) return txt;
   txt = String(txt);
-  let r = cacheTraducao.get(txt);
+  const chave = idioma + '|' + txt;
+  let r = cacheTraducao.get(chave);
   if (r !== undefined) return r;
+  if (jaTraduzidos.has(chave)) return txt;
   r = txt;
-  for (const [a, b] of LISTA_EN) if (r.includes(a)) r = r.split(a).join(b);
-  if (cacheTraducao.size > 4000) cacheTraducao.clear();
-  cacheTraducao.set(txt, r);
+  for (const [a, b, re] of listaIdioma()) {
+    if (!r.includes(a)) continue;
+    if (re) { re.lastIndex = 0; r = r.replace(re, () => b); } else r = r.split(a).join(b);
+  }
+  if (cacheTraducao.size > 4000) { cacheTraducao.clear(); jaTraduzidos.clear(); }
+  cacheTraducao.set(chave, r);
+  if (r !== txt) jaTraduzidos.add(idioma + '|' + r);
   return r;
 }
 
-function mudarIdioma() {
-  idioma = idioma === 'pt' ? 'en' : 'pt';
+const TITULOS = { pt: 'Masmorra do Destino', br: 'Masmorra do Destino', en: 'Dungeon of Destiny', es: 'Mazmorra del Destino' };
+const LANG_HTML = { pt: 'pt-PT', br: 'pt-BR', en: 'en', es: 'es' };
+// Muda de idioma: com o toque/rato em cima do botão escolhe esse; senão passa ao seguinte
+function mudarIdioma(qual) {
+  if (!qual && typeof rato !== 'undefined' && dentro(BOTAO_IDIOMA)) {
+    const i = Math.floor((rato.x - BOTAO_IDIOMA.x - 4) / ((BOTAO_IDIOMA.w - 8) / IDIOMAS.length));
+    qual = IDIOMAS[Math.max(0, Math.min(IDIOMAS.length - 1, i))];
+  }
+  idioma = qual || IDIOMAS[(IDIOMAS.indexOf(idioma) + 1) % IDIOMAS.length];
   try { localStorage.setItem('masmorra_idioma', idioma); } catch (e) { /* sem storage */ }
-  document.documentElement.lang = idioma;
-  document.title = idioma === 'en' ? 'Dungeon of Destiny' : 'Masmorra do Destino';
+  document.documentElement.lang = LANG_HTML[idioma];
+  document.title = TITULOS[idioma];
 }
-document.documentElement.lang = idioma;
-if (idioma === 'en') document.title = 'Dungeon of Destiny';
+document.documentElement.lang = LANG_HTML[idioma];
+document.title = TITULOS[idioma];
 
-// Botão PT | EN (no menu inicial e na pausa)
-const BOTAO_IDIOMA = { x: LARGURA - 128, y: 14, w: 112, h: 36 };
+// Botão PT | BR | EN | ES (no menu inicial e na pausa)
+const BOTAO_IDIOMA = { x: LARGURA - 200, y: 14, w: 184, h: 36 };

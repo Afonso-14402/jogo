@@ -136,7 +136,7 @@ function compararItens(novo, atual) {
   const p1 = poderJogador();
   J[novo.tipo] = guarda; S = S0;
   const d = p1 - p0;
-  l.unshift({ txt: `${idioma === 'en' ? 'Power' : 'Poder'} ${d >= 0 ? '+' : ''}${d} ${d > 0 ? '▲' : d < 0 ? '▼' : '='}`, cor: d > 0 ? '#5dff7a' : d < 0 ? '#ff6060' : '#aaa', grande: true });
+  l.unshift({ txt: `${traduzir('Poder')} ${d >= 0 ? '+' : ''}${d} ${d > 0 ? '▲' : d < 0 ? '▼' : '='}`, cor: d > 0 ? '#5dff7a' : d < 0 ? '#ff6060' : '#aaa', grande: true });
   if (cacheComparar.size > 200) cacheComparar.clear();
   cacheComparar.set(chave, l);
   return l;

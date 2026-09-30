@@ -140,7 +140,7 @@ const noRet = (p, r) => p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y +
 // Botões extra do menu inicial e da pausa (só em ecrãs táteis)
 const BOTAO_OPCOES = { x: 16, y: 14, w: 150, h: 36 };
 const BOTAO_INSTALAR = { x: 16, y: 58, w: 150, h: 32 };
-const BOTAO_ECRA = { x: LARGURA - 176, y: 14, w: 40, h: 36 };
+const BOTAO_ECRA = { x: LARGURA - 248, y: 14, w: 40, h: 36 };
 
 // ---------------------------------------------------------------------
 //  Ecrã inteiro

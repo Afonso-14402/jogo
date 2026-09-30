@@ -130,11 +130,11 @@ Os textos (título e descrições) estão mais abaixo.
 >
 > 🎁 **Baús da sorte**: cada baú gira uma roleta que pode dar o PIOR ou o MELHOR item do jogo. Há mais de 100 itens para colecionar, do Lixo ao Mítico, com encantamentos e maldições.
 >
-> 👥 **Jogar a 2**: cria uma sala, diz o código a um amigo e desçam juntos. Os monstros atacam o herói mais perto, a XP é dos dois e quem cai pode ser reanimado.
+> 👥 **Jogar a 2**: cria uma sala, diz o código a um amigo e desçam juntos. Os monstros atacam o herói mais perto, a XP é dos dois e quem cai pode ser reanimado. Se a ligação cair, o teu amigo volta sozinho com o mesmo herói.
 >
 > 🏰 **Portais de rank E a SSS**, a Cidade dos Caçadores, companheiros que evoluem, relíquias, conjuntos de equipamento, mudança de classe no nível 30, Desafio Diário, Torre dos 100 Andares e Boss Rush.
 >
-> 📱 Controlos de toque pensados para o telemóvel, com joystick analógico. Funciona sem internet (a internet só é precisa para jogar a 2).
+> 📱 Controlos de toque pensados para o telemóvel, com joystick analógico e letra grande. Em português, português do Brasil, inglês e espanhol. Funciona sem internet (a internet só é precisa para jogar a 2).
 >
 > Sem anúncios. Sem compras. Só masmorra.
 
@@ -161,6 +161,36 @@ Os textos (título e descrições) estão mais abaixo.
 > 📱 Touch controls made for phones, with an analog joystick. Works offline (internet is only needed for co-op).
 >
 > No ads. No purchases. Just dungeon.
+
+### Español
+
+**Título:** Mazmorra del Destino (Masmorra do Destino)
+
+**Descripción breve (máx. 80):** RPG de mazmorras pixel art: 60 pisos, jefes, cofres de la suerte y cooperativo.
+
+**Descripción completa:**
+
+> Baja a la Mazmorra del Destino, un RPG de acción en pixel art hecho para jugar en el móvil.
+>
+> ⚔️ **10 cazadores diferentes**, cada uno con su arma, habilidad única y habilidades propias: desde el Cazador de las Sombras, que levanta un ejército con los monstruos que derrota, hasta el Guardián del Tiempo, que detiene el tiempo y lo rebobina.
+>
+> 🐉 **60 pisos y 12 jefes**: dragones, liches, reinas araña, ángeles caídos y el Soberano del Vacío al final de todo.
+>
+> 🎁 **Cofres de la suerte**: cada cofre gira una ruleta que puede dar el PEOR o el MEJOR objeto del juego. Más de 100 objetos para coleccionar, de Basura a Mítico, y una forja para subir su rareza.
+>
+> 👥 **Jugar a 2**: crea una sala, dile el código a un amigo y bajad juntos. Si se corta la conexión, vuelve solo con el mismo héroe.
+>
+> 🏰 Portales de rango E a SSS, la Ciudad de los Cazadores, compañeros que evolucionan, reliquias, misiones diarias y semanales, Desafío Diario, Torre de los 100 Pisos y Boss Rush.
+>
+> 📱 Controles táctiles con joystick analógico y letra grande opcional. Funciona sin internet (solo el modo a 2 necesita internet).
+>
+> Sin anuncios. Sin compras.
+
+### Português do Brasil
+
+**Descrição breve (máx. 80):** RPG de masmorras em pixel art: 60 andares, chefes, baús da sorte e jogo em dupla!
+
+Para a descrição completa, usa o texto em português de cima trocando: *telemóvel → celular*, *Jogar a 2 → Jogar em Dupla*, *ecrã → tela*.
 
 ---
 

@@ -13,6 +13,9 @@ const SAIDA = path.join(RAIZ, 'loja');
 // Cada cena prepara o jogo e deixa-o correr um bocadinho antes da foto
 const CENAS = [
   ['1_menu', () => { estado = 'titulo'; }],
+  // (os ecrãs de menu primeiro, antes de haver um mundo por trás)
+  ['7_cacador', () => { estado = 'titulo'; abrirCriacao(); criacao.aba = 'classe'; escolhaClasse = 'arqueiro'; }],
+  ['8_jogar_a_2', () => { estado = 'titulo'; abrirCoop(); coop.papel = 'anfitriao'; coop.ecra = 'criar'; coop.codigo = 'K7PM'; coop.msg = null; coop.conn = { open: true, send() {} }; coop.escolhaP2 = { classe: 'cronos' }; }],
   ['2_masmorra', () => {
     escolhaClasse = 'espada'; escolhaSkin = 'carmesim'; novoJogo(); tutorial = null; banner = null; falas = [];
     J.nivel = 8; J.hpBase = 400; S = stats(); J.hp = S.maxHp * 0.8; J.escolhasPendentes = 0; estado = 'jogo';
@@ -44,8 +47,6 @@ const CENAS = [
     escolhaClasse = 'besta'; escolhaSkin = 'floresta'; novoJogo(); tutorial = null; banner = null; falas = []; J.escolhasPendentes = 0; estado = 'jogo';
     entrarCidade(); banner = null;
   }],
-  ['7_cacador', () => { estado = 'titulo'; abrirCriacao(); criacao.aba = 'classe'; escolhaClasse = 'cronos'; }],
-  ['8_jogar_a_2', () => { estado = 'titulo'; abrirCoop(); coop.papel = 'anfitriao'; coop.ecra = 'criar'; coop.codigo = 'K7PM'; coop.msg = null; coop.conn = { open: true, send() {} }; coop.escolhaP2 = { classe: 'cronos' }; }],
 ];
 
 (async () => {

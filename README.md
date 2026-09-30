@@ -34,11 +34,17 @@ No telemóvel há ainda:
 | 5 6 7 8 | Habilidades de Caçador (desbloqueiam nos níveis 5, 10, 15 e 20) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
 | M | Ligar/desligar o som |
-| I (no menu inicial) | Mudar o idioma entre Português e Inglês |
+| I (no menu inicial) | Mudar o idioma (Português, Português do Brasil, Inglês, Espanhol) |
 
-### Idioma (PT / EN)
+### Idioma (PT / BR / EN / ES)
 
-No canto superior direito do menu inicial e da pausa há um botão **PT | EN** para jogar em português ou em inglês. A escolha fica guardada. As traduções estão em `js/idioma.js`.
+No canto superior direito do menu inicial e da pausa há um botão **PT | BR | EN | ES**: português, português do Brasil, inglês e espanhol. A escolha fica guardada.
+
+- `js/idioma.js`: o `traduzir()` e o inglês;
+- `js/idioma_es.js`: o espanhol (as chaves são os textos em português);
+- `js/idioma_br.js`: só as palavras que no Brasil se dizem de outra maneira (celular, tela, salvar, conexão...).
+
+As palavras curtas soltas ("Tu", "Não") só se trocam quando são palavras inteiras, e um texto já traduzido não volta a ser traduzido.
 
 ### Guardar a partida
 
@@ -303,7 +309,9 @@ A partir do andar 20 os monstros ficam mais fortes cada vez mais depressa, e a d
 
 ```
 index.html          página do jogo
-js/idioma.js        tradução para inglês (botão PT | EN)
+js/idioma.js        traduzir() e tradução para inglês (botão PT | BR | EN | ES)
+js/idioma_es.js     tradução para espanhol
+js/idioma_br.js     palavras do português do Brasil
 js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigos, elites, bosses e preços
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
 js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)

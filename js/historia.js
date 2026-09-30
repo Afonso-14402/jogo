@@ -34,7 +34,7 @@ const HISTORIA = {
   50: [['arcanjo', 'Eu caí uma vez... não vou cair outra!']],
   51: [['sistema', 'Trono do Soberano. Daqui não há volta.'], ['monarca', 'Sente o chão a tremer? Sou eu a acordar.']],
   55: [['monarca', 'O meu general vai tratar de ti. Não me faças descer.']],
-  60: [['monarca', 'Finalmente, frente a frente. Mostra-me o teu verdadeiro poder, Jogador!']],
+  60: [['monarca', 'Finalmente, frente a frente. Mostra-me o teu verdadeiro poder, caçador!']],
 };
 
 // Chamado ao chegar a cada andar (só no modo normal e no diário)
