@@ -98,7 +98,8 @@ function abrirMenuMeta(qual) {
 }
 
 function retAlma(i) { return { x: 40 + (i % 3) * 300, y: 118 + Math.floor(i / 3) * 158, w: 280, h: 144 }; }
-function retColecao(i) { return { x: 44 + (i % 13) * 67, y: 96 + Math.floor(i / 13) * 70, w: 60, h: 62 }; }
+const COLUNAS_COLECAO = 16; // 16 por linha: cabem todos os itens por cima do painel do item
+function retColecao(i) { return { x: 48 + (i % COLUNAS_COLECAO) * 54, y: 92 + Math.floor(i / COLUNAS_COLECAO) * 50, w: 48, h: 46 }; }
 
 function atualizarMenuMeta(dt) {
   menuMeta.t += dt;
@@ -121,7 +122,7 @@ function atualizarMenuMeta(dt) {
     const n = ITENS_COLECAO.length;
     if (premiu('d', 'arrowright')) menuMeta.sel = (menuMeta.sel + 1) % n;
     if (premiu('a', 'arrowleft')) menuMeta.sel = (menuMeta.sel + n - 1) % n;
-    if (premiu('s', 'arrowdown')) menuMeta.sel = Math.min(n - 1, menuMeta.sel + 13);
-    if (premiu('w', 'arrowup')) menuMeta.sel = Math.max(0, menuMeta.sel - 13);
+    if (premiu('s', 'arrowdown')) menuMeta.sel = Math.min(n - 1, menuMeta.sel + COLUNAS_COLECAO);
+    if (premiu('w', 'arrowup')) menuMeta.sel = Math.max(0, menuMeta.sel - COLUNAS_COLECAO);
   }
 }

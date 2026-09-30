@@ -878,7 +878,7 @@ function iconeDoItem(it) {
     if (/Saco/.test(n)) return 'saco';
     if (/Cueca/.test(n)) return 'cueca';
     if (/Balde/.test(n)) return 'balde';
-    if (/Manto|Túnica/.test(n)) return 'manto';
+    if (/Manto|Túnica|Capa/.test(n)) return 'manto';
     return 'peitoral';
   }
   if (/Anel/.test(n)) return 'anel';

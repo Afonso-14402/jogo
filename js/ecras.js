@@ -232,27 +232,28 @@ function desenharMenuMeta(t) {
       const r = retColecao(i), tem = meta.colecao[it.nome], sel = menuMeta.sel === i;
       painel(r.x, r.y, r.w, r.h, sel ? 'rgba(44,38,66,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffffff' : tem ? RARIDADES[it.r].cor : '#2e2640');
       const c = iconeItem(it);
-      if (tem) sprEcra(c, r.x + r.w / 2, r.y + r.h / 2, 3);
+      if (tem) sprEcra(c, r.x + r.w / 2, r.y + r.h / 2, 2);
       else {
-        sprEcra(silhueta(c, '#2a2238'), r.x + r.w / 2, r.y + r.h / 2, 3);
+        sprEcra(silhueta(c, '#2a2238'), r.x + r.w / 2, r.y + r.h / 2, 2);
         textoCentro('?', r.x + r.w / 2, r.y + r.h / 2, 16, '#555', false);
       }
     });
     const it = ITENS_COLECAO[menuMeta.sel];
     if (it) {
       const tem = meta.colecao[it.nome], info = RARIDADES[it.r];
-      painel(160, 400, 640, 200, 'rgba(14,11,22,0.96)', tem ? info.cor : '#3a3150');
+      const B = 448; // o painel do item fica por baixo da grelha
+      painel(160, B, 640, 160, 'rgba(14,11,22,0.96)', tem ? info.cor : '#3a3150');
       if (tem) {
-        desenharIcone(it, 230, 470, 64);
-        textoEsq(it.nome, 300, 432, 20, info.cor);
-        textoEsq(`${info.nome} · ${NOME_TIPO[it.tipo]}`, 300, 456, 12, '#bbb', 'normal');
-        linhasItem(it).forEach((l, k) => textoEsq(l, 300 + (k % 2) * 220, 486 + Math.floor(k / 2) * 20, 13, '#eee', 'normal'));
-        textoEsq(`"${it.desc}"`, 300, 572, 12, '#999', 'normal');
+        desenharIcone(it, 230, B + 66, 64);
+        textoEsq(it.nome, 300, B + 26, 20, info.cor);
+        textoEsq(`${info.nome} · ${NOME_TIPO[it.tipo]}`, 300, B + 48, 12, '#bbb', 'normal');
+        linhasItem(it).forEach((l, k) => textoEsq(l, 300 + (k % 2) * 220, B + 74 + Math.floor(k / 2) * 18, 13, '#eee', 'normal'));
+        textoEsq(`"${it.desc}"`, 300, B + 142, 12, '#999', 'normal');
       } else {
-        sprEcra(silhueta(iconeItem(it), '#2a2238'), 230, 470, 4);
-        textoEsq('???', 300, 440, 22, '#777');
-        textoEsq(`Ainda não encontraste este item (${info.nome})`, 300, 474, 13, '#999', 'normal');
-        textoEsq('Abre baús, compra na loja ou vence bosses para o descobrir.', 300, 500, 12, '#777', 'normal');
+        sprEcra(silhueta(iconeItem(it), '#2a2238'), 230, B + 66, 4);
+        textoEsq('???', 300, B + 34, 22, '#777');
+        textoEsq(`Ainda não encontraste este item (${info.nome})`, 300, B + 68, 13, '#999', 'normal');
+        textoEsq('Abre baús, compra na loja ou vence bosses para o descobrir.', 300, B + 94, 12, '#777', 'normal');
       }
     }
     if (!modoToque) textoCentro('Setas ou rato para ver cada item  ·  Esc: voltar', LARGURA / 2, 620, 12, '#777', false);

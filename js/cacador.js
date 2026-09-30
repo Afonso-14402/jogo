@@ -67,6 +67,8 @@ const TODAS_HABILIDADES = {
   barreira:   { nome: 'Barreira Sagrada',  mana: 25, cd: 15, cor: '#fff0a0', desc: 'Um escudo de luz absorve dano (25% da tua vida) durante 8 s' },
   julgamento: { nome: 'Julgamento',        mana: 25, cd: 9,  cor: '#fff6a0', desc: 'Pilares de luz caem sobre os 4 monstros mais perto (x2 em mortos-vivos)' },
   tornado:    { nome: 'Tornado',           mana: 20, cd: 9,  cor: '#9fdcff', desc: 'Um tornado lento que atravessa e corta tudo no caminho' },
+  acelerar:   { nome: 'Acelerar',          mana: 20, cd: 14, cor: '#7df9ff', desc: 'Durante 5 s andas e atacas 50% mais depressa' },
+  rebobinar:  { nome: 'Rebobinar',         mana: 25, cd: 16, cor: '#b0f4ff', desc: 'Voltas 3 segundos atrás: ao sítio e à vida que tinhas' },
 };
 // Níveis em que se desbloqueia a 1.ª, 2.ª, 3.ª e 4.ª habilidade
 const NIVEIS_HABILIDADE = [3, 8, 14, 20];
@@ -90,10 +92,10 @@ function usarHabilidade(i) {
   if (J.mana < h.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
   const feito = ({ ergue: habErgue, sede: habSede, mao: habMao, furtivo: habFurtivo, redemoinho: habRedemoinho, investida: habInvestida,
     milCortes: habMilCortes, paredeFogo: habParedeFogo, supernova: habSupernova, rugido: habRugido, grito: habGrito, onda: habMao,
-    barreira: habBarreira, julgamento: habJulgamento, tornado: habTornado })[h.id]();
+    barreira: habBarreira, julgamento: habJulgamento, tornado: habTornado, acelerar: habAcelerar, rebobinar: habRebobinar })[h.id]();
   if (!feito) return;
   J.mana -= h.mana;
-  J.cdHab[h.id] = h.cd * (temRel('relogio') ? 0.7 : 1);
+  J.cdHab[h.id] = h.cd * (temRel('relogio') ? 0.7 : 1) * fatorRecarga();
   registar('feitico');
 }
 
@@ -278,6 +280,37 @@ function habJulgamento() {
     explosao(e.x, e.y, '#fff6a0', 14, 160, 4);
   }
   som(1200, 0.3, 'triangle', 0.05, -500);
+  return true;
+}
+
+function habAcelerar() {
+  J.acelerado = 5;
+  S = stats();
+  texto(J.x, J.y - 40, 'ACELERAR', '#7df9ff', 18);
+  ondas.push({ x: J.x, y: J.y, r: 70, t: 0.35, dur: 0.35, cor: '#7df9ff' });
+  som(600, 0.4, 'sine', 0.04, 900);
+  return true;
+}
+
+function habRebobinar() {
+  const l = (J.passado || []).filter(p => p.mapa === mapa);
+  if (l.length < 5) { texto(J.x, J.y - 30, 'Ainda não há passado', '#aaaaaa', 13); return false; }
+  const p = l[0]; // o mais antigo (até 3 s atrás)
+  // o caminho de volta fica marcado no chão
+  for (let k = 0; k < l.length; k += 2) particulas.push({ x: l[k].x, y: l[k].y, vx: 0, vy: -20, t: 0.6, cor: '#b0f4ff', tam: 6 });
+  const x0 = J.x, y0 = J.y;
+  if (!colideCirculo(mapa, p.x, p.y, J.r)) { J.x = p.x; J.y = p.y; }
+  const cura = Math.max(0, Math.round(p.hp - J.hp));
+  J.hp = Math.max(J.hp, Math.min(S.maxHp, p.hp));
+  J.mana = Math.max(J.mana, p.mana);
+  J.veneno = 0;
+  J.invuln = Math.max(J.invuln, 0.6);
+  J.passado = [];
+  explosao(x0, y0, '#b0f4ff', 16, 160, 4);
+  explosao(J.x, J.y, '#7df9ff', 24, 200, 5);
+  texto(J.x, J.y - 40, cura > 0 ? `REBOBINAR +${cura}` : 'REBOBINAR', '#b0f4ff', 18);
+  revelar(mapa, J.x, J.y, 7);
+  som(1200, 0.5, 'triangle', 0.05, -1000);
   return true;
 }
 

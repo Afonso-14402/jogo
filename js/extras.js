@@ -292,7 +292,7 @@ function criarSalaPacto(marcar) {
     const { x, y } = livre(c.x + (k - (n - 1) / 2) * 80, c.y + 34, 14);
     const o = { tipo: 'pedestal', sala, grupo, diabo, x, y };
     if (diabo && k === n - 1) { // o Diabo também vende uma arma ou armadura poderosa
-      const r = Math.random() < 0.25 ? 'mitico' : 'lendario';
+      const r = Math.random() < 0.1 ? 'mitico' : 'lendario';
       o.item = criarItem(escolher(ITENS.filter(i => i.r === r && i.tipo !== 'amuleto')), andar);
       o.custo = 0.2;
     } else {

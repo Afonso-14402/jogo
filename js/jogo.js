@@ -163,8 +163,10 @@ function chancesBau(tipoBau) {
   const sorte = J && S ? S.sorte : 0;
   const pesos = {};
   let total = 0;
+  // lá em cima os lendários e os míticos são muito mais raros (ficam normais no andar 15 e no 35)
+  const fundo = { lendario: clamp(andar / 15, 0.2, 1), mitico: clamp((andar - 5) / 30, 0.05, 1) };
   for (const r of ORDEM_RARIDADES) {
-    pesos[r] = base[r] * Math.pow(EFEITO_SORTE[r], sorte);
+    pesos[r] = base[r] * Math.pow(EFEITO_SORTE[r], sorte) * (fundo[r] || 1);
     total += pesos[r];
   }
   for (const r of ORDEM_RARIDADES) pesos[r] = pesos[r] * 100 / total;
@@ -731,6 +733,7 @@ function atacar(dx, dy) {
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   if (e.morto || e.enterrado > 0) return;
   if (e.medo > 0) dano = Math.round(dano * 1.3);
+  if (e.parado > 0) dano = Math.round(dano * 1.5); // com o tempo parado leva mais dano
   if (e.elite === 'blindado') dano = Math.max(1, Math.ceil(dano * 0.5));
   e.hp -= dano;
   e.flash = 0.1;
@@ -1176,7 +1179,7 @@ function lancarOnda(o) {
 //  Loja do Mercador
 // ---------------------------------------------------------------------
 function gerarStock() {
-  const r = escolherPeso({ raro: 60, epico: 30, lendario: 9, mitico: 1 });
+  const r = escolherPeso({ raro: 70, epico: 25, lendario: 4.5 * clamp(andar / 15, 0.2, 1), mitico: 0.5 * clamp((andar - 5) / 30, 0.05, 1) });
   const item = criarItem(escolher(ITENS.filter(i => i.r === r && !i.inicial)), andar);
   const stock = [
     { id: 'pocao', nome: 'Poção de Vida', desc: 'Cura parte da tua vida', preco: 15 + andar * 2, qtd: 99 },
@@ -1311,6 +1314,7 @@ function atualizarJogador(dt, R = null) {
 }
 
 function atualizarInimigo(e, dt) {
+  if (e.parado > 0) { e.parado -= dt; return; } // o Guardião do Tempo parou o tempo
   e.t += dt; e.cd -= dt; e.flash -= dt;
   atualizarAnimAtaque(e, dt);
   const dx = J.x - e.x, dy = J.y - e.y;
@@ -1688,10 +1692,10 @@ function atualizarBoss(e, dt, d, ux, uy, fLento = 1) {
 function separarInimigos() {
   for (let i = 0; i < inimigos.length; i++) {
     const a = inimigos[i];
-    if (a.morto) continue;
+    if (a.morto || a.parado > 0) continue; // com o tempo parado ninguém se mexe
     for (let j = i + 1; j < inimigos.length; j++) {
       const b = inimigos[j];
-      if (b.morto) continue;
+      if (b.morto || b.parado > 0) continue;
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.hypot(dx, dy), min = a.r + b.r;
       if (d >= min || d < 0.01) continue;
@@ -1708,6 +1712,7 @@ function empurrar(e, dx, dy) {
 
 function atualizarProjeteis(dt) {
   for (const p of projeteis) {
+    if (p.parado > 0) { p.parado -= dt; continue; } // tiro parado no ar (Parar o Tempo)
     p.x += p.vx * dt; p.y += p.vy * dt;
     p.vida -= dt;
     if (p.vida <= 0 || solido(mapa, Math.floor(p.x / TILE), Math.floor(p.y / TILE))) {
@@ -2164,6 +2169,11 @@ function atualizarPausa() {
 const ABAS_CRIACAO = ['classe', 'raca'];
 const retAbaCriacao = i => ({ x: 30 + i * 150, y: 50, w: 142, h: 26 });
 function retRaca(i) { return { x: 30 + (i % 2) * 228, y: 80 + Math.floor(i / 2) * 118, w: 220, h: 110 }; }
+// Cartões dos caçadores: com mais de 8 ficam mais baixos para caberem todos
+function retClasse(i) {
+  const linhas = Math.ceil(ORDEM_CLASSES.length / 2), h = Math.min(110, Math.floor((462 - (linhas - 1) * 8) / linhas));
+  return { x: 30 + (i % 2) * 228, y: 80 + Math.floor(i / 2) * (h + 8), w: 220, h };
+}
 function retSkin(i) { return { x: 506 + (i % 8) * 54, y: 372 + Math.floor(i / 8) * 100, w: 50, h: 92 }; }
 const BOTAO_COMECAR = { x: 700, y: 586, w: 240, h: 40 };
 function retDificuldade(i) { return { x: 30 + i * 92, y: 562, w: 86, h: 34 }; }
@@ -2191,7 +2201,7 @@ function atualizarCriacao(dt) {
     let ic = ORDEM_CLASSES.indexOf(escolhaClasse);
     if (premiu('w', 'arrowup')) ic = (ic + ORDEM_CLASSES.length - 1) % ORDEM_CLASSES.length;
     if (premiu('s', 'arrowdown')) ic = (ic + 1) % ORDEM_CLASSES.length;
-    if (premiu('rato')) ORDEM_CLASSES.forEach((_, i) => { if (dentro(retRaca(i))) ic = i; });
+    if (premiu('rato')) ORDEM_CLASSES.forEach((_, i) => { if (dentro(retClasse(i))) ic = i; });
     if (ORDEM_CLASSES[ic] !== escolhaClasse) som(700, 0.05, 'square', 0.02);
     escolhaClasse = ORDEM_CLASSES[ic];
   } else {

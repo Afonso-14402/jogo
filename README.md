@@ -178,6 +178,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Colosso | Manoplas do Titã | **Punho do Titã**: atordoa tudo à volta e levas -50% dano 4 s | +60 vida, +6 defesa |
   | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 30%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +2 vida/s, poções +15%, +30% poder mágico |
   | Mestre das Lâminas | Espadas Gémeas do Vento | **Corte do Vento**: leque de lâminas que atravessam | +15% velocidade |
+  | **Guardião do Tempo** (único) | Cetro das Horas | **Parar o Tempo**: 3 s em que os monstros e os tiros deles ficam parados e levam +50% dano (os bosses resistem mais) | +20% vel. de ataque, +5% crítico, recargas 15% mais rápidas |
 
   **Cada caçador só usa as suas magias e habilidades** (as outras nem aparecem):
   | Caçador | Magias (1-4) | Habilidades (5-8, nos níveis 3, 8, 14 e 20) |
@@ -190,6 +191,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   | Colosso | — | Investida, Grito de Guerra, Onda de Choque |
   | Curandeiro Supremo | Cura Divina, Relâmpago | Barreira Sagrada, Julgamento |
   | Mestre das Lâminas | — | Redemoinho, Tornado, Furtividade |
+  | Guardião do Tempo | Nova de Gelo | **Acelerar** (5 s a andar e atacar 50% mais depressa), **Rebobinar** (voltas 3 segundos atrás: ao sítio e à vida que tinhas), Tornado |
 
   Só o Caçador das Sombras tem o Exército das Sombras. Os Livros de Feitiço só trazem magias do teu caçador. Curar-se ficou mais difícil: a Cura Divina é só do Curandeiro e cura menos, as poções curam 35% e têm 3 s de recarga, o roubo de vida vai no máximo a 10% e a regeneração fica a metade enquanto estás em combate.
 
@@ -232,7 +234,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 - **Morte que ensina**: o ecrã de morte dá uma **dica** conforme o que te matou (cada monstro, boss, armadilha, fogo no chão ou a estátua do templo).
 - **Desafio Diário**: todos os dias há um caçador, uma raça e dois pactos, e os mapas saem iguais para toda a gente (semente do dia). Guarda a pontuação de cada dia (andar x1000 + monstros x5 + nível x20 + bosses x300).
 - **Torre dos 100 Andares**: cada andar é uma arena com 2 a 5 ondas de monstros. A cada 5 andares há um andar de descanso (loja, mesa de encantamentos e um baú) e a cada 10 um boss. No andar 100 conquistas a Torre.
-- **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo ou Senhor da Tempestade. Cada evolução tem uma passiva mais forte e melhora a habilidade única.
+- **Mudança de classe (nível 30)**: o [Sistema] dá-te uma missão e o andar seguinte é a **Provação**, uma arena com um boss. Se ganhares, o teu caçador evolui: Herói Lendário (ganha o Golpe Heróico), Monarca das Sombras, Espada Santa, Monarca das Chamas, Rei das Feras, Rei Titã, Santo, Senhor da Tempestade ou Senhor do Tempo (o tempo para 5 s na sala toda). Cada evolução tem uma passiva mais forte e melhora a habilidade única.
 - **Generais sombra**: com o Caçador das Sombras, os bosses que ergues tornam-se **generais com nome próprio** (Gelatinoso, Asa da Noite, Rocha Eterna...). Podes ter vários (1 + 1 a cada 15 níveis, até 5), e os elites erguidos tornam-se Cavaleiros Sombrios, mais fortes do que os soldados.
 - **Masmorra Dupla**: a partir do andar 6 pode aparecer uma **Porta Antiga**. Lá dentro está um templo com uma estátua gigante e três regras: *venera o deus, louva o deus, prova a tua fé*. Quando os olhos da estátua ficam vermelhos **não te podes mexer**. Pelo meio há raios, chuvas de pedra, anéis de fogo e guardiões de pedra. Se sobreviveres 50 segundos, a estátua desfaz-se e ganhas 3 Baús Dourados, uma relíquia, ouro, poções e almas.
 - **Portais (Gates) dentro das masmorras**: em **todos os andares** (menos nos de boss) abre pelo menos um portal, às vezes dois, e sentes onde estão: piscam sempre no minimapa. O rank (**E, D, C, B, A, S, SS ou SSS**) **não depende do andar**: um SSS pode abrir logo no andar 1 e podes entrar em qualquer um... se morreres, morreste. O rank e o tempo aparecem por cima e, ao chegares perto, vês o perigo (até MORTAL) e o boss. Se não entrares a tempo (3 minutos) dá-se a **Rutura do Portal** (Dungeon Break): os monstros do portal saem para a masmorra. Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Vermelho** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
@@ -265,17 +267,19 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 
 ### Probabilidades dos baús
 
-| Raridade | Baú de Madeira | Baú Dourado (boss) |
-|---|---|---|
-| Lixo (ex: *Colher Enferrujada*, o pior item) | 30% | 4% |
-| Comum | 32% | 14% |
-| Raro | 22% | 30% |
-| Épico | 11% | 30% |
-| Lendário | 4% | 17% |
-| Mítico (ex: *Espada do Infinito*, o melhor item) | 1% | 5% |
-| É um Mímico! | 8% | 0% |
+| Raridade | Baú de Madeira | Baú Dourado (boss) | Baú Amaldiçoado |
+|---|---|---|---|
+| Lixo (ex: *Colher Enferrujada*, o pior item) | 34% | 6% | 0% |
+| Comum | 36% | 22% | 8% |
+| Raro | 20% | 36% | 34% |
+| Épico | 8% | 26% | 38% |
+| Lendário | 1.7% | 8% | 16% |
+| Mítico (ex: *Espada do Infinito*, o melhor item) | 0.3% | 2% | 4% |
+| É um Mímico! | 8% | 0% | 0% |
 
-A melhoria **Trevo da Sorte** e o afixo **da Sorte** mudam estas percentagens a teu favor (o baú mostra as percentagens atualizadas).
+Estas são as percentagens a partir do fundo da masmorra. **Nos primeiros andares os Lendários e os Míticos são ainda mais raros**: os Lendários só chegam ao valor da tabela no andar 15 e os Míticos no andar 35 (no andar 1 são 5 e 20 vezes mais raros). Numa partida típica encontras o primeiro Lendário por volta do andar 14 e um Mítico lá para o andar 40. A melhoria **Trevo da Sorte** e o afixo **da Sorte** mudam estas percentagens a teu favor (o baú mostra as percentagens atualizadas).
+
+Há **104 itens** para colecionar: armas de todos os tipos (espadas, adagas, garras, machados, lanças, martelos, foices, cajados, cetros e arcos), armaduras e amuletos, do Lixo ao Mítico.
 
 ### Atributos aleatórios (afixos)
 

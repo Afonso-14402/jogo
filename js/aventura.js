@@ -101,6 +101,7 @@ function atualizarEfeitosEcra(dt) {
 }
 function desenharClarao() {
   if (luaDeSangue()) { ctx.fillStyle = 'rgba(120,0,0,0.08)'; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA); }
+  if (tempoParado > 0 && ['jogo', 'convidado'].includes(estado)) { ctx.fillStyle = `rgba(90,200,255,${Math.min(0.12, tempoParado * 0.1)})`; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA); } // o tempo parou
   if (flashEcra <= 0) return;
   ctx.fillStyle = `rgba(255,255,255,${Math.min(0.6, flashEcra)})`;
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);

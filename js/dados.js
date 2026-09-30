@@ -28,17 +28,17 @@ const TIPOS_BAU = {
   madeira: {
     nome: 'Baú de Madeira', corpo: '#8b5a2b', aro: '#c9a15a',
     mimico: 0.08, // 8% de ser um Mímico!
-    chances: { lixo: 30, comum: 32, raro: 22, epico: 11, lendario: 4, mitico: 1 },
+    chances: { lixo: 34, comum: 36, raro: 20, epico: 8, lendario: 1.7, mitico: 0.3 },
   },
   maldito: {
     nome: 'Baú Amaldiçoado', corpo: '#4a2a60', aro: '#d9a6ff',
     mimico: 0, maldito: true, // todos os itens vêm com uma maldição
-    chances: { lixo: 0, comum: 4, raro: 24, epico: 36, lendario: 28, mitico: 8 },
+    chances: { lixo: 0, comum: 8, raro: 34, epico: 38, lendario: 16, mitico: 4 },
   },
   ouro: {
     nome: 'Baú Dourado', corpo: '#d9a400', aro: '#fff0a0',
     mimico: 0,
-    chances: { lixo: 4, comum: 14, raro: 30, epico: 30, lendario: 17, mitico: 5 },
+    chances: { lixo: 6, comum: 22, raro: 36, epico: 26, lendario: 8, mitico: 2 },
   },
 };
 
@@ -144,6 +144,41 @@ const ITENS = [
   { tipo: 'amuleto', r: 'lendario', nome: 'Coração da Fénix', regen: 4, danoPct: 0.2, desc: 'Renasce das cinzas.' },
 
   { tipo: 'amuleto', r: 'mitico', nome: 'Olho de Deus', crit: 0.2, velMov: 0.25, roubo: 0.08, regen: 5, danoPct: 0.45, desc: 'Vê tudo. Pode tudo.' },
+
+  // ------------------------- MAIS ITENS -------------------------
+  { tipo: 'arma', r: 'lixo', nome: 'Vassoura Velha', dano: 2, vel: 1.0, alcance: 42, crit: 0, desc: 'Varre o chão melhor do que os monstros.' },
+  { tipo: 'arma', r: 'comum', nome: 'Martelo de Ferreiro', dano: 10, vel: 0.75, alcance: 46, crit: 0.05, desc: 'Ainda tem fuligem da forja.' },
+  { tipo: 'arma', r: 'comum', nome: 'Lança de Madeira', dano: 7, vel: 1.0, alcance: 62, crit: 0.04, desc: 'Uma vara com ponta. Funciona.' },
+  { tipo: 'arma', r: 'comum', nome: 'Foice Enferrujada', dano: 7, vel: 0.9, alcance: 56, crit: 0.04, desc: 'Encontrada num celeiro abandonado.' },
+  { tipo: 'arma', r: 'comum', nome: 'Garra de Lobo', dano: 5, vel: 1.55, alcance: 32, crit: 0.1, desc: 'Arranhões rápidos.' },
+  { tipo: 'arma', r: 'comum', nome: 'Cetro das Horas', dano: 6, vel: 1.15, alcance: 44, crit: 0.05, magia: 0.2, desc: 'Os ponteiros andam ao contrário.' },
+  { tipo: 'arma', r: 'raro', nome: 'Machado Duplo', dano: 16, vel: 0.85, alcance: 50, crit: 0.07, desc: 'Duas lâminas, zero paciência.' },
+  { tipo: 'arma', r: 'raro', nome: 'Cajado de Gelo', dano: 9, vel: 1.0, alcance: 46, crit: 0.05, magia: 0.35, desc: 'Fica sempre frio ao toque.' },
+  { tipo: 'arma', r: 'raro', nome: 'Adaga de Prata', dano: 10, vel: 1.5, alcance: 38, crit: 0.15, desc: 'Os mortos-vivos detestam-na.' },
+  { tipo: 'arma', r: 'raro', nome: 'Arco de Caça', dano: 10, vel: 1.0, alcance: 420, crit: 0.1, desc: 'Nunca falha um coelho.' },
+  { tipo: 'arma', r: 'epico', nome: 'Foice Lunar', dano: 22, vel: 1.0, alcance: 72, crit: 0.18, desc: 'Brilha mais nas noites de lua cheia.' },
+  { tipo: 'arma', r: 'epico', nome: 'Cajado da Tempestade', dano: 16, vel: 1.05, alcance: 52, crit: 0.08, magia: 0.6, desc: 'Cheira a chuva e a relâmpagos.' },
+  { tipo: 'arma', r: 'epico', nome: 'Garras do Lobisomem', dano: 18, vel: 1.65, alcance: 36, crit: 0.2, desc: 'Arrancadas numa noite sem estrelas.' },
+  { tipo: 'arma', r: 'epico', nome: 'Espada de Obsidiana', dano: 24, vel: 1.05, alcance: 58, crit: 0.12, desc: 'Vidro de vulcão, afiado como nada.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Martelo dos Gigantes', dano: 44, vel: 0.72, alcance: 62, crit: 0.1, desc: 'Só um gigante o levantava. Até agora.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Machado do Berserker', dano: 38, vel: 0.95, alcance: 60, crit: 0.15, desc: 'Quanto mais golpeia, mais quer golpear.' },
+  { tipo: 'arma', r: 'lendario', nome: 'Bastão da Aurora', dano: 22, vel: 1.05, alcance: 54, crit: 0.1, magia: 0.8, desc: 'Guarda a primeira luz do dia.' },
+  { tipo: 'arma', r: 'mitico', nome: 'Lança do Céu Partido', dano: 64, vel: 1.2, alcance: 100, crit: 0.28, desc: 'Abriu uma racha no céu. Ainda lá está.' },
+  { tipo: 'arma', r: 'mitico', nome: 'Cetro da Eternidade', dano: 40, vel: 1.2, alcance: 60, crit: 0.2, magia: 1.6, desc: 'O tempo para quando o levantas.' },
+  { tipo: 'armadura', r: 'comum', nome: 'Colete Acolchoado', def: 2, hp: 20, desc: 'Fofo, mas protege.' },
+  { tipo: 'armadura', r: 'raro', nome: 'Couraça de Bronze', def: 6, hp: 20, desc: 'Brilha ao sol.' },
+  { tipo: 'armadura', r: 'raro', nome: 'Capa do Ladrão', def: 3, hp: 30, mana: 10, desc: 'Cheia de bolsos escondidos.' },
+  { tipo: 'armadura', r: 'epico', nome: 'Armadura de Obsidiana', def: 10, hp: 40, desc: 'Pesada como uma montanha.' },
+  { tipo: 'armadura', r: 'epico', nome: 'Manto das Sombras', def: 7, hp: 55, mana: 30, desc: 'Some no escuro contigo.' },
+  { tipo: 'armadura', r: 'lendario', nome: 'Armadura do Rei Leão', def: 14, hp: 100, desc: 'Ruge quando te acertam.' },
+  { tipo: 'armadura', r: 'lendario', nome: 'Manto do Arquimago', def: 9, hp: 70, mana: 60, desc: 'Bordado com mil feitiços.' },
+  { tipo: 'armadura', r: 'mitico', nome: 'Manto da Noite Eterna', def: 18, hp: 220, mana: 80, desc: 'Feito do céu antes das estrelas.' },
+  { tipo: 'amuleto', r: 'comum', nome: 'Dente de Lobo', danoPct: 0.06, desc: 'Um troféu de caça.' },
+  { tipo: 'amuleto', r: 'raro', nome: 'Colar de Pérolas', regen: 1, mana: 15, desc: 'Pérolas do fundo do mar.' },
+  { tipo: 'amuleto', r: 'epico', nome: 'Anel do Ceifador', roubo: 0.06, crit: 0.06, desc: 'Cada golpe rouba um pouco de vida.' },
+  { tipo: 'amuleto', r: 'lendario', nome: 'Olho do Dragão Ancião', crit: 0.15, danoPct: 0.2, desc: 'Vê os pontos fracos de tudo.' },
+  { tipo: 'amuleto', r: 'lendario', nome: 'Anel das Mil Vidas', regen: 5, roubo: 0.04, desc: 'Quem o usa custa muito a cair.' },
+  { tipo: 'amuleto', r: 'mitico', nome: 'Coroa do Vazio', danoPct: 0.35, magia: 0.8, crit: 0.12, velMov: 0.15, desc: 'Pertenceu a quem manda no Vazio.' },
 ];
 
 // Inimigos normais. Os stats escalam com o andar.
@@ -276,7 +311,7 @@ const AFIXO_MALDICAO = { id: 'maldicao', nome: 'da Maldição', desc: '-10% velo
 // Probabilidade de um item trazer afixo, por raridade (no Lixo é sempre a Maldição)
 const CHANCE_AFIXO = { lixo: 0.25, comum: 0.2, raro: 0.45, epico: 0.7, lendario: 1, mitico: 1 };
 // Cada ponto de Sorte multiplica o peso de cada raridade por isto
-const EFEITO_SORTE = { lixo: 0.65, comum: 0.85, raro: 1, epico: 1.2, lendario: 1.4, mitico: 1.6 };
+const EFEITO_SORTE = { lixo: 0.65, comum: 0.85, raro: 1, epico: 1.15, lendario: 1.3, mitico: 1.4 };
 
 // ---------------------------------------------------------------------
 //  MELHORIAS: ao subir de nível escolhes 1 de 3

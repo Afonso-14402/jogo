@@ -156,7 +156,7 @@ function botoesMenuToque(comInstalar) {
 
 function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)', icone = null) {
   const sobre = rato.x > r.x && rato.x < r.x + r.w && rato.y > r.y && rato.y < r.y + r.h;
-  if (!icone && typeof BOTAO_VOLTAR !== 'undefined' && r === BOTAO_VOLTAR) { icone = 'voltar'; txt = String(txt).replace(/^<\s*/, ''); }
+  if (!icone && typeof BOTAO_VOLTAR !== 'undefined' && r === BOTAO_VOLTAR) { icone = 'voltar'; txt = traduzir(String(txt)).replace(/^<\s*/, ''); } // (traduz antes de tirar o "<")
   if (!icone && typeof BOTAO_FECHAR !== 'undefined' && r === BOTAO_FECHAR) icone = 'fechar';
   painel(r.x, r.y, r.w, r.h, sobre ? 'rgba(50,42,72,0.97)' : fundo, sobre ? '#ffffff' : cor);
   if (icone && typeof iconeUI === 'function' && r.w > 70) {
@@ -801,6 +801,7 @@ function desenharInimigo(e, t) {
   if (e.tipo === 'demonio' && e.aparecer > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.5);
   if (e.flash > 0) sprCor(s.c, x, y, flip, '#ffffff', 0.85);
   else if (e.congelado > 0) sprCor(s.c, x, y, flip, '#bfe6ff', 0.65);
+  else if (e.parado > 0) sprCor(s.c, x, y, flip, '#7df9ff', 0.45 + 0.1 * Math.sin(t * 6));
   else if (e.lento > 0) sprCor(s.c, x, y, flip, '#7fd8ff', 0.4);
   else if (e.queima > 0) sprCor(s.c, x, y, flip, '#ff7b25', 0.3);
   ctx.restore();
@@ -1144,7 +1145,7 @@ function tabelaChances(tipoBau, x, y, largura) {
   for (const r of ORDEM_RARIDADES) {
     const info = RARIDADES[r];
     const v = chances[r];
-    const pct = Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(1);
+    const pct = v < 0.095 ? v.toFixed(2) : Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(1);
     ctx.fillStyle = info.cor;
     ctx.fillRect(x, yy - 5, 10, 10);
     textoEsq(info.nome, x + 16, yy, 13, info.cor);
@@ -1619,7 +1620,7 @@ function desenharCriacao(t) {
     painel(r.x, r.y, r.w, r.h, sel ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffe14d' : dentro(r) ? '#ffffff' : '#3a3150');
     textoCentro(a === 'classe' ? 'Caçador' : 'Raça', r.x + r.w / 2, r.y + r.h / 2 + 1, 14, sel ? '#ffe14d' : '#aaa');
   });
-  if (criacao.aba === 'classe') ORDEM_CLASSES.forEach((id, i) => desenharCartaoClasse(retRaca(i), id, escolhaClasse === id));
+  if (criacao.aba === 'classe') ORDEM_CLASSES.forEach((id, i) => desenharCartaoClasse(retClasse(i), id, escolhaClasse === id));
   // raças
   if (criacao.aba === 'raca') ORDEM_RACAS.forEach((id, i) => {
     const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;

@@ -39,8 +39,13 @@ const CLASSES = {
     hab: 'corte', habNome: 'Corte do Vento', habDesc: 'Lança um leque de lâminas de vento que atravessam os monstros',
     passiva: '+15% velocidade', mana: 12, cd: 5, vel: 0.15,
     feit: [], habs: ['redemoinho', 'tornado', 'furtivo'] },
+  // o único que mexe no tempo: para-o, acelera-o e volta atrás
+  cronos: { nome: 'Guardião do Tempo', cor: '#7df9ff', arma: 'Cetro das Horas', unico: true,
+    hab: 'parar', habNome: 'Parar o Tempo', habDesc: 'O tempo para durante 3 s: os monstros e os tiros ficam gelados e levam +50% dano',
+    passiva: '+20% vel. de ataque, +5% crítico e recargas 15% mais rápidas', mana: 35, cd: 18, velAtaque: 0.2, crit: 0.05,
+    feit: ['gelo'], habs: ['acelerar', 'rebobinar', 'tornado'] },
 };
-const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento'];
+const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento', 'cronos'];
 
 // Mudança de classe (nível 30 + Provação): novo nome, passiva mais forte e habilidade única melhorada
 const EVOLUCOES = {
@@ -53,6 +58,7 @@ const EVOLUCOES = {
   titan: { nome: 'Rei Titã', hp: 160, def: 12, passiva: '+160 vida e +12 defesa, -10% velocidade', habDesc: 'Esmaga o chão num raio enorme e levas -50% dano durante 4 s' },
   cura: { nome: 'Santo', regen: 4, cura: 0.2, magia: 0.5, passiva: '+4 vida/s, poções +20% e +50% poder mágico', habDesc: 'Cura 40% da vida e queima os monstros à volta (x2 em mortos-vivos)' },
   vento: { nome: 'Senhor da Tempestade', vel: 0.25, passiva: '+25% velocidade', habDesc: 'Um leque de 9 lâminas de vento' },
+  cronos: { nome: 'Senhor do Tempo', velAtaque: 0.3, crit: 0.1, cd: 14, passiva: '+30% vel. de ataque, +10% crítico e recargas 15% mais rápidas', habDesc: 'O tempo para durante 5 s em toda a sala' },
 };
 const cacheClasseEvo = {};
 function classeJ() {
@@ -68,6 +74,7 @@ function bonusClasse() {
     vel: C.vel || 0, regen: C.regen || 0, cura: C.cura || 0, xp: C.xp || 0, danoPct: 0, roubo: 0 };
   if (J.formaBestial > 0) { b.danoPct += 0.5; b.vel += 0.3; b.roubo += 0.05; }
   if (J.furia > 0) b.danoPct += 0.25;
+  if (J.acelerado > 0) { b.velAtaque += 0.5; b.vel += 0.35; } // Acelerar (Guardião do Tempo)
   return b;
 }
 
@@ -86,10 +93,10 @@ function usarHabilidadeClasse() {
   if (!C.hab) return;
   if ((J.cdClasse || 0) > 0) return;
   if (J.mana < C.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
-  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte, heroi: habHeroi })[C.hab]();
+  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte, heroi: habHeroi, parar: habParar })[C.hab]();
   if (!feito) return;
   J.mana -= C.mana;
-  J.cdClasse = C.cd * (temRel('relogio') ? 0.7 : 1);
+  J.cdClasse = C.cd * (temRel('relogio') ? 0.7 : 1) * fatorRecarga();
   registar('feitico');
 }
 
@@ -101,6 +108,13 @@ function atualizarClasse(dt) {
   }
   if (J.escudoTitan > 0) J.escudoTitan -= dt;
   if (J.buffSombras > 0) J.buffSombras -= dt;
+  if (J.acelerado > 0) {
+    J.acelerado -= dt;
+    if (Math.random() < 0.4) particulas.push({ x: J.x + rand(-8, 8), y: J.y + rand(-10, 8), vx: -J.dirX * 90, vy: -J.dirY * 90, t: 0.3, cor: '#7df9ff', tam: 3 });
+    if (J.acelerado <= 0) S = stats();
+  }
+  if (J.classe === 'cronos') lembrarPassado(dt);
+  if (tempoParado > 0) tempoParado -= dt;
   if (premiu('f')) usarHabilidadeClasse();
 }
 
@@ -217,6 +231,41 @@ function habCorte() {
   return true;
 }
 
+// ---------------------------------------------------------------------
+//  Guardião do Tempo
+// ---------------------------------------------------------------------
+let tempoParado = 0; // para o ecrã ficar azulado enquanto o tempo está parado
+const fatorRecarga = () => (J.classe === 'cronos' ? 0.85 : 1);
+
+// Parar o Tempo: os monstros (e os tiros deles) ficam parados e levam +50% dano
+function habParar() {
+  const dur = J.evoluido ? 5 : 3, raio = J.evoluido ? 2000 : 520;
+  let n = 0;
+  for (const e of inimigos) {
+    if (e.morto || Math.hypot(e.x - J.x, e.y - J.y) > raio) continue;
+    e.parado = e.boss ? dur * 0.4 : dur; // os bosses resistem mais
+    n++;
+  }
+  for (const p of projeteis) if (p.dono !== 'jogador' && Math.hypot(p.x - J.x, p.y - J.y) < raio) p.parado = dur;
+  tempoParado = dur;
+  ondas.push({ x: J.x, y: J.y, r: Math.min(raio, 520), t: 0.6, dur: 0.6, cor: '#7df9ff' });
+  texto(J.x, J.y - 40, 'O TEMPO PAROU', '#7df9ff', 20);
+  som(1600, 0.8, 'sine', 0.05, -1400);
+  fanfarra([1046, 784, 523], 0.03);
+  return true;
+}
+
+// Rebobinar: guarda onde estavas e a vida que tinhas nos últimos 3 segundos
+function lembrarPassado(dt) {
+  J.passadoT = (J.passadoT || 0) - dt;
+  if (J.passadoT > 0) return;
+  J.passadoT = 0.1;
+  if (!J.passado) J.passado = [];
+  J.passado.push({ x: J.x, y: J.y, hp: J.hp, mana: J.mana, mapa });
+  if (J.passado.length > 30) J.passado.shift();
+}
+
+// ---------------------------------------------------------------------
 // Golpe Heróico (Herói Lendário): leque grande à frente
 function habHeroi() {
   const [ux, uy] = mira(), base = Math.atan2(uy, ux);
@@ -291,9 +340,15 @@ function desenharCartaoClasse(r, id, sel) {
   if (arma) desenharIcone(arma, r.x + 34, r.y + r.h / 2, 40);
   // o texto encolhe para caber no cartão
   const cabe = (txt, tam, peso) => { ctx.font = fonte(tam, peso); return tam <= 7 || ctx.measureText(traduzir(txt)).width <= r.w - 72 ? tam : cabe(txt, tam - 1, peso); };
-  textoEsq(C.nome, r.x + 64, r.y + 20, cabe(C.nome, 14, 'bold'), C.cor);
+  const k = r.h / 110; // cartões mais baixos quando há muitos caçadores
+  textoEsq(C.nome, r.x + 64, r.y + 20 * k, cabe(C.nome, 14, 'bold'), C.cor);
   const h = C.hab ? `F: ${C.habNome}` : 'Sem habilidade';
-  textoEsq(h, r.x + 64, r.y + 44, cabe(h, 11, 'normal'), '#ffe680', 'normal');
-  textoEsq(C.passiva, r.x + 64, r.y + 64, cabe(C.passiva, 10, 'normal'), '#7dff9a', 'normal');
-  if (C.arma) textoEsq(C.arma, r.x + 64, r.y + 88, cabe(C.arma, 10, 'normal'), '#aaa', 'normal');
+  textoEsq(h, r.x + 64, r.y + 42 * k, cabe(h, 11, 'normal'), '#ffe680', 'normal');
+  textoEsq(C.passiva, r.x + 64, r.y + 62 * k, cabe(C.passiva, 10, 'normal'), '#7dff9a', 'normal');
+  if (C.arma) textoEsq(C.arma, r.x + 64, r.y + 86 * k, cabe(C.arma, 10, 'normal'), '#aaa', 'normal');
+  if (C.unico) { // caçador único: etiqueta a brilhar
+    ctx.globalAlpha = 0.7 + 0.3 * Math.sin(performance.now() / 250);
+    textoDir('ÚNICO', r.x + r.w - 8, r.y + 12, 9, C.cor);
+    ctx.globalAlpha = 1;
+  }
 }
