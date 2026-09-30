@@ -21,6 +21,9 @@ on:
       - 'scripts/copiar-www.js'
       - '.github/workflows/android.yml'
 
+permissions:
+  contents: write # para pôr o APK de teste num link fixo (Releases)
+
 jobs:
   construir:
     runs-on: ubuntu-latest
@@ -76,6 +79,18 @@ jobs:
         with:
           name: masmorra-apk-teste-${{ github.run_number }}
           path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Pôr o APK de teste num link fixo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk masmorra-do-destino.apk
+          if ! gh release view teste >/dev/null 2>&1; then
+            gh release create teste --prerelease --target "${{ github.sha }}" --title "Versão de teste (Android)" \
+              --notes "Abre este link no telemóvel Android e instala: o ficheiro masmorra-do-destino.apk é sempre a versão mais recente do jogo."
+          fi
+          gh release upload teste masmorra-do-destino.apk --clobber
+          echo "Link: https://github.com/${{ github.repository }}/releases/download/teste/masmorra-do-destino.apk"
 
       - name: Guardar o .aab para a Play Store
         if: env.ANDROID_KEYSTORE_FILE != ''
