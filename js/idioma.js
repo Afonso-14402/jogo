@@ -847,6 +847,16 @@ const EN = {
   'Toca no botão de ': 'Tap the button of ', ' para lançar magia': ' to cast magic', 'Carrega 1 para lançar ': 'Press 1 to cast ', ' (gasta mana)': ' (uses mana)',
   'Toca em ★ para usar ': 'Tap ★ to use ', 'Carrega F para usar ': 'Press F to use ',
   'Toca em »» para te esquivares': 'Tap »» to dodge', 'Shift: esquiva (ficas invencível)': 'Shift: dodge (you are invincible)',
+  // conquistas de equipa
+  'Juntos na Masmorra': 'Together in the Dungeon', 'Joga a 2 com um amigo': 'Play co-op with a friend',
+  'Ninguém Fica para Trás': 'No One Left Behind', 'Reanima o teu parceiro (a jogar a 2)': 'Revive your partner (in co-op)',
+  'Dupla Imbatível': 'Unbeatable Duo', 'Derrotem um boss a jogar a 2': 'Defeat a boss together in co-op',
+  'Companheiros de Armas': 'Brothers in Arms', 'Cheguem juntos ao andar 10': 'Reach floor 10 together',
+  'Lenda a Dois': 'Legend for Two', 'Cheguem juntos ao andar 30': 'Reach floor 30 together',
+  'O teu parceiro voltou!': 'Your partner is back!', 'Continua com o mesmo herói': 'Same hero as before',
+  'Voltaste à sala!': 'You are back in the room!', 'Continuas com o mesmo herói': 'You keep the same hero',
+  'Pode voltar com o código ': 'They can come back with the code ', ' (fica com o mesmo herói)': ' (keeping the same hero)',
+  'A ligação caiu. A voltar a ligar... (': 'Connection lost. Reconnecting... (', 'A voltar a ligar à sala ': 'Reconnecting to room ',
   // missões da semana
   'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',
   'Mudam daqui a ': 'New ones in ', ' dias': ' days',

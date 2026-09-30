@@ -491,6 +491,8 @@ function proximoAndar() {
   historiaDoAndar();
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
+  if (andar >= 10) conquistaEquipa('coopAndar10');
+  if (andar >= 30) conquistaEquipa('coopAndar30');
   conquistasAoDescer();
   registar('andar', andar);
   if (boss) viuMonstro(boss.tipo);
@@ -849,7 +851,7 @@ function matarInimigo(e) {
   progressoPedidos('matar', e);
   if (e.elite) registar('elite');
   if (e.nv === 3) registar('campeao');
-  if (e.boss) registar('boss');
+  if (e.boss) { registar('boss'); conquistaEquipa('coopBoss'); }
   deixarCadaver(e);
   guardarResto(e);
   explosao(e.x, e.y, e.cor, e.boss ? 80 : 16, e.boss ? 350 : 180, e.boss ? 7 : 4);

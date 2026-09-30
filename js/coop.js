@@ -39,7 +39,10 @@ const coop = {
   // réplica (convidado)
   pronto: false, mv: -1, ultN: 0, tpLocal: null, petOutro: null, metaGuardada: null, espera: false, pausa: false, fim: false, vistaHost: null, posT: 0,
   classeConvidado: 'aventureiro',
+  // voltar a entrar: o anfitrião dá uma senha ao convidado; com ela, o convidado volta ao mesmo herói
+  senhaP2: null, senha: null, religar: null,
 };
+const TENTATIVAS_RELIGAR = 10;
 const PREFIXO_SALA = 'masmorra-do-destino-';
 const LETRAS_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CLASSES_CONVIDADO = ORDEM_CLASSES;
@@ -208,6 +211,7 @@ function atualizarCoop(dt) {
   if (!coop.p2 || coop.p2.dono !== P1) { criarParceiro(); enviarCoop({ t: 'aviso', titulo: 'Entraste no jogo!', sub: 'Luta ao lado do teu parceiro', cor: '#5dff7a' }); }
   const p2 = coop.p2;
   if (p2.mapa !== mapa) { juntarParceiro(p2); levantarExercitoParceiro(p2); }
+  conquistaEquipa('coopJuntos');
   const C = coop.ctxP2;
   p2.emMenu = C.estado !== 'jogo';
 
@@ -354,6 +358,27 @@ function levantarHeroi(H) {
     fanfarra([523, 659, 784], 0.04);
   });
   if (H.remoto) enviarCoop({ t: 'aviso', titulo: 'De pé!', sub: 'O teu parceiro reanimou-te', cor: '#5dff7a' });
+  conquistaEquipa('coopReanimar');
+}
+
+// Conquistas de equipa: o anfitrião ganha-as e manda-as ao convidado (ganham os dois)
+function conquistaEquipa(id) {
+  if (coop.papel !== 'anfitriao' || !coop.conn || !coop.conn.open || !coop.p2 || !coop.escolhaP2) return;
+  desbloquear(id);
+  if (!coop.conqEnviadas) coop.conqEnviadas = {};
+  if (coop.conqEnviadas[id]) return;
+  coop.conqEnviadas[id] = true;
+  enviarCoop({ t: 'conquista', id });
+}
+// No convidado: as melhorias em uso são as do anfitrião, por isso guarda-se à mão com as tuas
+function conquistaNoConvidado(id) {
+  const c = CONQUISTAS.find(x => x.id === id);
+  if (!c || meta.conquistas[id]) return;
+  meta.conquistas[id] = true;
+  if (c.almas) meta.almas += c.almas;
+  try { localStorage.setItem(CHAVE_META, JSON.stringify(Object.assign({}, meta, { melhorias: coop.metaGuardada || meta.melhorias }))); } catch (e) { /* sem storage */ }
+  avisar(`Conquista: ${c.nome}`, c.almas ? `+${c.almas} almas` : '', '#ffe14d');
+  fanfarra([784, 1046, 1318, 1568], 0.04);
 }
 
 // Chamado pelo danoJogador quando um herói fica sem vida. Devolve true se
@@ -571,13 +596,29 @@ function receberLigacao(c) {
     if (coop.conn && c.peer === coop.conn.peer) {
       coop.connEst = c;
       c.on('data', m => receberNoAnfitriao(m, coop.conn));
-    } else c.on('open', () => setTimeout(() => c.close(), 300));
+    } else c.on('open', () => setTimeout(() => { // pode ser o convidado a voltar: espera que o canal principal mude
+      if (coop.conn && c.peer === coop.conn.peer) { coop.connEst = c; c.on('data', m => receberNoAnfitriao(m, coop.conn)); } else c.close();
+    }, 1500));
     return;
   }
-  if (coop.conn && coop.conn.open) { // já há um parceiro
-    c.on('open', () => { try { c.send({ t: 'cheia' }); } catch (e) { /* ignora */ } setTimeout(() => c.close(), 500); });
+  if (coop.conn && coop.conn.open) { // já há um parceiro... a não ser que seja ele a voltar (a ligação antiga ainda não fechou)
+    c.on('data', function primeira(m) {
+      c.off('data', primeira);
+      if (m && m.t === 'ola' && m.senha && m.senha === coop.senhaP2) {
+        const velha = coop.conn;
+        aceitarLigacao(c);
+        receberNoAnfitriao(m, c);
+        try { velha.close(); } catch (e) { /* ignora */ }
+        return;
+      }
+      try { c.send({ t: 'cheia' }); } catch (e) { /* ignora */ }
+      setTimeout(() => c.close(), 500);
+    });
     return;
   }
+  aceitarLigacao(c);
+}
+function aceitarLigacao(c) {
   coop.conn = c;
   coop.connEst = null;
   c.on('data', m => receberNoAnfitriao(m, c));
@@ -600,13 +641,18 @@ function receberNoAnfitriao(m, c) {
   } else if (m.t === 'tecla') {
     if (typeof m.k === 'string' && m.k.length < 12) coop.ctxP2.premidas[m.k] = true;
   } else if (m.t === 'ola') {
-    const mesma = coop.escolhaP2 && coop.escolhaP2.classe === m.classe;
-    coop.escolhaP2 = { classe: m.classe, raca: m.raca, skin: m.skin };
+    const volta = !!(m.senha && m.senha === coop.senhaP2 && coop.p2);
+    const mesma = volta || (coop.escolhaP2 && coop.escolhaP2.classe === m.classe);
+    if (!volta) coop.escolhaP2 = { classe: m.classe, raca: m.raca, skin: m.skin };
     if (!mesma) coop.p2 = null; // mudou de caçador: herói novo
+    if (!coop.senhaP2 || !volta) coop.senhaP2 = Math.random().toString(36).slice(2, 10);
     coop.env = {}; // volta a enviar tudo (mapa, heróis, menus)
     coop.posRep = null;
-    enviarCoop({ t: 'bemvindo', codigo: coop.codigo, melhorias: meta.melhorias });
-    avisar('O teu parceiro entrou!', `${traduzir((CLASSES[m.classe] || CLASSES.aventureiro).nome)} · joga no telemóvel dele`, '#5dff7a');
+    coop.conqEnviadas = {}; // (o convidado guarda as dele; se já as tiver, não conta duas vezes)
+    if (coop.p2) coop.p2.tp = (coop.p2.tp || 0) + 1; // o telemóvel dele fica com a posição que o anfitrião tem
+    enviarCoop({ t: 'bemvindo', codigo: coop.codigo, melhorias: meta.melhorias, senha: coop.senhaP2, classe: coop.escolhaP2.classe });
+    if (volta) avisar('O teu parceiro voltou!', 'Continua com o mesmo herói', '#5dff7a');
+    else avisar('O teu parceiro entrou!', `${traduzir((CLASSES[m.classe] || CLASSES.aventureiro).nome)} · joga no telemóvel dele`, '#5dff7a');
   }
 }
 
@@ -619,7 +665,7 @@ function saiuConvidado(c) {
   if (coop.p2) coop.p2.emMenu = false;
   const P1 = heroiPrincipal();
   if (P1 && P1.caido) { P1.caido = false; P1.hp = Math.max(1, Math.round((S ? S.maxHp : 100) * 0.3)); P1.invuln = 2; }
-  avisar('O teu parceiro saiu', `A sala continua aberta (código ${coop.codigo})`, '#ffae00');
+  avisar('O teu parceiro saiu', `Pode voltar com o código ${coop.codigo} (fica com o mesmo herói)`, '#ffae00');
 }
 
 function fecharSala() {
@@ -864,7 +910,7 @@ function entrarSala() {
       const c = peer.connect(PREFIXO_SALA + coop.codigo, { reliable: true, label: 'ctl' });
       coop.conn = c;
       c.on('open', () => {
-        c.send({ t: 'ola', classe: coop.classeConvidado, raca: escolhaRaca, skin: escolhaSkin });
+        c.send({ t: 'ola', classe: coop.classeConvidado, raca: escolhaRaca, skin: escolhaSkin, senha: coop.senha });
         const r = peer.connect(PREFIXO_SALA + coop.codigo, { reliable: false, serialization: 'json', label: 'est' });
         coop.connEst = r;
         r.on('data', m => receberNoConvidado(m));
@@ -874,7 +920,7 @@ function entrarSala() {
       c.on('error', () => perdeuLigacao());
     });
     peer.on('error', err => {
-      if (estado === 'convidado') { perdeuLigacao(); return; }
+      if (estado === 'convidado' || coop.religar) { perdeuLigacao(); return; }
       coop.ecra = 'entrar';
       coop.msg = { txt: erroRede(err), cor: '#ff6060' };
       fecharRede();
@@ -887,6 +933,10 @@ function receberNoConvidado(m) {
   if (m.t === 's') { aplicarEstado(m); return; }
   if (m.t === 'bemvindo') {
     estado = 'convidado';
+    if (m.senha) coop.senha = m.senha;
+    if (m.classe) coop.classeConvidado = m.classe;
+    if (coop.religar) avisar('Voltaste à sala!', 'Continuas com o mesmo herói', '#5dff7a');
+    coop.religar = null;
     coop.pronto = false; coop.mv = -1; coop.ultN = 0; coop.tpLocal = null; coop.menu = 'jogo';
     if (!coop.metaGuardada) coop.metaGuardada = meta.melhorias;
     meta.melhorias = m.melhorias || {}; // as melhorias das almas de quem criou a sala (os números batem certo)
@@ -919,6 +969,8 @@ function receberNoConvidado(m) {
     avisar(m.titulo, m.sub, m.cor);
   } else if (m.t === 'vib') {
     vibrar(m.p);
+  } else if (m.t === 'conquista' && typeof m.id === 'string') {
+    conquistaNoConvidado(m.id);
   }
 }
 
@@ -1027,8 +1079,36 @@ function perdeuLigacao() {
   const noJogo = estado === 'convidado';
   sairDoJogoConvidado();
   estado = 'coop';
+  // a meio do jogo (ou já a tentar): volta a ligar sozinho algumas vezes
+  if ((noJogo && coop.senha) || coop.religar) {
+    const R = coop.religar || (coop.religar = { n: 0, t: 0 });
+    if (R.n < TENTATIVAS_RELIGAR) {
+      R.t = R.n ? 3 : 0.5; // espera um bocadinho antes de tentar
+      coop.ecra = 'ligando';
+      coop.msg = { txt: `A ligação caiu. A voltar a ligar... (${R.n + 1}/${TENTATIVAS_RELIGAR})`, cor: '#ffae00' };
+      return;
+    }
+    coop.religar = null;
+  }
   coop.ecra = 'entrar';
-  coop.msg = { txt: noJogo ? 'A ligação caiu. Podes voltar a entrar com o mesmo código.' : 'Não foi possível entrar na sala.', cor: '#ff6060' };
+  coop.msg = { txt: noJogo || coop.senha ? 'A ligação caiu. Podes voltar a entrar com o mesmo código.' : 'Não foi possível entrar na sala.', cor: '#ff6060' };
+}
+// Tentativas de voltar a entrar (corre no ecrã da sala)
+function atualizarReligar(dt) {
+  const R = coop.religar;
+  if (!R) return;
+  if (coop.peer) { // a tentar: se em 10 s não entrou, desiste desta tentativa
+    R.espera = (R.espera || 0) + dt;
+    if (R.espera > 10 && estado === 'coop') { R.espera = 0; fecharRede(); perdeuLigacao(); }
+    return;
+  }
+  R.espera = 0;
+  R.t -= dt;
+  if (R.t > 0) return;
+  R.n++;
+  coop.msg = { txt: `A voltar a ligar à sala ${coop.codigo}... (${R.n}/${TENTATIVAS_RELIGAR})`, cor: '#ffae00' };
+  entrarSala();
+  coop.msg = { txt: `A voltar a ligar à sala ${coop.codigo}... (${R.n}/${TENTATIVAS_RELIGAR})`, cor: '#ffae00' };
 }
 function sairDoJogoConvidado() {
   fecharRede();
@@ -1039,7 +1119,7 @@ function sairDoJogoConvidado() {
 }
 function sairConvidado() {
   sairDoJogoConvidado();
-  coop.papel = null;
+  coop.papel = null; coop.senha = null; coop.religar = null;
   estado = 'titulo';
 }
 
@@ -1235,9 +1315,10 @@ function abrirCoop() {
 
 function atualizarLobby(dt) {
   const E = coop.ecra;
+  atualizarReligar(dt);
   if (premiu('escape') || clicou(BOTAO_VOLTAR)) {
     if (E === 'classe') coop.ecra = 'entrar';
-    else if (E === 'entrar' || E === 'ligando') { if (E === 'ligando') fecharRede(); coop.papel = null; coop.ecra = 'menu'; coop.msg = null; }
+    else if (E === 'entrar' || E === 'ligando') { if (E === 'ligando') fecharRede(); coop.religar = null; coop.senha = null; coop.papel = null; coop.ecra = 'menu'; coop.msg = null; }
     else estado = 'titulo';
     return;
   }

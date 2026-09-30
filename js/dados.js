@@ -530,6 +530,12 @@ const CONQUISTAS = [
   { id: 'ajudante',  nome: 'Amigo da Cidade',    desc: 'Cumpre 5 pedidos dos habitantes',       almas: 40 },
   { id: 'conjunto',  nome: 'Conjunto Completo',  desc: 'Usa as 3 peças de um conjunto',         almas: 50 },
   { id: 'templo',    nome: 'Santuário do Vigia',     desc: 'Sobrevive ao Santuário do Vigia', almas: 60 },
+  // de equipa (a jogar a 2): ganham os dois
+  { id: 'coopJuntos',   nome: 'Juntos na Masmorra',     desc: 'Joga a 2 com um amigo',                   almas: 20 },
+  { id: 'coopReanimar', nome: 'Ninguém Fica para Trás', desc: 'Reanima o teu parceiro (a jogar a 2)',    almas: 30 },
+  { id: 'coopBoss',     nome: 'Dupla Imbatível',        desc: 'Derrotem um boss a jogar a 2',            almas: 40 },
+  { id: 'coopAndar10',  nome: 'Companheiros de Armas',  desc: 'Cheguem juntos ao andar 10',              almas: 50 },
+  { id: 'coopAndar30',  nome: 'Lenda a Dois',           desc: 'Cheguem juntos ao andar 30',              almas: 120 },
 ];
 
 // ---------------------------------------------------------------------
