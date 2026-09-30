@@ -328,25 +328,25 @@ const RACAS = {
 const ORDEM_RACAS = ['humano', 'elfo', 'anao', 'orc', 'vampiro', 'gnomo', 'draconato', 'mortoVivo'];
 
 // ---------------------------------------------------------------------
-//  SKINS: cores da armadura do herói. 'recorde' = andar que tens de alcançar para desbloquear.
+//  SKINS: forma (cabeça, corpo, pés) e cores do herói. 'recorde' = andar que tens de alcançar para desbloquear.
 //  Letras: s/m/d capacete, b/B/l túnica, r pluma, w olhos, y fivela, p calças
 // ---------------------------------------------------------------------
 const SKINS = {
-  azul:     { nome: 'Cavaleiro Azul', pal: {} },
-  carmesim: { nome: 'Carmesim',       pal: { b: '#c0392b', B: '#8a2219', l: '#ff6b5b', r: '#ffd23f' } },
-  floresta: { nome: 'Floresta',       pal: { b: '#2f8f5b', B: '#1f6040', l: '#4fc07f', s: '#d8c9a3', m: '#a89060', d: '#6b5a3a', r: '#8b5a2b' } },
-  sombra:   { nome: 'Sombra',         pal: { b: '#3a2a4a', B: '#221830', l: '#5a4470', s: '#5b6480', m: '#3e4458', d: '#262a38', r: '#b44dff', w: '#b44dff' } },
-  real:     { nome: 'Real',           pal: { b: '#6a3fb5', B: '#4a2a80', l: '#9a6fe0', s: '#ffe38a', m: '#d9a400', d: '#8a6a00', r: '#ffffff' } },
-  gelo:     { nome: 'Gelo',           pal: { b: '#7fd8ff', B: '#3a9ac0', l: '#d0f4ff', s: '#ffffff', m: '#bfe6ff', d: '#7aa8c8', r: '#3d9bff' } },
-  dourado:  { nome: 'Dourado',        pal: { s: '#fff0a0', m: '#ffd23f', d: '#b88a00', b: '#e0b000', B: '#a07800', l: '#fff6c8', r: '#ff3355', p: '#8a6a30' }, recorde: 10 },
-  infinito: { nome: 'Infinito',       pal: { s: '#2a2030', m: '#1a1422', d: '#0e0a14', b: '#ff3355', B: '#a01830', l: '#ff8095', r: '#ff3355', w: '#ff3355' }, recorde: 20 },
-  celestial: { nome: 'Celestial',     pal: { s: '#ffffff', m: '#d0f4ff', d: '#8ab8d0', b: '#f5f0ff', B: '#c8bff0', l: '#ffffff', r: '#ffd23f', y: '#4dffea', w: '#4dffea' }, conquista: 'mitico' },
-  draconica: { nome: 'Dracónica',     pal: { s: '#c0392b', m: '#8a2219', d: '#5a1410', b: '#e8c080', B: '#c8a060', l: '#f5d8a0', r: '#ffd23f', w: '#ffe14d' }, conquista: 'pesadelo' },
-  infernal:  { nome: 'Infernal',      pal: { s: '#3a2a2a', m: '#241818', d: '#140c0c', b: '#ff7b25', B: '#b03a10', l: '#ffe14d', r: '#ff3b3b', w: '#ff7b25' }, conquista: 'demonio' },
-  cristal:   { nome: 'Cristal',       pal: { s: '#d8f8ff', m: '#7fe0ff', d: '#3a8ab0', b: '#bff4ff', B: '#5ac0e0', l: '#ffffff', r: '#ff7fd0', w: '#ffffff' }, conquista: 'guardiao' },
-  vazio:     { nome: 'Do Vazio',      pal: { s: '#2e1a40', m: '#1a1026', d: '#07040c', b: '#5a2a8a', B: '#2e1a40', l: '#b44dff', r: '#d07fff', w: '#ff4dff' }, conquista: 'vazio' },
-  lendaria:  { nome: 'Lendária',      pal: { s: '#fff6c8', m: '#ffd23f', d: '#a07800', b: '#8a3fc0', B: '#5a2a80', l: '#d07fff', r: '#ffd23f', w: '#ffe14d' }, conquista: 'andar50' },
-  magma:     { nome: 'Magma',         pal: { s: '#1a1010', m: '#0c0606', d: '#000000', b: '#ff5a1a', B: '#a02a08', l: '#ffe14d', r: '#ffe14d', w: '#ff5a1a' }, conquista: 'inferno' },
+  azul:     { nome: 'Cavaleiro Azul', forma: ['elmo', 'armadura', 'botas'], pal: {} },
+  carmesim: { nome: 'Carmesim',       forma: ['samurai', 'armadura', 'botas'], pal: { b: '#c0392b', B: '#8a2219', l: '#ff6b5b', r: '#ffd23f' } },
+  floresta: { nome: 'Floresta',       forma: ['capuz', 'capa', 'botas'], pal: { b: '#2f8f5b', B: '#1f6040', l: '#4fc07f', s: '#d8c9a3', m: '#a89060', d: '#6b5a3a', r: '#8b5a2b' } },
+  sombra:   { nome: 'Sombra',         forma: ['ninja', 'armadura', 'botas'], pal: { b: '#3a2a4a', B: '#221830', l: '#5a4470', s: '#5b6480', m: '#3e4458', d: '#262a38', r: '#b44dff', w: '#b44dff' } },
+  real:     { nome: 'Real',           forma: ['coroa', 'capa', 'botas'], pal: { h: '#3a2418', b: '#6a3fb5', B: '#4a2a80', l: '#9a6fe0', s: '#ffe38a', m: '#d9a400', d: '#8a6a00', r: '#ffffff' } },
+  gelo:     { nome: 'Gelo',           forma: ['mago', 'manto', 'manto'], pal: { h: '#f0f8ff', b: '#7fd8ff', B: '#3a9ac0', l: '#d0f4ff', s: '#ffffff', m: '#bfe6ff', d: '#7aa8c8', r: '#3d9bff' } },
+  dourado:  { nome: 'Dourado',        forma: ['elmo', 'pesada', 'botas'], pal: { s: '#fff0a0', m: '#ffd23f', d: '#b88a00', b: '#e0b000', B: '#a07800', l: '#fff6c8', r: '#ff3355', p: '#8a6a30' }, recorde: 10 },
+  infinito: { nome: 'Infinito',       forma: ['caveira', 'capa', 'botas'], pal: { s: '#2a2030', m: '#1a1422', d: '#0e0a14', b: '#ff3355', B: '#a01830', l: '#ff8095', r: '#ff3355', w: '#ff3355' }, recorde: 20 },
+  celestial: { nome: 'Celestial',     forma: ['aureola', 'manto', 'manto'], pal: { h: '#ffe38a', s: '#ffffff', m: '#d0f4ff', d: '#8ab8d0', b: '#f5f0ff', B: '#c8bff0', l: '#ffffff', r: '#ffd23f', y: '#4dffea', w: '#4dffea' }, conquista: 'mitico' },
+  draconica: { nome: 'Dracónica',     forma: ['chifres', 'pesada', 'botas'], pal: { s: '#c0392b', m: '#8a2219', d: '#5a1410', b: '#e8c080', B: '#c8a060', l: '#f5d8a0', r: '#ffd23f', w: '#ffe14d' }, conquista: 'pesadelo' },
+  infernal:  { nome: 'Infernal',      forma: ['chifres', 'capa', 'botas'], pal: { s: '#3a2a2a', m: '#241818', d: '#140c0c', b: '#ff7b25', B: '#b03a10', l: '#ffe14d', r: '#ff3b3b', w: '#ff7b25' }, conquista: 'demonio' },
+  cristal:   { nome: 'Cristal',       forma: ['cristal', 'armadura', 'botas'], pal: { s: '#d8f8ff', m: '#7fe0ff', d: '#3a8ab0', b: '#bff4ff', B: '#5ac0e0', l: '#ffffff', r: '#ff7fd0', w: '#ffffff' }, conquista: 'guardiao' },
+  vazio:     { nome: 'Do Vazio',      forma: ['capuz', 'manto', 'flutua'], pal: { s: '#2e1a40', m: '#1a1026', d: '#07040c', b: '#5a2a8a', B: '#2e1a40', l: '#b44dff', r: '#d07fff', w: '#ff4dff' }, conquista: 'vazio' },
+  lendaria:  { nome: 'Lendária',      forma: ['coroa', 'pesada', 'botas'], pal: { h: '#e8e8f0', s: '#fff6c8', m: '#ffd23f', d: '#a07800', b: '#8a3fc0', B: '#5a2a80', l: '#d07fff', r: '#ffd23f', w: '#ffe14d' }, conquista: 'andar50' },
+  magma:     { nome: 'Magma',         forma: ['caveira', 'pesada', 'botas'], pal: { s: '#1a1010', m: '#0c0606', d: '#000000', b: '#ff5a1a', B: '#a02a08', l: '#ffe14d', r: '#ffe14d', w: '#ff5a1a' }, conquista: 'inferno' },
 };
 const ORDEM_SKINS = ['azul', 'carmesim', 'floresta', 'sombra', 'real', 'gelo', 'dourado', 'infinito', 'celestial', 'draconica', 'infernal', 'cristal', 'vazio', 'lendaria', 'magma'];
 
@@ -422,7 +422,7 @@ const MELHORIAS_ALMA = [
   { id: 'pocao',   nome: 'Bolsa de Poções',  desc: '+1 poção ao começar',      max: 2, custo: [25, 50],             cor: '#ff3d6b', letra: 'P' },
   { id: 'xp',      nome: 'Memória Antiga',   desc: '+10% XP',                  max: 3, custo: [20, 40, 70],         cor: '#7ec8ff', letra: 'X' },
   { id: 'sorte',   nome: 'Estrela da Sorte', desc: '+1 sorte nos baús',        max: 2, custo: [60, 120],            cor: '#3ddc84', letra: 'S' },
-  { id: 'feitico', nome: 'Aprendiz de Mago', desc: 'Começa a saber Relâmpago', max: 1, custo: [80],                 cor: '#ffe14d', letra: 'R' },
+  { id: 'feitico', nome: 'Aprendiz de Mago', desc: 'Começa a saber Relâmpago (se o caçador usar)', max: 1, custo: [80],                 cor: '#ffe14d', letra: 'R' },
   { id: 'reviver', nome: 'Segunda Vida',     desc: 'Revives 1 vez por partida', max: 1, custo: [200],               cor: '#fff0a0', letra: '+' },
 ];
 
@@ -439,7 +439,7 @@ const CONQUISTAS = [
   { id: 'demonio',   nome: 'Fim do Demónio',     desc: 'Derrota o Rei Demónio',                 skin: 'infernal' },
   { id: 'mimicos',   nome: 'Caçador de Mímicos', desc: 'Mata 5 Mímicos (no total)',             almas: 20 },
   { id: 'encantar5', nome: 'Mestre Encantador',  desc: 'Reforça um item até +5',                almas: 30 },
-  { id: 'arquimago', nome: 'Arquimago',          desc: 'Aprende os 4 feitiços numa partida',    almas: 25 },
+  { id: 'arquimago', nome: 'Arquimago',          desc: 'Todas as magias do caçador no nível 3', almas: 25 },
   { id: 'rico',      nome: 'Milionário',         desc: 'Tem 1000 ouro ao mesmo tempo',          almas: 20 },
   { id: 'maldito',   nome: 'Amaldiçoado',        desc: 'Equipa um item amaldiçoado',            almas: 10 },
   { id: 'amigo',     nome: 'Melhor Amigo',       desc: 'Sobe o teu companheiro ao nível 5',     almas: 20 },

@@ -298,6 +298,7 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
   if (estado !== 'pausa' && estado !== 'opcoes' && estado !== 'status') desenharHUD(t);
+  desenharTutorial(t);
 
   if (estado === 'bau') desenharRoleta(t);
   else if (estado === 'nivel') desenharEscolha(t);
@@ -875,8 +876,9 @@ function desenharHUD(t) {
 
   // feitiços
   const fx0 = 378;
-  painel(fx0 - 10, by - 10, ORDEM_FEITICOS.length * 66 + 12, 86);
-  ORDEM_FEITICOS.forEach((id, i) => {
+  const FJ = feiticosJ(); // só as magias do teu caçador
+  if (FJ.length) painel(fx0 - 10, by - 10, FJ.length * 66 + 12, 86);
+  FJ.forEach((id, i) => {
     const x = fx0 + i * 66, f = FEITICOS[id], nv = J.feiticos[id] || 0;
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.fillRect(x, by, 58, 58);
@@ -906,9 +908,9 @@ function desenharHUD(t) {
   });
 
   // habilidades de caçador (teclas 5 a 8)
-  const hx0 = fx0 + ORDEM_FEITICOS.length * 66 + 16;
-  const CL = classeJ();
-  painel(hx0 - 10, by - 10, (HABILIDADES_CACADOR.length + 1) * 46 + 12, 86);
+  const hx0 = fx0 + FJ.length * 66 + (FJ.length ? 16 : 0);
+  const CL = classeJ(), HJ = habsJ();
+  painel(hx0 - 10, by - 10, (HJ.length + 1) * 46 + 12, 86);
   { // habilidade única do caçador (tecla F)
     const x = hx0, cd = J.cdClasse || 0;
     ctx.fillStyle = 'rgba(255,230,128,0.08)';
@@ -921,7 +923,7 @@ function desenharHUD(t) {
     textoCentro('F', x + 6, by + 12, 11, '#fff');
     textoCentro(CL.hab ? `${CL.mana}` : '—', x + 21, by + 60, 10, '#ffe680', false);
   }
-  HABILIDADES_CACADOR.forEach((h, i) => {
+  HJ.forEach((h, i) => {
     const x = hx0 + (i + 1) * 46, tem = temHabilidade(h), cd = (J.cdHab || {})[h.id] || 0;
     ctx.fillStyle = 'rgba(77,195,255,0.08)';
     ctx.fillRect(x, by + 6, 42, 44);
@@ -940,7 +942,7 @@ function desenharHUD(t) {
     textoCentroAjustado(CL.habDesc, px + 120, by - 64, 11, '#ddd', 224, false);
     textoCentro(`Mana ${CL.mana} · Recarga ${CL.cd}s`, px + 120, by - 42, 12, '#ffe680', false);
   }
-  if (estado === 'jogo') HABILIDADES_CACADOR.forEach((h, i) => {
+  if (estado === 'jogo') HJ.forEach((h, i) => {
     const x = hx0 + (i + 1) * 46;
     if (!(rato.x > x && rato.x < x + 44 && rato.y > by && rato.y < by + 58)) return;
     const px = clamp(x - 110, 10, LARGURA - 250);
@@ -954,7 +956,7 @@ function desenharHUD(t) {
     const x = 20 + i * 66;
     if (J[k] && rato.x > x && rato.x < x + 58 && rato.y > by && rato.y < by + 58) desenharCartaItem(J[k], x, by - 200, 'Equipado');
   });
-  if (estado === 'jogo') ORDEM_FEITICOS.forEach((id, i) => {
+  if (estado === 'jogo') FJ.forEach((id, i) => {
     const x = fx0 + i * 66;
     if (!(rato.x > x && rato.x < x + 58 && rato.y > by && rato.y < by + 58)) return;
     const f = FEITICOS[id], nv = J.feiticos[id] || 0;
@@ -1001,6 +1003,7 @@ function desenharHUDFinal(t) {
     textoCentro(banner.titulo, LARGURA / 2, 170, 40, banner.cor);
     if (banner.sub) textoCentro(banner.sub, LARGURA / 2, 210, 18, '#ddd');
     if (banner.extra) textoCentro(banner.extra, LARGURA / 2, 238, 14, banner.corExtra || '#9fdcff');
+    if (banner.extra2) textoCentro(banner.extra2, LARGURA / 2, 260, 14, '#ff4dff');
     ctx.globalAlpha = 1;
   }
 }
@@ -1030,7 +1033,11 @@ function desenharMinimapa() {
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
   const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', pedestal: '#fff0a0', estatua: '#ff8080' };
-  for (const o of objetos) if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
+  for (const o of objetos) {
+    if (o.tipo === 'portal') { // os portais sentem-se de longe: aparecem sempre e a piscar
+      ponto(o.x, o.y, Math.floor(performance.now() / 300) % 2 ? (o.vermelho ? '#ff2a2a' : RANKS_PORTAL[o.gi].cor) : '#ffffff', 8);
+    } else if (vis(o.x, o.y)) ponto(o.x, o.y, corObj[o.tipo], 6);
+  }
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
 }
@@ -1417,7 +1424,8 @@ function desenharPersonagem() {
     textoEsq(p.desc, x + 32, y + 9, 11, '#bbb', 'normal');
   });
   // feitiços
-  ORDEM_FEITICOS.forEach((id, i) => {
+  if (!feiticosJ().length) textoEsq('O teu caçador não usa magias: usa as habilidades (5 a 8)', 356, 578, 12, '#889', 'normal');
+  feiticosJ().forEach((id, i) => {
     const nv = J.feiticos[id] || 0, x = 356 + i * 146, y = 578;
     ctx.globalAlpha = nv ? 1 : 0.3;
     sprEcra(SPR.feitico[id], x + 12, y, 2);
@@ -1532,9 +1540,12 @@ function desenharCriacao(t) {
   R.bonus.forEach((b, i) => textoEsq(`+ ${traduzir(b).replace(/^\+/, '')}`, 690, 172 + i * 22, 14, '#7dff9a'));
   R.contra.forEach((c, i) => textoEsq(`- ${traduzir(c).replace(/^-/, '')}`, 690, 172 + (R.bonus.length + i) * 22, 14, '#ff8080'));
   const CL = CLASSES[escolhaClasse];
-  textoEsq(`Caçador: ${CL.nome}`, 690, 292, 13, CL.cor);
-  textoEsq(CL.hab ? `F: ${CL.habNome}` : 'Todas começam com a Bola de Fogo', 690, 314, 11, CL.hab ? '#ffe680' : '#8a7fa8', 'normal');
-  if (CL.hab) textoCentroAjustado(CL.habDesc, 720, 334, 11, '#ddd', 424, false);
+  textoEsq(`Caçador: ${CL.nome}`, 690, 262, 13, CL.cor);
+  textoEsq(CL.hab ? `F: ${CL.habNome}` : 'Sem habilidade única', 690, 280, 11, CL.hab ? '#ffe680' : '#8a7fa8', 'normal');
+  if (CL.hab) textoCentroAjustado(CL.habDesc, 720, 298, 10, '#ddd', 424, false);
+  const mags = CL.feit.map(f => traduzir(FEITICOS[f].nome)).join(', ');
+  textoCentroAjustado(`Magias: ${mags || 'nenhuma'}`, 720, 318, 11, CL.feit.length ? '#c9b0ff' : '#888', 424, false);
+  textoCentroAjustado(`Habilidades: ${CL.habs.map(h => traduzir(TODAS_HABILIDADES[h].nome)).join(', ')}`, 720, 336, 11, '#9fdcff', 424, false);
   // skins
   textoEsq('Skin', 506, 360, 16, '#ffe14d');
   ORDEM_SKINS.forEach((id, i) => {

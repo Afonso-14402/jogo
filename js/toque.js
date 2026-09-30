@@ -27,10 +27,6 @@ const BOTOES_BASE = [
   { id: 'dash', x: 746, y: 596, r: 34, tecla: 'shift', ancora: [LARGURA, ALTURA], lado: true },
   { id: 'pocao', x: 752, y: 486, r: 32, tecla: 'q', ancora: [LARGURA, ALTURA], lado: true },
   { id: 'usar', x: 872, y: 418, r: 32, tecla: 'e', ancora: [LARGURA, ALTURA], lado: true },
-  { id: 'f1', x: 436, y: 598, r: 28, tecla: '1', feitico: 'fogo', ancora: [535, ALTURA] },
-  { id: 'f2', x: 502, y: 598, r: 28, tecla: '2', feitico: 'raio', ancora: [535, ALTURA] },
-  { id: 'f3', x: 568, y: 598, r: 28, tecla: '3', feitico: 'gelo', ancora: [535, ALTURA] },
-  { id: 'f4', x: 634, y: 598, r: 28, tecla: '4', feitico: 'cura', ancora: [535, ALTURA] },
   { id: 'pausa', x: 926, y: 214, r: 22, tecla: 'p', ancora: [LARGURA, 264] },
   { id: 'personagem', x: 926, y: 264, r: 22, tecla: 'c', ancora: [LARGURA, 264] },
   { id: 'mochila', x: 926, y: 314, r: 22, tecla: 'i', ancora: [LARGURA, 264] },
@@ -39,7 +35,12 @@ const BOTOES_BASE = [
 function botoesToque() {
   const k = TAMANHOS_BOTAO[opcoes.tamanho] || 1;
   // as habilidades de caçador só aparecem quando já as tens
-  const habs = J && estado !== 'titulo' ? botoesHabilidadeToque().filter(b => temHabilidade(HABILIDADES_CACADOR[b.hab])) : [];
+  const emJogo = J && estado !== 'titulo';
+  // só as magias do teu caçador (as que já sabes)
+  const feits = emJogo ? feiticosJ().map((f, i) => ({ id: 'f' + (i + 1), x: 436 + i * 66, y: 598, r: 28, tecla: String(i + 1), feitico: f, ancora: [535, ALTURA] }))
+    .filter(b => J.feiticos[b.feitico]) : [];
+  // as habilidades só aparecem quando já as tens
+  const habs = emJogo ? feits.concat(botoesHabilidadeToque().filter(b => temHabilidade(habsJ()[b.hab]))) : [];
   if (J && estado !== 'titulo' && classeJ().hab) habs.push(botaoClasseToque()); // habilidade única do caçador
   return BOTOES_BASE.concat(habs).map(b => {
     const [ax, ay] = b.ancora;
@@ -356,20 +357,45 @@ function desenharPreviaControlos() {
 }
 
 // =====================================================================
-//  TUTORIAL DE TOQUE (primeira partida no telemóvel)
+//  TUTORIAL (primeira partida, no andar 1, no PC e no telemóvel)
+//  Cada passo acaba quando fazes o que ele pede (ou carregas em Saltar).
 // =====================================================================
 let tutorial = null;
+// pc/tel: texto para teclado e para toque; alvo: botão a realçar no telemóvel; ev: o que acaba o passo
 const PASSOS_TUTORIAL = [
-  { alvo: 'joy', txt: 'Arrasta o dedo neste lado do ecrã para andar' },
-  { alvo: 'atacar', txt: 'Toca no botão grande para atacar o inimigo mais perto' },
-  { alvo: 'dash', txt: 'Toca em »» para te esquivares (ficas invencível)' },
-  { alvo: 'f1', txt: 'Lança uma Bola de Fogo (gasta mana)' },
-  { alvo: 'usar', txt: 'Ao pé de baús, lojas e da escada, toca em USAR', tempo: 4 },
-  { alvo: 'pocao', txt: 'A poção cura-te. Boa sorte na masmorra!', tempo: 3.5 },
+  { ev: 'mover', alvo: 'joy', pc: 'Anda com W A S D ou as setas', tel: 'Arrasta o dedo neste lado do ecrã para andar' },
+  { ev: 'atacar', alvo: 'atacar', pc: 'Ataca: clica com o rato (ou Espaço)', tel: 'Toca no botão grande para atacar' },
+  { ev: 'bau', alvo: 'usar', pc: 'Vai até ao baú (seta amarela) e carrega E para o abrir', tel: 'Vai até ao baú (seta amarela) e toca em USAR' },
+  { ev: 'mochila', alvo: 'mochila', pc: 'Abre a mochila com a tecla I: lá equipas ou vendes itens', tel: 'Toca no saco para abrir a mochila: lá equipas ou vendes itens' },
+  { ev: 'status', alvo: 'personagem', pc: 'Carrega U para abrir a Janela de Estado e gastar pontos', tel: 'Toca no herói e depois em Estado para gastar pontos' },
+  { ev: 'pocao', alvo: 'pocao', pc: 'Q bebe uma poção (cura). Experimenta agora', tel: 'O botão da poção cura-te. Experimenta agora' },
+  { ev: 'poder', alvo: null, pc: '', tel: '' }, // o texto depende do caçador (ver textoPasso)
+  { ev: 'fim', alvo: null, tempo: 7, pc: 'Mata monstros e encontra a escada (vê o minimapa). Os portais são opcionais... e perigosos!', tel: 'Mata monstros e encontra a escada (vê o minimapa). Os portais são opcionais... e perigosos!' },
 ];
+const TEMPO_MAX_PASSO = 40; // nunca fica preso para sempre
 const BOTAO_SALTAR_TUTORIAL = { x: 652, y: 42, w: 88, h: 26 };
 
-function iniciarTutorial() { tutorial = { passo: 0, t: 0, feito: 0 }; }
+function textoPasso(P) {
+  if (P.ev === 'poder') {
+    if (feiticosJ().length) return modoToque ? `Toca no botão de ${traduzir(FEITICOS[feiticosJ()[0]].nome)} para lançar magia` : `Carrega 1 para lançar ${traduzir(FEITICOS[feiticosJ()[0]].nome)} (gasta mana)`;
+    if (classeJ().hab) return modoToque ? `Toca em ★ para usar ${traduzir(classeJ().habNome)}` : `Carrega F para usar ${traduzir(classeJ().habNome)}`;
+    return modoToque ? 'Toca em »» para te esquivares' : 'Shift: esquiva (ficas invencível)';
+  }
+  return modoToque ? P.tel : P.pc;
+}
+function alvoPasso(P) {
+  if (P.ev !== 'poder') return P.alvo;
+  return feiticosJ().length ? 'f1' : classeJ().hab ? 'classe' : 'dash';
+}
+
+function iniciarTutorial() {
+  tutorial = { passo: 0, t: 0, feito: 0, bau: null };
+  // um baú mesmo ao lado do início para aprender a abrir
+  const q = typeof pontoPerto === 'function' ? pontoPerto(J.x, J.y, 70, 130, 16) : null;
+  const b = { x: q ? q.x : J.x + 90, y: q ? q.y : J.y, tipo: 'madeira', semMimico: true, t: 0 };
+  baus.push(b);
+  tutorial.bau = b;
+}
 function acabarTutorial() {
   tutorial = null;
   opcoes.tutorialFeito = true;
@@ -382,45 +408,64 @@ function avancarTutorial() {
   tutorial.feito = 0;
   if (tutorial.passo >= PASSOS_TUTORIAL.length) acabarTutorial();
 }
+// Chamado pelo jogo quando fazes alguma coisa
+function tutorialEvento(ev) {
+  if (!tutorial) return;
+  const P = PASSOS_TUTORIAL[tutorial.passo];
+  if (P.ev === ev) avancarTutorial();
+}
+// Toque num botão do ecrã
 function tutorialAcao(id) {
   if (!tutorial) return;
   const P = PASSOS_TUTORIAL[tutorial.passo];
-  if (P.alvo === id && !P.tempo) avancarTutorial();
+  if (P.ev === 'poder' && id === alvoPasso(P)) avancarTutorial();
 }
 function atualizarTutorial(dt) {
   if (!tutorial) return;
   const P = PASSOS_TUTORIAL[tutorial.passo];
   tutorial.t += dt;
-  if (P.alvo === 'joy') {
+  if (clicou(BOTAO_SALTAR_TUTORIAL)) { rato.baixo = false; acabarTutorial(); return; }
+  if (P.ev === 'mover') {
     const j = toque.joy;
-    if (j && Math.hypot(j.x - j.cx, j.y - j.cy) > 20) tutorial.feito += dt;
-    if (tutorial.feito > 0.7) avancarTutorial();
-  }
-  if (tutorial && tutorial.t > (P.tempo || 8)) avancarTutorial(); // não fica preso num passo
+    const aAndar = (j && Math.hypot(j.x - j.cx, j.y - j.cy) > 20) || ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].some(k => teclas[k]);
+    if (aAndar) tutorial.feito += dt;
+    if (tutorial.feito > 0.6) avancarTutorial();
+  } else if (P.ev === 'bau' && tutorial.bau && !baus.includes(tutorial.bau)) avancarTutorial();
+  else if (P.ev === 'poder' && ((J.cdClasse || 0) > 0 || Object.values(J.cdFeitico).some(v => v > 0) || J.dashT > 0)) avancarTutorial();
+  if (tutorial && tutorial.t > (P.tempo || TEMPO_MAX_PASSO)) avancarTutorial();
 }
 
 function desenharTutorial(t) {
-  if (!tutorial) return;
+  if (!tutorial || estado !== 'jogo') return;
   const P = PASSOS_TUTORIAL[tutorial.passo];
   // entre o painel de vida (esquerda) e o minimapa (direita)
   painel(300, 10, 450, 64, 'rgba(24,18,8,0.96)', '#ffe14d');
-  textoCentroAjustado(P.txt, 525, 29, 15, '#fff', 426, false);
-  textoEsq(`${tutorial.passo + 1}/${PASSOS_TUTORIAL.length}`, 314, 56, 11, '#aaa', 'normal');
-  barra(350, 52, 280, 6, 1 - tutorial.t / (P.tempo || 8), '#ffe14d', '#3a3020');
+  textoCentroAjustado(textoPasso(P), 525, 29, 15, '#fff', 426, false);
+  textoEsq(`Tutorial ${tutorial.passo + 1}/${PASSOS_TUTORIAL.length}`, 314, 56, 11, '#aaa', 'normal');
+  if (P.tempo) barra(410, 52, 220, 6, 1 - tutorial.t / P.tempo, '#ffe14d', '#3a3020');
   botao(BOTAO_SALTAR_TUTORIAL, 'Saltar', '#ff8080');
-  // realça o que é preciso tocar
   const pulso = Math.sin(t * 6) * 5;
   ctx.lineWidth = 4;
   ctx.strokeStyle = '#ffe14d';
-  if (P.alvo === 'joy') {
+  // seta por cima do baú do tutorial
+  if (P.ev === 'bau' && tutorial.bau && baus.includes(tutorial.bau)) {
+    const x = ecraX(tutorial.bau.x), y = ecraY(tutorial.bau.y) - 44 + pulso;
+    ctx.fillStyle = '#ffe14d';
+    ctx.beginPath(); ctx.moveTo(x - 12, y - 14); ctx.lineTo(x + 12, y - 14); ctx.lineTo(x, y + 4); ctx.closePath(); ctx.fill();
+  }
+  if (!modoToque) return;
+  // no telemóvel realça o botão que é preciso tocar
+  const alvo = alvoPasso(P);
+  if (alvo === 'joy') {
     const c = centroJoystick();
     ctx.beginPath();
     ctx.arc(c.x, c.y, RAIO_JOYSTICK + 12 + pulso, 0, Math.PI * 2);
     ctx.stroke();
     const dx = Math.sin(t * 2.5) * 40;
     circuloEcra(c.x + dx, c.y, 14, 'rgba(255,225,77,0.8)', '#fff', 2);
-  } else {
-    const b = botoesToque().find(x => x.id === P.alvo);
+  } else if (alvo) {
+    const b = botoesToque().find(x => x.id === alvo);
+    if (!b) return;
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r + 10 + pulso, 0, Math.PI * 2);
     ctx.stroke();

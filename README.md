@@ -15,7 +15,7 @@ No telemóvel há ainda:
 - **Opções**: tamanho dos botões, transparência, **modo canhoto** (joystick à direita), vibração, **poupança de bateria** (30 FPS), som, ecrã inteiro e rever o tutorial.
 - **Vibração** ao levar dano, subir de nível, tirar um item Lendário ou Mítico, matar um boss e morrer (só Android; o iPhone não deixa).
 - **Pausa automática** quando sais da app, bloqueias o ecrã ou recebes uma chamada.
-- **Tutorial** na primeira partida: mostra o joystick, o ataque, a esquiva e os feitiços. Cada passo avança sozinho ao fim de uns segundos e podes saltá-lo.
+- **Tutorial** no andar 1 da primeira partida (no PC e no telemóvel): andar, atacar, abrir um baú (aparece um ao teu lado, com uma seta), abrir a mochila, a Janela de Estado, beber uma poção e usar a magia ou habilidade do teu caçador. Cada passo acaba quando fazes o que ele pede e podes saltá-lo.
 - O jogo respeita o notch e as bordas curvas do ecrã, e as dicas mostram toques em vez de teclas.
 - Com o telemóvel deitado o jogo **ocupa o ecrã todo**: o mundo estica para a largura toda e aparece ampliado, e a vida, o minimapa e os botões ficam encostados às bordas.
 
@@ -122,7 +122,7 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   | Draconato | +30 vida, +25% poder mágico, imune ao fogo no chão | -10% velocidade de ataque |
   | Morto-Vivo | imune a veneno, +2 vida por segundo, +10% crítico | poções curam -30%, -10% XP |
 
-  Cada raça muda também o aspeto (orelhas de elfo, barba de anão, dentes de orc, capa de vampiro, chapéu de gnomo, chifres de draconato, olhos brilhantes de morto-vivo). Há 15 skins; **Dourado** desbloqueia ao chegar ao andar 10, **Infinito** ao andar 20 e as outras com conquistas. Os bónus e as cores estão em `js/dados.js` (`RACAS` e `SKINS`).
+  Cada raça muda também o aspeto (orelhas de elfo, barba de anão, dentes de orc, capa de vampiro, chapéu de gnomo, chifres de draconato, olhos brilhantes de morto-vivo). Há 15 skins e **cada uma tem uma forma diferente** (elmo, samurai, capuz, ninja, coroa, mago, caveira, auréola, chifres, cristal, fantasma) e um corpo próprio (armadura, armadura pesada, manto ou capa); **Dourado** desbloqueia ao chegar ao andar 10, **Infinito** ao andar 20 e as outras com conquistas. Os bónus e as cores estão em `js/dados.js` (`RACAS` e `SKINS`).
 - **Magia**: tens uma barra de mana (roxa) que se regenera sozinha; as poções também recuperam 40% da mana. Todos começam com a **Bola de Fogo**. Os outros feitiços aprendem-se com **Livros de Feitiço** (largados pelos bosses, na Sala de Desafio e à venda na loja); um livro repetido sobe o feitiço de nível (até 3).
   - **Bola de Fogo**: explode e queima os inimigos à volta.
   - **Relâmpago**: atinge o inimigo mais próximo e salta para outros.
@@ -154,11 +154,25 @@ O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu
   | Imperador das Chamas | Cajado Flamejante | **Chuva de Meteoros** | +40% poder mágico, Bola de Fogo nível 2 |
   | Tigre Branco | Garras de Tigre | **Forma Bestial**: 8 s com +50% dano, +30% velocidade e roubo de vida | +40 vida |
   | Colosso | Manoplas do Titã | **Punho do Titã**: atordoa tudo à volta e levas -50% dano 4 s | +60 vida, +6 defesa |
-  | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 45%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +3 vida/s, poções +20% |
+  | Curandeiro Supremo | Bastão Sagrado | **Luz Sagrada**: cura 30%, tira o veneno e queima os monstros (x2 em mortos-vivos) | +2 vida/s, poções +15% |
   | Mestre das Lâminas | Espadas Gémeas do Vento | **Corte do Vento**: leque de lâminas que atravessam | +15% velocidade |
 
+  **Cada caçador só usa as suas magias e habilidades** (as outras nem aparecem):
+  | Caçador | Magias (1-4) | Habilidades (5-8, nos níveis 3, 8, 14 e 20) |
+  |---|---|---|
+  | Aventureiro | Bola de Fogo, Relâmpago, Nova de Gelo | Redemoinho, Investida |
+  | Caçador das Sombras | — | Ergue-te! (nível 1), Sede de Sangue, Mão Invisível, Furtividade |
+  | Dançarina da Espada | — | Mil Cortes, Redemoinho, Investida |
+  | Imperador das Chamas | Bola de Fogo, Relâmpago | Rio de Chamas, Supernova |
+  | Tigre Branco | — | Rugido, Investida, Redemoinho |
+  | Colosso | — | Investida, Grito de Guerra, Onda de Choque |
+  | Curandeiro Supremo | Cura Divina, Relâmpago | Barreira Sagrada, Julgamento |
+  | Mestre das Lâminas | — | Redemoinho, Tornado, Furtividade |
+
+  Só o Caçador das Sombras tem o Exército das Sombras. Os Livros de Feitiço só trazem magias do teu caçador. Curar-se ficou mais difícil: a Cura Divina é só do Curandeiro e cura menos, as poções curam 35% e têm 3 s de recarga, o roubo de vida vai no máximo a 10% e a regeneração fica a metade enquanto estás em combate.
+
   Também há armas lendárias de caçador para encontrar: **Mata-Cavaleiros**, **Fúria do Dragão**, **Adagas do Rei Demónio** (mítico) e o amuleto **Orbe da Ganância**.
-- **Portais (Gates) dentro das masmorras**: em muitos andares aparece um portal com rank **E, D, C, B, A, S, SS ou SSS** (o rank aparece por cima e, ao chegares perto, vês o perigo e o boss). Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Vermelho** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
+- **Portais (Gates) dentro das masmorras**: em **todos os andares** (menos nos de boss) abre pelo menos um portal, às vezes dois, e sentes onde estão: piscam sempre no minimapa. O rank (**E, D, C, B, A, S, SS ou SSS**) **não depende do andar**: um SSS pode abrir logo no andar 1 e podes entrar em qualquer um... se morreres, morreste. O rank e o tempo aparecem por cima e, ao chegares perto, vês o perigo (até MORTAL) e o boss. Se não entrares a tempo (3 minutos) dá-se a **Rutura do Portal** (Dungeon Break): os monstros do portal saem para a masmorra. Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Vermelho** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
 - **Caçador** (inspirado em manhwas como Solo Leveling):
   - **Atributos**: em cada nível ganhas 2 pontos para pôr em Força, Agilidade, Vitalidade, Inteligência ou Perceção, na **Janela de Estado** (tecla **U**, ou no ecrã de personagem → Estado).
   - **Habilidades de Caçador** (teclas **5 a 8**; no telemóvel aparece uma segunda fila de botões):

@@ -70,7 +70,7 @@ function desenharControlosToque(t) {
     const on = carregados.includes(b.id) || (b.id === 'atacar' && toque.atacar);
     let borda = '#cfc6e0';
     if (b.feitico) borda = FEITICOS[b.feitico].cor;
-    if (b.hab != null) borda = HABILIDADES_CACADOR[b.hab].cor;
+    if (b.hab != null) borda = habsJ()[b.hab].cor;
     if (b.id === 'classe') borda = classeJ().cor;
     if (b.id === 'atacar') borda = RARIDADES[J.arma.r].cor;
     if (b.id === 'usar' && podeUsar) borda = '#ffe14d';
@@ -114,7 +114,7 @@ function desenharControlosToque(t) {
       }
       textoCentro(`${CL.mana}`, b.x + 16, b.y + 19, 10, '#ffe680');
     } else if (b.hab != null) { // habilidade de caçador
-      const h = HABILIDADES_CACADOR[b.hab], cd = (J.cdHab || {})[h.id] || 0;
+      const h = habsJ()[b.hab], cd = (J.cdHab || {})[h.id] || 0;
       alfa(J.mana < h.mana ? 0.4 : 1);
       textoCentro(h.nome[0], b.x, b.y, 16, h.cor);
       alfa(1);
@@ -146,7 +146,6 @@ function desenharControlosToque(t) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  desenharTutorial(t);
 }
 
 // ---------------------------------------------------------------------

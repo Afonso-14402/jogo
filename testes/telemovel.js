@@ -86,7 +86,7 @@ const APARELHOS = [
     // o tutorial acaba sozinho mesmo sem fazer nada
     await p.evaluate(() => { if (tutorial) tutorial.t = 999; });
     await p.waitForTimeout(100);
-    for (let k = 0; k < 6; k++) { await p.evaluate(() => { if (tutorial) tutorial.t = 999; }); await p.waitForTimeout(60); }
+    for (let k = 0; k < 12; k++) { await p.evaluate(() => { if (tutorial) tutorial.t = 999; }); await p.waitForTimeout(60); }
     ok(await p.evaluate(() => !tutorial), 'o tutorial não fica preso');
     // pausa pelo botão
     const pz = await p.evaluate(() => { const a = botoesToque().find(x => x.id === 'pausa'); return [a.x, a.y]; });

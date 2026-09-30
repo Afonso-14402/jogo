@@ -223,7 +223,7 @@ function stats() {
     dano: Math.round((J.atkBase + a.dano) * (1 + 0.15 * nPerk('forca')) * (1 + (R.dano || 0)) * (1 + 0.05 * nMeta('dano')) * (1 + X.danoPct) * (1 + C.danoPct) * (1 + K.danoPct)),
     crit: Math.min(0.6, 0.05 + (a.crit || 0) + (am.crit || 0) + somaAfixos('crit') + 0.08 * nPerk('olho') + (R.crit || 0) + X.crit + C.crit + K.crit),
     vel: J.velBase * Math.max(0.3, 1 + (am.velMov || 0) + somaAfixos('velMov') + 0.12 * nPerk('pes') + (R.velMov || 0) + somaMaldicoes('velMov') + X.vel + C.velMov + K.vel),
-    roubo: Math.min(0.15 + K.roubo, (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0) + K.roubo),
+    roubo: Math.min(0.1 + K.roubo, (am.roubo || 0) + somaAfixos('roubo') + 0.03 * nPerk('sangue') + (R.roubo || 0) + K.roubo),
     regen: (am.regen || 0) + somaAfixos('regen') + 1.5 * nPerk('regen') + somaMaldicoes('regen') + X.regen + K.regen,
     danoPct: am.danoPct || 0,
     cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0) + C.velAtaque + K.velAtaque)),
@@ -232,7 +232,7 @@ function stats() {
     sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte') + X.sorte,
     espinhos: somaAfixos('espinhos') + X.espinhos,
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')) * X.dash,
-    curaPocao: (0.4 + 0.15 * nPerk('pocoes') + (R.cura || 0) + K.cura) * (1 - 0.25 * nPacto('secura')),
+    curaPocao: (0.35 + 0.12 * nPerk('pocoes') + (R.cura || 0) + K.cura) * (1 - 0.25 * nPacto('secura')),
     ouroMult: Math.max(0.1, (1 + (R.ouro || 0)) * dif().ouro * (1 + somaMaldicoes('ouroPct')) * X.ouro * (1 - 0.3 * nPacto('pobreza'))),
     danoRecebido: somaMaldicoes('danoRecebido'),
     magia,
@@ -354,7 +354,7 @@ function novoJogo() {
   proximoAndar();
   estado = 'jogo';
   tutorial = null;
-  if (modoToque && !opcoes.tutorialFeito) iniciarTutorial();
+  if (!opcoes.tutorialFeito) iniciarTutorial(); // no andar 1 da primeira partida
 }
 
 function continuarJogo() {
@@ -393,8 +393,9 @@ function proximoAndar() {
     const zona = NOMES_ZONAS[zonaAtual()];
     if (andar % 5 === 1) mostrarBanner(`ANDAR ${andar}`, `Nova zona: ${zona}${andar > 40 ? ' (Profundezas)' : ''}`, '#ffe14d');
     else mostrarBanner(`ANDAR ${andar}`, andar % 5 === 4 ? 'Cuidado... o próximo andar tem um BOSS!' : 'Encontra a escada para descer', '#ffffff');
-    banner.extra = `Portal Rank ${rankDoAndar(andar).letra} · poder recomendado ${poderRecomendado(andar)} · o teu: ${poderJogador()}`;
+    banner.extra = `Andar de Rank ${rankDoAndar(andar).letra} · poder recomendado ${poderRecomendado(andar)} · o teu: ${poderJogador()}`;
     banner.corExtra = corPoder();
+    banner.extra2 = mapa.avisoPortal || null;
     if (andar > 1) som(300, 0.3, 'triangle', 0.05, -150);
   }
   cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
@@ -657,6 +658,7 @@ function atacar(dx, dy) {
   const ang = Math.atan2(dy, dx);
   J.cdAtaque = S.cdAtaque;
   J.angArma = ang;
+  tutorialEvento('atacar');
   J.contaGolpes++;
   const classe = classeArma(J.arma);
   const giro = nPerk('remoinho') > 0 && J.contaGolpes % 4 === 0;
@@ -818,7 +820,14 @@ function danoJogador(d, fx, fy, fonte = null) {
     return;
   }
   if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
-  const final = Math.max(1, Math.round(d * (1 - reducaoDefesa()) * (1 + S.danoRecebido) * reducaoClasse()));
+  let final = Math.max(1, Math.round(d * (1 - reducaoDefesa()) * (1 + S.danoRecebido) * reducaoClasse()));
+  J.feridoT = 3;
+  if (J.barreira > 0) { // a Barreira Sagrada absorve primeiro
+    const abs = Math.min(J.barreira, final);
+    J.barreira -= abs; final -= abs;
+    texto(J.x, J.y - 34, `(${abs})`, '#fff0a0', 13);
+    if (final <= 0) { J.invuln = 0.4; return; }
+  }
   if (fonte && fonte.tipo === 'loboGelo') J.lentoT = Math.max(J.lentoT, 1.2);
   J.hp -= final;
   if (boss) J.levouDanoBoss = true;
@@ -870,6 +879,8 @@ function morrer(desistiu = false) {
 
 function beberPocao() {
   if (J.pocoes <= 0 || J.hp >= S.maxHp) return;
+  if (J.cdPocao > 0) { texto(J.x, J.y - 30, `Espera ${J.cdPocao.toFixed(1)}s`, '#aaaaaa', 13); return; }
+  J.cdPocao = 3;
   J.pocoes--;
   registar('pocao');
   const cura = Math.round(S.maxHp * S.curaPocao);
@@ -1213,12 +1224,15 @@ function atualizarJogador(dt) {
     if (a) atacar(a.x - J.x, a.y - J.y); else atacar(J.dirX, J.dirY);
   } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
   else if (teclas[' '] || teclas['j']) atacar(J.dirX, J.dirY);
-  if (premiu('q')) beberPocao();
-  for (let i = 0; i < ORDEM_FEITICOS.length; i++) if (premiu(String(i + 1))) lancarFeitico(ORDEM_FEITICOS[i]);
+  if (premiu('q')) { beberPocao(); tutorialEvento('pocao'); }
+  feiticosJ().forEach((id, i) => { if (premiu(String(i + 1))) lancarFeitico(id); });
   for (const k in J.cdFeitico) J.cdFeitico[k] -= dt;
+  if (J.cdPocao > 0) J.cdPocao -= dt;
+  if (J.feridoT > 0) J.feridoT -= dt;
   J.mana = Math.min(S.maxMana, J.mana + S.manaRegen * dt);
 
-  J.hp = Math.min(S.maxHp, J.hp + S.regen * dt);
+  // em combate (levaste dano há menos de 3 s) a regeneração é metade
+  J.hp = Math.min(S.maxHp, J.hp + S.regen * dt * (S.regen > 0 && J.feridoT > 0 ? 0.5 : 1));
   if (S.regen < 0) J.hp = Math.max(1, J.hp); // a maldição Sangrento não te mata sozinha
   if (J.golpe) { J.golpe.t -= dt; if (J.golpe.t <= 0) J.golpe = null; }
 }
@@ -1708,6 +1722,7 @@ const custoMana = id => Math.round(FEITICOS[id].mana * (1 - 0.1 * ((J.feiticos[i
 function lancarFeitico(id) {
   const nv = J.feiticos[id] || 0;
   const f = FEITICOS[id];
+  if (!feiticosJ().includes(id)) { texto(J.x, J.y - 30, 'O teu caçador não usa esta magia', '#aaaaaa', 13); return; }
   if (!nv) { texto(J.x, J.y - 30, 'Ainda não sabes este feitiço', '#aaaaaa', 13); return; }
   if ((J.cdFeitico[id] || 0) > 0) return;
   const custo = custoMana(id);
@@ -1745,7 +1760,7 @@ function lancarFeitico(id) {
     }
     som(900, 0.4, 'sine', 0.05, -600);
   } else if (id === 'cura') {
-    const cura = Math.round(S.maxHp * 0.3 + poder * 0.6);
+    const cura = Math.round(S.maxHp * 0.2 + poder * 0.4);
     J.hp = Math.min(S.maxHp, J.hp + cura);
     texto(J.x, J.y - 30, `+${cura}`, '#5dff7a', 22);
     ondas.push({ x: J.x, y: J.y, r: 60, t: 0.5, dur: 0.5, cor: '#5dff7a' });
@@ -1775,7 +1790,7 @@ function explodirFogo(p) {
 // Escolhe um livro: prefere feitiços que ainda não sabes
 function sortearLivro() {
   const pesos = {};
-  for (const id of ORDEM_FEITICOS) {
+  for (const id of feiticosJ()) {
     const nv = J.feiticos[id] || 0;
     if (nv < 3) pesos[id] = nv ? 1 : 3;
   }
@@ -1787,9 +1802,9 @@ function aprenderFeitico(id) {
   const antes = J.feiticos[id] || 0;
   if (antes >= 3) { J.ouro += 50; texto(J.x, J.y - 30, `Já dominas ${f.nome}: +50 ouro`, '#ffd23f', 14); return; }
   J.feiticos[id] = antes + 1;
-  if (ORDEM_FEITICOS.every(k => J.feiticos[k])) desbloquear('arquimago');
-  const tecla = ORDEM_FEITICOS.indexOf(id) + 1;
-  mostrarBanner(antes ? `${f.nome} nível ${antes + 1}` : `Aprendeste: ${f.nome}`, antes ? 'O feitiço ficou mais forte' : `Carrega ${tecla} para lançar`, f.cor);
+  if (feiticosJ().length >= 2 && feiticosJ().every(k => (J.feiticos[k] || 0) >= 3)) desbloquear('arquimago');
+  const tecla = feiticosJ().indexOf(id) + 1;
+  mostrarBanner(antes ? `${f.nome} nível ${antes + 1}` : `Aprendeste: ${f.nome}`, antes ? 'O feitiço ficou mais forte' : modoToque ? 'Tens um botão novo' : `Carrega ${tecla} para lançar`, f.cor);
   texto(J.x, J.y - 30, antes ? `${f.nome} Nv ${antes + 1}!` : `Novo feitiço!`, f.cor, 18);
   fanfarra([523, 659, 784, 1046, 1318], 0.04);
 }
@@ -1985,6 +2000,7 @@ const BOTOES_MOCHILA = {
 };
 
 function abrirMochila() {
+  tutorialEvento('mochila');
   mochilaUI = { t: 0, sel: 0, msg: null };
   estado = 'mochila';
   som(500, 0.08, 'triangle', 0.03, 100);

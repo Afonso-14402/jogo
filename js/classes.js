@@ -9,28 +9,36 @@
 
 const CLASSES = {
   aventureiro: { nome: 'Aventureiro', cor: '#ddd', arma: null, icone: 'Espada de Treino',
-    hab: null, habNome: '—', habDesc: 'Sem habilidade especial', passiva: '+10% XP', xp: 0.1 },
+    hab: null, habNome: '—', habDesc: 'Sem habilidade especial', passiva: '+10% XP', xp: 0.1,
+    feit: ['fogo', 'raio', 'gelo'], habs: ['redemoinho', 'investida'] },
   sombras: { nome: 'Caçador das Sombras', cor: '#8a6aff', arma: 'Presa Venenosa',
     hab: 'troca', habNome: 'Troca de Sombra', habDesc: 'Trocas de lugar com a tua sombra mais longe e o exército fica +50% mais forte',
-    passiva: '"Ergue-te!" desde o nível 1 e +2 sombras', mana: 20, cd: 10 },
+    passiva: '"Ergue-te!" desde o nível 1 e +2 sombras', mana: 20, cd: 10,
+    feit: [], habs: ['ergue', 'sede', 'mao', 'furtivo'] },
   espada: { nome: 'Dançarina da Espada', cor: '#ffd23f', arma: 'Espada Celeste',
     hab: 'danca', habNome: 'Dança da Espada', habDesc: 'Atravessa os monstros num relâmpago e corta todos pelo caminho (dano x3)',
-    passiva: '+15% vel. de ataque e +5% crítico', mana: 15, cd: 6, velAtaque: 0.15, crit: 0.05 },
+    passiva: '+15% vel. de ataque e +5% crítico', mana: 15, cd: 6, velAtaque: 0.15, crit: 0.05,
+    feit: [], habs: ['milCortes', 'redemoinho', 'investida'] },
   fogo: { nome: 'Imperador das Chamas', cor: '#ff5a1a', arma: 'Cajado Flamejante',
     hab: 'meteoros', habNome: 'Chuva de Meteoros', habDesc: 'Faz cair meteoros de fogo à volta do alvo',
-    passiva: '+40% poder mágico e Bola de Fogo nível 2', mana: 35, cd: 12, magia: 0.4 },
+    passiva: '+40% poder mágico e Bola de Fogo nível 2', mana: 35, cd: 12, magia: 0.4,
+    feit: ['fogo', 'raio'], habs: ['paredeFogo', 'supernova'] },
   besta: { nome: 'Tigre Branco', cor: '#f0f0f0', arma: 'Garras de Tigre',
     hab: 'forma', habNome: 'Forma Bestial', habDesc: 'Transformas-te em fera durante 8 s: +50% dano, +30% velocidade e roubo de vida',
-    passiva: '+40 vida', mana: 20, cd: 20, hp: 40 },
+    passiva: '+40 vida', mana: 20, cd: 20, hp: 40,
+    feit: [], habs: ['rugido', 'investida', 'redemoinho'] },
   titan: { nome: 'Colosso', cor: '#c0a060', arma: 'Manoplas do Titã',
     hab: 'punho', habNome: 'Punho do Titã', habDesc: 'Esmaga o chão: atordoa tudo à volta e levas -50% dano durante 4 s',
-    passiva: '+60 vida e +6 defesa, -10% velocidade', mana: 25, cd: 14, hp: 60, def: 6, vel: -0.1 },
+    passiva: '+60 vida e +6 defesa, -10% velocidade', mana: 25, cd: 14, hp: 60, def: 6, vel: -0.1,
+    feit: [], habs: ['investida', 'grito', 'onda'] },
   cura: { nome: 'Curandeiro Supremo', cor: '#5dff7a', arma: 'Bastão Sagrado',
-    hab: 'luz', habNome: 'Luz Sagrada', habDesc: 'Cura 45% da vida, tira o veneno e queima os monstros à volta (x2 em mortos-vivos)',
-    passiva: '+3 vida por segundo e poções +20%', mana: 30, cd: 16, regen: 3, cura: 0.2 },
+    hab: 'luz', habNome: 'Luz Sagrada', habDesc: 'Cura 30% da vida, tira o veneno e queima os monstros à volta (x2 em mortos-vivos)',
+    passiva: '+2 vida por segundo e poções +15%', mana: 30, cd: 18, regen: 2, cura: 0.15,
+    feit: ['cura', 'raio'], habs: ['barreira', 'julgamento'] },
   vento: { nome: 'Mestre das Lâminas', cor: '#9fdcff', arma: 'Espadas Gémeas do Vento',
     hab: 'corte', habNome: 'Corte do Vento', habDesc: 'Lança um leque de lâminas de vento que atravessam os monstros',
-    passiva: '+15% velocidade', mana: 12, cd: 5, vel: 0.15 },
+    passiva: '+15% velocidade', mana: 12, cd: 5, vel: 0.15,
+    feit: [], habs: ['redemoinho', 'tornado', 'furtivo'] },
 };
 const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento'];
 const classeJ = () => CLASSES[(J && J.classe) || 'aventureiro'] || CLASSES.aventureiro;
@@ -40,7 +48,8 @@ const MORTOS_VIVOS = ['esqueleto', 'zumbi', 'fantasma', 'mumia', 'necromante', '
 function bonusClasse() {
   const C = classeJ(), b = { hp: C.hp || 0, def: C.def || 0, velAtaque: C.velAtaque || 0, crit: C.crit || 0, magia: C.magia || 0,
     vel: C.vel || 0, regen: C.regen || 0, cura: C.cura || 0, xp: C.xp || 0, danoPct: 0, roubo: 0 };
-  if (J.formaBestial > 0) { b.danoPct += 0.5; b.vel += 0.3; b.roubo += 0.1; }
+  if (J.formaBestial > 0) { b.danoPct += 0.5; b.vel += 0.3; b.roubo += 0.05; }
+  if (J.furia > 0) b.danoPct += 0.25;
   return b;
 }
 
@@ -48,7 +57,10 @@ function bonusClasse() {
 function aplicarClasseInicial() {
   const C = classeJ();
   if (C.arma) J.arma = criarItem(ITENS.find(i => i.nome === C.arma), 1, true);
-  if (J.classe === 'fogo') J.feiticos.fogo = 2;
+  // só sabes as magias do teu caçador: a primeira já vem aprendida
+  J.feiticos = {};
+  if (C.feit.length) J.feiticos[C.feit[0]] = J.classe === 'fogo' ? 2 : 1;
+  if (nMeta('feitico') && C.feit.includes('raio')) J.feiticos.raio = Math.max(1, J.feiticos.raio || 0);
 }
 
 function usarHabilidadeClasse() {
@@ -162,7 +174,7 @@ function habPunho() {
 }
 
 function habLuz() {
-  const q = Math.round(S.maxHp * 0.45);
+  const q = Math.round(S.maxHp * 0.3);
   J.hp = Math.min(S.maxHp, J.hp + q);
   J.veneno = 0;
   texto(J.x, J.y - 40, `+${q}`, '#5dff7a', 20);
@@ -188,12 +200,13 @@ function habCorte() {
 }
 
 // Dano que levas com o Punho do Titã ativo
-const reducaoClasse = () => (J.escudoTitan > 0 ? 0.5 : 1);
+const reducaoClasse = () => (J.escudoTitan > 0 ? 0.5 : 1) * (J.grito > 0 ? 0.6 : 1);
+// Magias que o caçador pode usar (teclas 1 a 4, pela ordem da lista)
+const feiticosJ = () => classeJ().feit || [];
 // As sombras ficam mais fortes depois da Troca de Sombra
 const bonusSombras = () => (J.buffSombras > 0 ? 1.5 : 1);
 // O Caçador das Sombras tem o "Ergue-te!" desde o início e mais sombras
 const extraSombras = () => (J.classe === 'sombras' ? 2 : 0);
-const nivelErgue = () => (J.classe === 'sombras' ? 1 : 5);
 
 // Botão de toque da habilidade de classe
 function botaoClasseToque() {

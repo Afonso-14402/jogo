@@ -170,26 +170,141 @@ function poligono(g, pts, c) {
 // ---------------------------------------------------------------------
 //  Sprites desenhados à mão
 // ---------------------------------------------------------------------
-const PAL_HEROI = { r: '#e04848', s: '#dfe4ef', m: '#9aa3b8', d: '#5b6480', v: '#1b1424', w: '#ffffff', b: '#3a6ad4', B: '#27489c', l: '#6f9bff', n: '#6b4a2a', y: '#ffd23f', p: '#4a4058', N: '#3b2a1c' };
-const HEROI_TOPO = [
-  '......krrk......',
-  '.....kkrrkk.....',
-  '....kssssssk....',
-  '...ksssssssmk...',
-  '...ksvvvvvvmk...',
-  '...ksvwvvwvmk...',
-  '...kmsssssmdk...',
-  '....kddmmddk....',
-  '..kkBbbbbbbBkk..',
-  '.kmkBlbbbbbBkmk.',
-  '.kmkBlbbbbbBkmk.',
-  '.kskkynnnnykksk.',
-  '..kk.kbbbbk.kk..',
-];
-const HEROI_PES = [
-  ['....kpk..kpk....', '...kNNk..kNNk...', '...kkkk..kkkk...'],
-  ['...kpk....kpk...', '...kNk....kNNk..', '...kk.....kkkk..'],
-];
+const PAL_HEROI = { r: '#e04848', s: '#dfe4ef', m: '#9aa3b8', d: '#5b6480', v: '#1b1424', w: '#ffffff', b: '#3a6ad4', B: '#27489c', l: '#6f9bff', n: '#6b4a2a', y: '#ffd23f', p: '#4a4058', N: '#3b2a1c',
+  f: '#f1c8a0', h: '#6b4a2a', o: '#e8e2cf' };
+// Cada skin tem uma forma própria: cabeça (8 linhas) + corpo (5 linhas) + pés (3 linhas, 2 passos)
+const CABECAS_HEROI = {
+  elmo: [
+    '......krrk......',
+    '.....kkrrkk.....',
+    '....kssssssk....',
+    '...ksssssssmk...',
+    '...ksvvvvvvmk...',
+    '...ksvwvvwvmk...',
+    '...kmsssssmdk...',
+    '....kddmmddk....'],
+  capuz: [
+    '.......kk.......',
+    '.....kkbbkk.....',
+    '....kbbbbbBk....',
+    '...kbbBBBBbBk...',
+    '...kbBvvvvBBk...',
+    '...kbvwvvwvBk...',
+    '...kbBvvvvBBk...',
+    '....kBBBBBBk....'],
+  mago: [
+    '.........kk.....',
+    '........kbBk....',
+    '.......kbbBk....',
+    '.....kkbbbbBk...',
+    '..kbbyyyyyybbk..',
+    '...khfvffvfhk...',
+    '...khffffffhk...',
+    '....kkffffkk....'],
+  coroa: [
+    '....k..kk..k....',
+    '...kykkyykkyk...',
+    '...kyyyrryyyk...',
+    '...khhhhhhhhk...',
+    '...khffffffhk...',
+    '...khfvffvfhk...',
+    '...kffffffffk...',
+    '....kkffffkk....'],
+  chifres: [
+    '.kr..........rk.',
+    '..kr.kkkkkk.rk..',
+    '...krsssssmrk...',
+    '...ksssssssmk...',
+    '...ksvvvvvvmk...',
+    '...ksvwvvwvmk...',
+    '...kmsssssmdk...',
+    '....kddmmddk....'],
+  samurai: [
+    '..ky........yk..',
+    '...ky......yk...',
+    '....kyyssyyk....',
+    '..kssssssssssk..',
+    '.kmsvvvvvvvvsmk.',
+    '...kdvwvvwvdk...',
+    '...kddddddddk...',
+    '....kdmmmmdk....'],
+  cristal: [
+    '.....k....k.....',
+    '..k.klk..klk.k..',
+    '.klkklk..klkklk.',
+    '..kllssssssllk..',
+    '...ksvvvvvvmk...',
+    '...ksvwvvwvmk...',
+    '...kmsssssmdk...',
+    '....kddmmddk....'],
+  ninja: [
+    '................',
+    '.....kkkkkk.....',
+    '....kddddddk....',
+    '...kddddddddkrk.',
+    '...krrrrrrrrrrk.',
+    '...kfvffffvfk...',
+    '...kddddddddk...',
+    '....kddddddk....'],
+  aureola: [
+    '....kyyyyyyk....',
+    '.....kkkkkk.....',
+    '....khhhhhhk....',
+    '...khhhhhhhhk...',
+    '...khffffffhk...',
+    '...khfwffwfhk...',
+    '...khffffffhk...',
+    '...khkffffkhk...'],
+  caveira: [
+    '......kkkk......',
+    '....kkddddkk....',
+    '...kddddddddk...',
+    '...kdoooooodk...',
+    '...kovwoovwok...',
+    '...kooooooook...',
+    '...kdokokokdk...',
+    '....kddddddk....'],
+};
+const CORPOS_HEROI = {
+  armadura: [
+    '..kkBbbbbbbBkk..',
+    '.kmkBlbbbbbBkmk.',
+    '.kmkBlbbbbbBkmk.',
+    '.kskkynnnnykksk.',
+    '..kk.kbbbbk.kk..'],
+  manto: [
+    '...kkbbbbbbkk...',
+    '..kbBblbbbbBbk..',
+    '.kbBkblbbbbkBbk.',
+    '.kfkkbyyyybkkfk.',
+    '...kbbbbbbbbk...'],
+  capa: [
+    '.kkkBbbbbbbBkkk.',
+    'krrkBlbbbbbBkrrk',
+    'krrkBlbbbbbBkrrk',
+    'krrkkynnnnykkrrk',
+    'krrk.kbbbbk.krrk'],
+  pesada: [
+    'kmmkBbbbbbbBkmmk',
+    'kddkBlbbbbbBkddk',
+    '.kmkBlbbbbbBkmk.',
+    '.kskkynnnnykksk.',
+    '..kk.kbbbbk.kk..'],
+};
+const PES_HEROI = {
+  botas: [
+    ['....kpk..kpk....', '...kNNk..kNNk...', '...kkkk..kkkk...'],
+    ['...kpk....kpk...', '...kNk....kNNk..', '...kk.....kkkk..'],
+  ],
+  manto: [
+    ['...kbbbbbbbbk...', '...kBBBBBBBBk...', '....kNk..kNk....'],
+    ['...kbbbbbbbbk...', '..kBBBBBBBBk....', '...kNk....kNk...'],
+  ],
+  flutua: [
+    ['....kbBbbBbk....', '.....kBkkBk.....', '......k..k......'],
+    ['....kbBbbBbk....', '....kBk..kBk....', '...k........k...'],
+  ],
+};
 
 // Detalhes de cada raça pintados por cima do herói
 function aplicarRaca(g, raca) {
@@ -227,8 +342,10 @@ function aplicarRaca(g, raca) {
 function gerarHeroi(raca, skinId) {
   const skin = SKINS[skinId] || SKINS.azul;
   const pal = Object.assign({}, PAL_HEROI, skin.pal);
-  const frames = HEROI_PES.map(pes => {
-    const g = gradeDeLinhas(HEROI_TOPO.concat(pes), pal);
+  const [cab, corpo, pes] = skin.forma || ['elmo', 'armadura', 'botas'];
+  const topo = CABECAS_HEROI[cab].concat(CORPOS_HEROI[corpo]);
+  const frames = PES_HEROI[pes].map(pe => {
+    const g = gradeDeLinhas(topo.concat(pe), pal);
     aplicarRaca(g, raca);
     contornar(g);
     return gradeParaCanvas(g);

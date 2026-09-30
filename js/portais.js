@@ -20,23 +20,53 @@ const RANKS_PORTAL = [
 // Índice do rank "normal" para o andar (E=0 ... S=5)
 const rankIndiceAndar = a => Math.min(5, RANKS.findIndex(r => a <= r.ate));
 
+// O rank não depende do andar: um portal SSS pode abrir logo no andar 1.
+// Entras em qualquer um... e se morreres, morreste.
 function sortearRankPortal() {
-  const base = rankIndiceAndar(andar);
-  const d = escolherPeso({ '-1': 18, 0: 40, 1: 25, 2: 11, 3: 6 });
-  return clamp(base + Number(d), 0, 7);
+  return Number(escolherPeso({ 0: 18, 1: 17, 2: 16, 3: 14, 4: 12, 5: 10, 6: 7, 7: 6 }));
 }
 
 // Força dos monstros do portal em relação ao andar
-const multPortal = gi => Math.max(0.6, Math.pow(1.35, gi - rankIndiceAndar(andar)));
+const multPortal = gi => Math.max(0.6, Math.pow(1.4, gi - rankIndiceAndar(andar)));
+// Tempo até à Rutura do Portal (Dungeon Break) se ninguém o fechar
+const TEMPO_RUTURA = 180;
 
-// Coloca um portal numa sala normal do andar (chamado pelo popularAndar)
+// Em todos os andares abre pelo menos um portal (às vezes dois)
 function criarPortalNoAndar(salas) {
-  if (andar < 2 || Math.random() > 0.4) return;
-  const livres = salas.filter(s => !s.tipo && s !== mapa.salaEscada);
-  if (!livres.length) return;
-  const s = escolher(livres), p = pontoLivreNaSala(mapa, s, 24, 1);
-  const gi = sortearRankPortal();
-  objetos.push({ tipo: 'portal', gi, vermelho: gi >= 3 && Math.random() < 0.18, x: p.x, y: p.y, t: 0 });
+  const livres = salas.filter(s => !s.tipo && s !== mapa.salaEscada && !s.oculto);
+  const n = Math.random() < 0.25 ? 2 : 1;
+  for (let k = 0; k < n && livres.length; k++) {
+    const s = livres.splice(randInt(0, livres.length - 1), 1)[0];
+    const p = pontoLivreNaSala(mapa, s, 24, 1);
+    const gi = sortearRankPortal();
+    objetos.push({ tipo: 'portal', gi, vermelho: gi >= 3 && Math.random() < 0.18, x: p.x, y: p.y, t: 0, rutura: TEMPO_RUTURA + k * 60 });
+  }
+  const ps = objetos.filter(o => o.tipo === 'portal');
+  if (ps.length) {
+    mapa.avisoPortal = `Sentes ${ps.length > 1 ? 'portais' : 'um portal'}: Rank ${ps.map(o => RANKS_PORTAL[o.gi].letra).join(' e ')} (vê o minimapa)`;
+  }
+}
+
+// Rutura do Portal: se não entrares a tempo, os monstros saem para a masmorra
+function romperPortal(o) {
+  objetos = objetos.filter(x => x !== o);
+  const mult = multPortal(o.gi), pesos = pesosInimigos();
+  for (let k = 0; k < 3 + o.gi; k++) {
+    const a = k / (3 + o.gi) * Math.PI * 2;
+    let x = o.x + Math.cos(a) * 40, y = o.y + Math.sin(a) * 40;
+    if (colideCirculo(mapa, x, y, 14)) { x = o.x; y = o.y; }
+    const e = criarInimigo(escolherPeso(pesos), x, y);
+    aplicarNivel(e, Math.min(3, 1 + Math.floor(o.gi / 3)));
+    e.hp = e.maxHp = Math.round(e.maxHp * mult);
+    e.dano = Math.round(e.dano * Math.pow(mult, 0.7));
+    e.acordado = true;
+    if (o.gi >= 4) tornarElite(e);
+    inimigos.push(e);
+  }
+  explosao(o.x, o.y, RANKS_PORTAL[o.gi].cor, 50, 300, 6);
+  mostrarBanner('RUTURA DO PORTAL!', `Os monstros do portal Rank ${RANKS_PORTAL[o.gi].letra} saíram para a masmorra`, '#ff3b3b');
+  tremor = 18;
+  som(50, 1.2, 'sawtooth', 0.07, -20);
 }
 
 // ---------------------------------------------------------------------
@@ -109,6 +139,8 @@ function lancarOndaPortal() {
 
 function atualizarPortal(dt) {
   for (const o of objetos) if (o.tipo === 'portal' || o.tipo === 'saidaPortal') o.t += dt;
+  const aRomper = objetos.find(o => o.tipo === 'portal' && (o.rutura -= dt) <= 0);
+  if (aRomper) romperPortal(aRomper);
   const P = mapa.portal;
   if (!P || P.fase === 'feito') return;
   if (inimigos.some(e => !e.morto)) return;
@@ -182,15 +214,18 @@ function desenharInfoPortal(o, sx, sy) {
     return;
   }
   const R = RANKS_PORTAL[o.gi], mult = multPortal(o.gi);
-  const perigo = mult >= 1.8 ? 'MUITO PERIGOSO' : mult >= 1.3 ? 'Perigoso' : mult <= 0.8 ? 'Fácil' : 'Normal';
+  const perigo = mult >= 4 ? 'MORTAL' : mult >= 1.8 ? 'MUITO PERIGOSO' : mult >= 1.3 ? 'Perigoso' : mult <= 0.8 ? 'Fácil' : 'Normal';
   textoCentro(`${o.vermelho ? 'PORTAL VERMELHO' : 'Portal'} Rank ${R.letra}`, sx, sy - 40, 18, o.vermelho ? '#ff3b3b' : R.cor);
   textoCentro(`${perigo} · monstros x${mult.toFixed(1)} · boss: ${BOSSES.find(b => b.id === R.boss).nome}`, sx, sy - 20, 12, '#ddd');
-  textoCentro(`${usar}: Entrar`, sx, sy, 15, '#ffe680');
+  textoCentro(`${usar}: Entrar   ·   Rutura em ${relogioPortal(o.rutura)}`, sx, sy, 15, '#ffe680');
 }
 
-// O rank aparece por cima do portal
+const relogioPortal = t => `${Math.floor(Math.max(0, t) / 60)}:${String(Math.floor(Math.max(0, t) % 60)).padStart(2, '0')}`;
+
+// O rank e o tempo até à rutura aparecem por cima do portal
 function desenharLetraPortal(o) {
   if (o.tipo !== 'portal' || !explorado(o.x, o.y)) return;
-  const R = RANKS_PORTAL[o.gi];
-  textoCentro(R.letra, ecraX(o.x), ecraY(o.y) - 58 * (0.8 + o.gi * 0.07) * ZOOM, 18, o.vermelho ? '#ff3b3b' : R.cor);
+  const R = RANKS_PORTAL[o.gi], y = ecraY(o.y) - 58 * (0.8 + o.gi * 0.07) * ZOOM;
+  textoCentro(R.letra, ecraX(o.x), y, 18, o.vermelho ? '#ff3b3b' : R.cor);
+  textoCentro(relogioPortal(o.rutura), ecraX(o.x), y - 18, 11, o.rutura < 30 ? '#ff4d4d' : '#ddd');
 }

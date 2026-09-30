@@ -50,22 +50,47 @@ function subirAtributo(id) {
 // ---------------------------------------------------------------------
 //  Habilidades de Caçador (teclas 5 a 8 / segunda fila de botões)
 // ---------------------------------------------------------------------
-const HABILIDADES_CACADOR = [
-  { id: 'ergue',   nome: 'Ergue-te!',       nivel: 5,  mana: 30, cd: 6,  cor: '#8a6aff', desc: 'Os monstros que mataste há pouco levantam-se como soldados sombra' },
-  { id: 'sede',    nome: 'Sede de Sangue',  nivel: 10, mana: 20, cd: 18, cor: '#ff3b3b', desc: 'Os monstros à tua volta ficam paralisados de medo e levam +30% dano' },
-  { id: 'mao',     nome: 'Mão Invisível',   nivel: 15, mana: 15, cd: 8,  cor: '#9fdcff', desc: 'Uma força invisível esmaga e empurra os monstros à tua frente' },
-  { id: 'furtivo', nome: 'Furtividade',     nivel: 20, mana: 25, cd: 20, cor: '#b0a8c8', desc: 'Ficas invisível 5 s e o golpe seguinte faz dano x3' },
-];
-const temHabilidade = h => J && J.nivel >= (h.id === 'ergue' ? nivelErgue() : h.nivel);
+// Todas as habilidades que existem. Cada caçador só recebe as suas (ver CLASSES em classes.js)
+const TODAS_HABILIDADES = {
+  ergue:      { nome: 'Ergue-te!',         mana: 30, cd: 6,  cor: '#8a6aff', desc: 'Os monstros que mataste há pouco levantam-se como soldados sombra' },
+  sede:       { nome: 'Sede de Sangue',    mana: 20, cd: 18, cor: '#ff3b3b', desc: 'Os monstros à tua volta ficam paralisados de medo e levam +30% dano' },
+  mao:        { nome: 'Mão Invisível',     mana: 15, cd: 8,  cor: '#9fdcff', desc: 'Uma força invisível esmaga e empurra os monstros à tua frente' },
+  furtivo:    { nome: 'Furtividade',       mana: 25, cd: 20, cor: '#b0a8c8', desc: 'Ficas invisível 5 s e o golpe seguinte faz dano x3' },
+  redemoinho: { nome: 'Redemoinho',        mana: 15, cd: 5,  cor: '#ffe680', desc: 'Giras a arma e cortas todos os monstros à tua volta' },
+  investida:  { nome: 'Investida',         mana: 15, cd: 7,  cor: '#ffae00', desc: 'Carregas em frente e atordoas os monstros que atropelas' },
+  milCortes:  { nome: 'Mil Cortes',        mana: 20, cd: 8,  cor: '#fff6a0', desc: 'Saltas para o monstro mais perto e cortas 6 vezes seguidas' },
+  paredeFogo: { nome: 'Rio de Chamas',     mana: 25, cd: 8,  cor: '#ff7b25', desc: 'Uma linha de explosões de fogo à tua frente' },
+  supernova:  { nome: 'Supernova',         mana: 45, cd: 20, cor: '#ffe14d', desc: 'Uma explosão enorme à tua volta que queima tudo' },
+  rugido:     { nome: 'Rugido',            mana: 20, cd: 16, cor: '#ffffff', desc: 'Os monstros fogem de medo e ganhas +25% dano durante 6 s' },
+  grito:      { nome: 'Grito de Guerra',   mana: 20, cd: 18, cor: '#c0a060', desc: 'Durante 6 s levas -40% dano' },
+  onda:       { nome: 'Onda de Choque',    mana: 15, cd: 8,  cor: '#d8b070', desc: 'Um soco no ar que esmaga e empurra os monstros à tua frente' },
+  barreira:   { nome: 'Barreira Sagrada',  mana: 25, cd: 15, cor: '#fff0a0', desc: 'Um escudo de luz absorve dano (25% da tua vida) durante 8 s' },
+  julgamento: { nome: 'Julgamento',        mana: 25, cd: 9,  cor: '#fff6a0', desc: 'Pilares de luz caem sobre os 4 monstros mais perto (x2 em mortos-vivos)' },
+  tornado:    { nome: 'Tornado',           mana: 20, cd: 9,  cor: '#9fdcff', desc: 'Um tornado lento que atravessa e corta tudo no caminho' },
+};
+// Níveis em que se desbloqueia a 1.ª, 2.ª, 3.ª e 4.ª habilidade
+const NIVEIS_HABILIDADE = [3, 8, 14, 20];
+
+// As habilidades do caçador escolhido (teclas 5 a 8)
+const cacheHabs = {};
+function habsJ() {
+  const id = (J && J.classe) || 'aventureiro';
+  if (!cacheHabs[id]) cacheHabs[id] = (classeJ().habs || []).map((h, i) =>
+    Object.assign({ id: h }, TODAS_HABILIDADES[h], { nivel: h === 'ergue' && id === 'sombras' ? 1 : NIVEIS_HABILIDADE[i] }));
+  return cacheHabs[id];
+}
+const temHabilidade = h => J && J.nivel >= h.nivel;
 
 function usarHabilidade(i) {
-  const h = HABILIDADES_CACADOR[i];
+  const h = habsJ()[i];
   if (!h) return;
   if (!temHabilidade(h)) { texto(J.x, J.y - 30, `Desbloqueia no nível ${h.nivel}`, '#aaaaaa', 13); return; }
   if (!J.cdHab) J.cdHab = {};
   if ((J.cdHab[h.id] || 0) > 0) return;
   if (J.mana < h.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
-  const feito = ({ ergue: habErgue, sede: habSede, mao: habMao, furtivo: habFurtivo })[h.id]();
+  const feito = ({ ergue: habErgue, sede: habSede, mao: habMao, furtivo: habFurtivo, redemoinho: habRedemoinho, investida: habInvestida,
+    milCortes: habMilCortes, paredeFogo: habParedeFogo, supernova: habSupernova, rugido: habRugido, grito: habGrito, onda: habMao,
+    barreira: habBarreira, julgamento: habJulgamento, tornado: habTornado })[h.id]();
   if (!feito) return;
   J.mana -= h.mana;
   J.cdHab[h.id] = h.cd * (temRel('relogio') ? 0.7 : 1);
@@ -134,22 +159,155 @@ function habFurtivo() {
   return true;
 }
 
+function habRedemoinho() {
+  const raio = S.alcance + 50;
+  for (const e of inimigos) {
+    if (e.morto || e.z > 20 || Math.hypot(e.x - J.x, e.y - J.y) > raio + e.r) continue;
+    const { dano, crit } = rolarDano(1.6);
+    const l = Math.hypot(e.x - J.x, e.y - J.y) || 1;
+    danoInimigo(e, dano, crit, (e.x - J.x) / l * 1.5, (e.y - J.y) / l * 1.5, true);
+  }
+  ondas.push({ x: J.x, y: J.y, r: raio, t: 0.3, dur: 0.3, cor: '#ffe680' });
+  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; particulas.push({ x: J.x + Math.cos(a) * raio * 0.7, y: J.y + Math.sin(a) * raio * 0.7, vx: -Math.sin(a) * 200, vy: Math.cos(a) * 200, t: 0.3, cor: '#ffffff', tam: 4 }); }
+  som(700, 0.2, 'triangle', 0.04, -400);
+  return true;
+}
+
+function habInvestida() {
+  const [ux, uy] = mira();
+  let d = 0;
+  while (d < 180 && !colideCirculo(mapa, J.x + ux * (d + 8), J.y + uy * (d + 8), J.r)) d += 8;
+  const x0 = J.x, y0 = J.y;
+  J.x += ux * d; J.y += uy * d;
+  J.invuln = Math.max(J.invuln, 0.3);
+  for (const e of inimigos) {
+    if (e.morto || e.z > 20) continue;
+    const px = e.x - x0, py = e.y - y0, proj = px * ux + py * uy;
+    if (proj < -20 || proj > d + 30 || Math.abs(px * uy - py * ux) > 34 + e.r) continue;
+    const { dano, crit } = rolarDano(1.8);
+    danoInimigo(e, dano, crit, ux * 2.5, uy * 2.5, true);
+    e.medo = Math.max(e.medo || 0, e.boss ? 0.4 : 1.2);
+  }
+  for (let k = 0; k <= d; k += 14) particulas.push({ x: x0 + ux * k, y: y0 + uy * k, vx: 0, vy: 0, t: 0.3, cor: '#ffae00', tam: 6 });
+  revelar(mapa, J.x, J.y, 7);
+  tremor = Math.max(tremor, 6);
+  som(140, 0.3, 'square', 0.05, -60);
+  return true;
+}
+
+function habMilCortes() {
+  const a = alvoProximo(220);
+  if (!a) { texto(J.x, J.y - 30, 'Nenhum monstro perto', '#aaaaaa', 13); return false; }
+  const l = Math.hypot(a.x - J.x, a.y - J.y) || 1, ux = (a.x - J.x) / l, uy = (a.y - J.y) / l;
+  const nx = a.x - ux * (a.r + J.r + 4), ny = a.y - uy * (a.r + J.r + 4);
+  if (!colideCirculo(mapa, nx, ny, J.r)) { J.x = nx; J.y = ny; }
+  J.invuln = Math.max(J.invuln, 0.6);
+  for (let k = 0; k < 6; k++) setTimeout(() => {
+    if (a.morto || estado !== 'jogo') return;
+    const { dano, crit } = rolarDano(0.7);
+    danoInimigo(a, dano, crit, 0, 0, true);
+    particulas.push({ x: a.x + rand(-14, 14), y: a.y + rand(-14, 14), vx: rand(-200, 200), vy: rand(-200, 200), t: 0.2, cor: '#fff6a0', tam: 5 });
+    som(1500 + k * 80, 0.04, 'sawtooth', 0.02, -900);
+  }, k * 70);
+  return true;
+}
+
+function habParedeFogo() {
+  const [ux, uy] = mira();
+  for (let k = 1; k <= 6; k++) {
+    const x = J.x + ux * k * 45, y = J.y + uy * k * 45;
+    if (colideCirculo(mapa, x, y, 4)) break;
+    projeteis.push({ x, y, vx: 0, vy: 0, r: 4, vida: 0.08 + k * 0.07, cor: '#ff7b25', tipo: 'fogo', dono: 'jogador', dano: Math.round(S.poder * 1.1), explode: 50, caindo: true });
+  }
+  som(200, 0.5, 'sawtooth', 0.05, -100);
+  return true;
+}
+
+function habSupernova() {
+  const raio = 210;
+  ondas.push({ x: J.x, y: J.y, r: raio, t: 0.6, dur: 0.6, cor: '#ffe14d' });
+  explosao(J.x, J.y, '#ff7b25', 60, 400, 7);
+  for (const e of inimigos) {
+    if (e.morto || Math.hypot(e.x - J.x, e.y - J.y) > raio + e.r) continue;
+    const l = Math.hypot(e.x - J.x, e.y - J.y) || 1;
+    danoInimigo(e, Math.round(S.poder * 2.2), false, (e.x - J.x) / l * 2, (e.y - J.y) / l * 2);
+    e.queima = 4; e.queimaDps = Math.max(1, S.poder * 0.3);
+  }
+  tremor = Math.max(tremor, 16);
+  som(50, 1, 'sawtooth', 0.07, -20);
+  return true;
+}
+
+function habRugido() {
+  for (const e of inimigos) if (!e.morto && Math.hypot(e.x - J.x, e.y - J.y) < 220) e.medo = e.boss ? 0.8 : 2;
+  J.furia = 6;
+  S = stats();
+  ondas.push({ x: J.x, y: J.y, r: 220, t: 0.5, dur: 0.5, cor: '#ffffff' });
+  texto(J.x, J.y - 40, 'RUGIDO!', '#ffffff', 20);
+  tremor = Math.max(tremor, 10);
+  som(70, 0.7, 'sawtooth', 0.07, 40);
+  return true;
+}
+
+function habGrito() {
+  J.grito = 6;
+  ondas.push({ x: J.x, y: J.y, r: 120, t: 0.5, dur: 0.5, cor: '#c0a060' });
+  texto(J.x, J.y - 40, 'GRITO DE GUERRA', '#c0a060', 16);
+  som(110, 0.5, 'square', 0.06, 30);
+  return true;
+}
+
+function habBarreira() {
+  J.barreira = Math.round(S.maxHp * 0.25);
+  J.barreiraT = 8;
+  ondas.push({ x: J.x, y: J.y, r: 50, t: 0.5, dur: 0.5, cor: '#fff0a0' });
+  fanfarra([784, 988, 1175], 0.03);
+  return true;
+}
+
+function habJulgamento() {
+  const alvos = inimigos.filter(e => !e.morto && Math.hypot(e.x - J.x, e.y - J.y) < 320)
+    .sort((a, b) => Math.hypot(a.x - J.x, a.y - J.y) - Math.hypot(b.x - J.x, b.y - J.y)).slice(0, 4);
+  if (!alvos.length) { texto(J.x, J.y - 30, 'Nenhum monstro perto', '#aaaaaa', 13); return false; }
+  for (const e of alvos) {
+    danoInimigo(e, Math.round(S.poder * 1.6 * (MORTOS_VIVOS.includes(e.tipo) ? 2 : 1)), false, 0, 0);
+    raios.push({ x1: e.x, y1: e.y - 220, x2: e.x, y2: e.y, t: 0.3 });
+    explosao(e.x, e.y, '#fff6a0', 14, 160, 4);
+  }
+  som(1200, 0.3, 'triangle', 0.05, -500);
+  return true;
+}
+
+function habTornado() {
+  const [ux, uy] = mira();
+  const { dano } = rolarDano(0.9);
+  projeteis.push({ x: J.x + ux * 20, y: J.y + uy * 20, vx: ux * 170, vy: uy * 170, r: 20, vida: 2.2, cor: '#9fdcff',
+    tipo: 'lamina', dono: 'jogador', dano, perfura: 30, atingidos: [] });
+  som(500, 0.6, 'sine', 0.04, -300);
+  return true;
+}
+
 function atualizarCacador(dt) {
   if (!J.cdHab) J.cdHab = {};
   for (const k in J.cdHab) J.cdHab[k] -= dt;
-  for (let i = 0; i < HABILIDADES_CACADOR.length; i++) if (premiu(String(5 + i))) usarHabilidade(i);
+  for (let i = 0; i < habsJ().length; i++) if (premiu(String(5 + i))) usarHabilidade(i);
   if (premiu('u')) abrirStatus();
   if (J.furtivo > 0) J.furtivo -= dt;
+  if (J.grito > 0) J.grito -= dt;
+  if (J.furia > 0) { J.furia -= dt; if (J.furia <= 0) S = stats(); }
+  if (J.barreiraT > 0) { J.barreiraT -= dt; if (J.barreiraT <= 0) J.barreira = 0; }
   for (const c of cadaveres) c.t -= dt;
   cadaveres = cadaveres.filter(c => c.t > 0);
   atualizarSombras(dt);
 }
 
+const temErgue = () => habsJ().some(h => h.id === 'ergue' && temHabilidade(h));
+
 // Novas habilidades e pontos ao subir de nível
 function aoSubirNivelCacador() {
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
-  const h = HABILIDADES_CACADOR.find(x => x.nivel === J.nivel);
-  if (h) avisar(`[Sistema] Nova habilidade: ${h.nome}`, `Tecla ${5 + HABILIDADES_CACADOR.indexOf(h)} · ${h.desc}`, '#4dc3ff');
+  const h = habsJ().find(x => x.nivel === J.nivel);
+  if (h) avisar(`[Sistema] Nova habilidade: ${h.nome}`, `${modoToque ? 'Novo botão' : `Tecla ${5 + habsJ().indexOf(h)}`} · ${h.desc}`, '#4dc3ff');
   else if (J.nivel === 2) avisar('[Sistema] Tens pontos de atributo', `Abre a Janela de Estado (${modoToque ? 'botão do herói' : 'tecla U'}) para os usar`, '#4dc3ff');
 }
 
@@ -160,7 +318,7 @@ let cadaveres = [], sombras = [];
 const maxSombras = () => Math.min(10, 2 + Math.floor(J.nivel / 8)) + extraSombras();
 
 function deixarCadaver(e) {
-  if (!J || J.nivel < nivelErgue() || e.mini) return;
+  if (!J || !temErgue() || e.mini) return;
   if (!SPR[e.tipo]) return;
   cadaveres.push({ tipo: e.tipo, boss: !!e.boss, x: e.x, y: e.y, t: e.boss ? 20 : 8 });
   if (cadaveres.length > 30) cadaveres.shift();
@@ -351,6 +509,7 @@ const formatarPoder = p => p >= 10000 ? `${(p / 1000).toFixed(0)}k` : p >= 1000 
 // ---------------------------------------------------------------------
 let voltarStatus = 'jogo';
 function abrirStatus() {
+  tutorialEvento('status');
   voltarStatus = estado;
   menuMeta = { t: 0 };
   estado = 'status';
@@ -392,7 +551,7 @@ function desenharStatus(t) {
   textoEsq(rk.letra, 64, 136, rk.letra.length > 2 ? 28 : 54, rk.cor);
   textoEsq(`Nível ${J.nivel}   ·   ${RACAS[J.raca].nome}`, 250, 92, 16, '#ffffff');
   textoEsq(`Poder de combate: ${poder}`, 250, 124, 20, corPoder());
-  textoEsq(`Andar ${andar} · Portal Rank ${rp.letra} · recomendado ${rec}`, 250, 152, 14, '#9fdcff', 'normal');
+  textoEsq(`Andar ${andar} · Rank do andar ${rp.letra} · recomendado ${rec}`, 250, 152, 14, '#9fdcff', 'normal');
   const r = poder / Math.max(1, rec);
   const veredicto = r >= 2 ? 'Muito mais forte do que este portal. Os monstros também ficaram mais fortes.'
     : r >= 1.3 ? 'Mais forte do que este portal.' : r >= 0.85 ? 'Ao nível deste portal. Cuidado.' : 'Mais fraco do que este portal. Perigo!';
@@ -417,7 +576,8 @@ function desenharStatus(t) {
   // habilidades
   janelaSistema(500, 226, 420, 300);
   textoEsq('HABILIDADES DE CAÇADOR', 520, 240, 14, '#9fdcff');
-  HABILIDADES_CACADOR.forEach((h, i) => {
+  if (!habsJ().length) textoEsq('Este caçador não tem habilidades extra', 520, 280, 12, '#889', 'normal');
+  habsJ().forEach((h, i) => {
     const y = 268 + i * 62, tem = temHabilidade(h);
     ctx.globalAlpha = tem ? 1 : 0.45;
     circuloEcra(538, y + 8, 16, 'rgba(10,30,60,0.9)', h.cor, 3);
@@ -427,20 +587,29 @@ function desenharStatus(t) {
     textoEsq(h.desc, 564, y + 20, 10, '#bcd', 'normal');
     ctx.globalAlpha = 1;
   });
-  // exército
+  // exército (só o Caçador das Sombras)
   janelaSistema(40, 538, 880, 64);
+  if (J.classe !== 'sombras') {
+    const CL = classeJ();
+    textoEsq(`CAÇADOR: ${CL.nome}`, 60, 556, 14, CL.cor);
+    textoEsq(`Passiva: ${CL.passiva}`, 60, 580, 12, '#7dff9a', 'normal');
+    if (CL.hab) textoDir(`F: ${CL.habNome}`, 904, 556, 13, '#ffe680');
+    textoCentro(modoToque ? 'Toca fora dos botões para voltar' : 'U / Esc para voltar', LARGURA / 2, ALTURA - 14, 12, '#667', false);
+    return;
+  }
   const n = (J.sombras || []).length;
   textoEsq('EXÉRCITO DAS SOMBRAS', 60, 556, 14, '#9fdcff');
-  textoDir(J.nivel >= 5 ? `${J.sombras.filter(s => !s.boss).length} / ${maxSombras()} soldados${J.sombras.some(s => s.boss) ? ' + 1 boss' : ''}` : 'Desbloqueia no nível 5', 904, 556, 13, '#b48cff');
+  textoDir(temErgue() ? `${J.sombras.filter(s => !s.boss).length} / ${maxSombras()} soldados${J.sombras.some(s => s.boss) ? ' + 1 boss' : ''}` : `Desbloqueia no nível ${habsJ()[0].nivel}`, 904, 556, 13, '#b48cff');
   (J.sombras || []).slice(0, 22).forEach((s, i) => {
     const c = spriteSombra(s), esc = Math.max(1, Math.floor(26 / Math.max(c.width, c.height)));
     sprEcra(c, 72 + i * 38, 584, Math.min(2, esc));
   });
-  if (!n && J.nivel >= 5) textoEsq('Mata monstros e usa "Ergue-te!" (tecla 5) perto dos corpos', 60, 584, 12, '#889', 'normal');
+  if (!n && temErgue()) textoEsq('Mata monstros e usa "Ergue-te!" (tecla 5) perto dos corpos', 60, 584, 12, '#889', 'normal');
   textoCentro(modoToque ? 'Toca fora dos botões para voltar' : 'U / Esc para voltar', LARGURA / 2, ALTURA - 14, 12, '#667', false);
 }
 
 // Botões de toque das habilidades (segunda fila, por cima dos feitiços)
 function botoesHabilidadeToque() {
-  return HABILIDADES_CACADOR.map((h, i) => ({ id: 'h' + i, x: 436 + i * 66, y: 532, r: 26, tecla: String(5 + i), hab: i, ancora: [535, ALTURA] }));
+  const y = feiticosJ().some(f => J.feiticos[f]) ? 532 : 598; // sem magias ficam na fila de baixo
+  return habsJ().map((h, i) => ({ id: 'h' + i, x: 436 + i * 66, y, r: 26, tecla: String(5 + i), hab: i, ancora: [535, ALTURA] }));
 }
