@@ -73,6 +73,7 @@ canvas.addEventListener('touchstart', e => {
     rato.x = p.x; rato.y = p.y;
     if (estado === 'jogo' || (estado === 'convidado' && convidadoPronto() && coop.menu === 'jogo' && !coop.confirmarSair)) {
       if (estado === 'jogo' && tutorial && noRet(p, BOTAO_SALTAR_TUTORIAL)) { acabarTutorial(); continue; }
+      if (estado === 'jogo' && dicaAtual && dicaAtual.t > 0.4 && noRet(p, BOTAO_DICA)) { dicaAtual = null; continue; } // tocar na dica fecha-a
       if (mapa && noRet(p, retMinimapa())) { if (estado === 'jogo') estado = 'mapa'; else premidas['tab'] = true; continue; } // tocar no minimapa abre o mapa grande
       const b = botaoEm(p);
       if (b) {

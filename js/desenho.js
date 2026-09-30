@@ -354,6 +354,7 @@ function desenhar(t) {
   desenharEtiquetasCoop(t);
   if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['status', 'cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
+  desenharDica();
   desenharFalas();
 
   if (estado === 'bau') desenharRoleta(t);
@@ -1741,7 +1742,7 @@ function desenharTitulo(t) {
 
   // botões do menu
   botoesTitulo().forEach((b, i) => {
-    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : b.id === 'coop' ? '#5dff7a' : '#ddd';
+    const cor = b.fechado ? '#5a5468' : ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : b.id === 'coop' ? '#5dff7a' : '#ddd';
     botao(b, b.txt, cor, undefined, { continuar: 'jogar', novo: 'novo' }[b.id] || b.id);
   });
   if (saveInfo) {
@@ -1779,6 +1780,7 @@ function desenharTitulo(t) {
   desenharIcone(ITENS.find(i => i.nome === 'Colher Enferrujada'), 470, 530, 32);
   desenharIcone(ITENS.find(i => i.nome === 'Espada do Infinito'), 870, 530, 32);
   textoCentro('Cada baú pode dar o PIOR ou o MELHOR item!', 670, 530, 14, '#fff', false);
+  desenharMsgTitulo();
   const extra = recorde > 0 ? `Recorde: Andar ${recorde}  ·  ` : '';
   textoCentro(`${extra}Almas: ${meta.almas}  ·  Coleção: ${Object.keys(meta.colecao).length}/${ITENS_COLECAO.length}  ·  Conquistas: ${Object.keys(meta.conquistas).length}/${CONQUISTAS.length}`, LARGURA / 2, modoToque ? 608 : 586, 13, '#7ec8ff', false);
   if (!modoToque) textoCentro('ENTER: jogar · N: novo · D: diário · O: torre · B: boss rush · A: almas · K: pacto · L: coleção · T: conquistas · R: missões · I: idioma', LARGURA / 2, 612, 11, '#777', false);

@@ -59,7 +59,7 @@ const CENAS = [
       localStorage.setItem('masmorra_opcoes', JSON.stringify({ tutorialFeito: true }));
       localStorage.setItem('masmorra_som', JSON.stringify({ som: false, musica: false }));
       // um jogador com alguma coisa feita (almas e coleção)
-      localStorage.setItem('masmorra_meta', JSON.stringify({ almas: 340, melhorias: { vida: 2, dano: 1 }, colecao: {}, conquistas: {}, contadores: {}, vistos: {} }));
+      localStorage.setItem('masmorra_meta', JSON.stringify({ almas: 340, andarMax: 30, dicas: { bau: true, boss: true, elite: true, vidaBaixa: true, pontos: true, portal: true, mercador: true }, melhorias: { vida: 2, dano: 1 }, colecao: {}, conquistas: {}, contadores: {}, vistos: {} }));
     }, lingua);
     const p = await c.newPage();
     p.on('pageerror', e => console.log('erro:', e.message));

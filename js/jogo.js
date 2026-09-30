@@ -396,6 +396,7 @@ function proximoAndar() {
   if (J && J.modo === 'bossrush') andarBossRush();
   if (J) atualizarFatorAdaptativo(); // os monstros acompanham o teu poder
   if (J && andar > 1) registarPoder();
+  if (J) progressoDesbloqueios(); // modos novos no menu inicial
   if (J) { const rk = rankJogador().letra; if (rk === 'S' || rk === 'Nacional') desbloquear('rankS'); if (rk === 'Nacional') desbloquear('nacional'); }
   // no Desafio Diário os mapas usam uma semente: são iguais para toda a gente
   const semente = J && J.modo === 'diario' ? hashTexto(desafioDeHoje().dia + '#' + andar) : null;
@@ -2142,8 +2143,10 @@ function botoesTitulo() {
   const calor = calorDe(meta.pacto || {});
   const peq = [['almas', `Almas (${meta.almas})`], ['pacto', calor ? `Pacto (Calor ${calor})` : 'Pacto de Castigo'],
     ['colecao', 'Coleção'], ['conquistas', 'Conquistas'], ['registo', 'Missões'], ['transferir', 'Transferir progresso']];
-  return l.map(([id, txt], i) => ({ id, txt, x: 70, y: 206 + i * 44, w: 330, h: 38 }))
-    .concat(peq.map(([id, txt], i) => ({ id, txt, peq: true, x: 70 + (i % 2) * 168, y: 214 + l.length * 44 + Math.floor(i / 2) * 40, w: 162, h: 34 })));
+  // os modos abrem-se aos poucos (ver guia.js): fechados aparecem a cinzento
+  const fecho = ([id, txt]) => modoLivre(id) ? [id, txt, false] : [id, `${DESBLOQUEIOS[id].nome} · Andar ${DESBLOQUEIOS[id].andar}`, true];
+  return l.map(fecho).map(([id, txt, fechado], i) => ({ id, txt, fechado, x: 70, y: 206 + i * 44, w: 330, h: 38 }))
+    .concat(peq.map(fecho).map(([id, txt, fechado], i) => ({ id, txt, fechado, peq: true, x: 70 + (i % 2) * 168, y: 214 + l.length * 44 + Math.floor(i / 2) * 40, w: 162, h: 34 })));
 }
 const BOTOES_MORTE = {
   denovo: { x: 250, y: 566, w: 220, h: 44 },
@@ -2350,6 +2353,8 @@ function loop(agora) {
     if (premiu('b')) acao = 'bossrush';
     if (premiu('i') || clicou(BOTAO_IDIOMA)) { mudarIdioma(); acao = null; }
     if (modoToque && clicou(BOTAO_OPCOES)) acao = 'opcoes';
+    if (msgTitulo) { msgTitulo.t -= dt; if (msgTitulo.t <= 0) msgTitulo = null; }
+    if (acao && !modoLivre(acao)) { tocarModoFechado(acao); acao = null; }
     if (acao === 'opcoes') abrirOpcoes();
     else if (acao === 'continuar') continuarJogo();
     else if (acao === 'novo') { modoProximo = null; abrirCriacao(); }
@@ -2393,7 +2398,7 @@ function loop(agora) {
     else if (premiu('c')) estado = 'personagem';
     else if (premiu('tab')) estado = 'mapa';
     else if (premiu('i')) abrirMochila();
-    else { atualizar(dt * ritmoJogo()); atualizarTutorial(dt); }
+    else { atualizar(dt * ritmoJogo()); atualizarTutorial(dt); atualizarDicas(dt); }
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
     atualizarEscolha(dt);
