@@ -43,9 +43,9 @@ A chave (`masmorra-upload.p12`) e as palavras-passe estão no ficheiro `SEGREDOS
 
 ### 3. Experimentar no teu telemóvel (antes da loja)
 
-1. Em **Actions → App Android**, abre a última execução e descarrega **masmorra-apk-teste-N**.
-2. Descompacta o ficheiro e passa o `.apk` para o telemóvel.
-3. Abre o `.apk`. O Android pede para permitir apps de fontes desconhecidas: aceita.
+1. No telemóvel Android, abre **https://github.com/Afonso-14402/jogo/releases/download/teste/masmorra-do-destino.apk**. É sempre a versão mais recente, e o GitHub atualiza-a sozinho.
+2. Abre o ficheiro descarregado. O Android pergunta se deixa instalar apps desta origem: **Definições → Permitir desta origem**, e depois volta atrás.
+3. Toca em **Instalar**. Se aparecer um aviso do **Play Protect**, toca em **Mais detalhes → Instalar mesmo assim**. O aviso aparece só porque a app ainda não está na Play Store.
 
 ### 4. Criar a app na Play Console
 
