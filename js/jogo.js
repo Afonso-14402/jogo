@@ -2143,7 +2143,30 @@ function retMochila(i) { return { x: 40 + (i % 3) * 110, y: 262 + Math.floor(i /
 const BOTOES_MOCHILA = {
   equipar: { x: 40, y: 500, w: 160, h: 44 },
   vender:  { x: 210, y: 500, w: 160, h: 44 },
+  forjar:  { x: 40, y: 556, w: 330, h: 40 },
 };
+
+// Forja: 3 itens da mesma raridade na mochila dão 1 item da raridade seguinte
+// (do mesmo tipo do item escolhido; os outros dois vão os primeiros que houver)
+function proximaRaridade(r) { const i = ORDEM_RARIDADES.indexOf(r); return i >= 0 && i < ORDEM_RARIDADES.length - 1 ? ORDEM_RARIDADES[i + 1] : null; }
+function podeForjar(it) {
+  return !!(it && proximaRaridade(it.r) && J.mochila.filter(x => x.r === it.r).length >= 3);
+}
+function forjar(idx) {
+  const it = J.mochila[idx];
+  if (!podeForjar(it)) return null;
+  const nova = proximaRaridade(it.r);
+  let pool = ITENS.filter(i => i.r === nova && i.tipo === it.tipo && !i.inicial);
+  if (!pool.length) pool = ITENS.filter(i => i.r === nova && !i.inicial);
+  if (it.tipo === 'arma' && Math.random() < 0.5) { const m = pool.filter(i => classeArma(i) === classeArma(it)); if (m.length) pool = m; }
+  const outros = J.mochila.filter((x, i) => i !== idx && x.r === it.r).slice(0, 2);
+  J.mochila = J.mochila.filter(x => x !== it && !outros.includes(x));
+  const feito = criarItem(escolher(pool), andar);
+  J.mochila.splice(Math.min(idx, J.mochila.length), 0, feito);
+  registrarItem(feito);
+  contar('forjados');
+  return feito;
+}
 
 function abrirMochila() {
   tutorialEvento('mochila');
@@ -2175,6 +2198,17 @@ function atualizarMochila(dt) {
     M.msg = { txt: `Vendeste ${it.nome} por ${v} ouro`, cor: '#ffd23f', t: 2 };
     som(1300, 0.08, 'square', 0.03, 300);
     if (M.sel >= J.mochila.length) M.sel = Math.max(0, J.mochila.length - 1);
+  } else if (premiu('f') || clicou(BOTOES_MOCHILA.forjar)) {
+    if (!podeForjar(it)) {
+      M.msg = { txt: proximaRaridade(it.r) ? `Precisas de 3 itens (${RARIDADES[it.r].nome}) na mochila` : 'Os itens Míticos já não sobem mais', cor: '#ff8080', t: 2.2 };
+      som(200, 0.1, 'square', 0.03);
+      return;
+    }
+    const feito = forjar(M.sel);
+    M.sel = J.mochila.indexOf(feito);
+    M.msg = { txt: `Forjaste: ${feito.nome}!`, cor: RARIDADES[feito.r].cor, t: 3 };
+    fanfarra([523, 659, 784, 1047], 0.04);
+    vibrar(60);
   }
 }
 

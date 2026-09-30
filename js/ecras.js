@@ -191,12 +191,15 @@ function desenharMochila() {
     if (atual) desenharCartaItem(atual, 660, 88, 'EQUIPADO AGORA');
     botao(BOTOES_MOCHILA.equipar, modoToque ? 'Equipar' : '[E] Equipar', '#5dff7a');
     botao(BOTOES_MOCHILA.vender, `${modoToque ? '' : '[X] '}Vender +${valorVenda(it)}`, '#ffd23f');
+    const prox = proximaRaridade(it.r), n = J.mochila.filter(x => x.r === it.r).length;
+    botao(BOTOES_MOCHILA.forjar, !prox ? 'Forja: o Mítico é o máximo' : `${modoToque ? '' : '[F] '}Forjar 3 ${RARIDADES[it.r].nome} → ${RARIDADES[prox].nome} (${Math.min(n, 3)}/3)`,
+      podeForjar(it) ? RARIDADES[prox].cor : '#5a5468');
   } else {
     textoCentro('A mochila está vazia.', 640, 260, 16, '#888', false);
     textoCentro('Quando abrires um baú, escolhe "Mochila" para guardar o item.', 640, 286, 13, '#777', false);
   }
-  if (mochilaUI.msg) textoCentro(mochilaUI.msg.txt, 460, 580, 15, mochilaUI.msg.cor);
-  if (!modoToque) textoCentro('1-6: escolher  ·  E: equipar  ·  X: vender  ·  I / Esc: fechar', 400, ALTURA - 16, 12, '#888', false);
+  if (mochilaUI.msg) textoCentroAjustado(mochilaUI.msg.txt, 660, 470, 16, mochilaUI.msg.cor, 520);
+  if (!modoToque) textoCentro('1-6: escolher  ·  E: equipar  ·  X: vender  ·  F: forjar  ·  I / Esc: fechar', 400, ALTURA - 16, 12, '#888', false);
   botao(BOTAO_FECHAR, 'Fechar', '#ff8080');
 }
 
