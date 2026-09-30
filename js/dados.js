@@ -472,6 +472,13 @@ const CONQUISTAS = [
   { id: 'portalS',   nome: 'Portal S',           desc: 'Conquista um Portal de Rank S ou maior', almas: 50 },
   { id: 'portalSSS', nome: 'Além do Limite',     desc: 'Conquista um Portal de Rank SSS',       almas: 150 },
   { id: 'portalVermelho', nome: 'Portal Vermelho', desc: 'Sobrevive a um Portal Vermelho',      almas: 40 },
+  { id: 'reavaliadoS', nome: 'Caçador de Rank S',  desc: 'Passa a Rank S na reavaliação',       almas: 60 },
+  { id: 'diario10',  nome: 'Desafiante',         desc: 'Chega ao andar 10 no Desafio Diário',   almas: 30 },
+  { id: 'torre25',   nome: 'Alpinista',          desc: 'Chega ao andar 25 da Torre',            almas: 40 },
+  { id: 'torre100',  nome: 'Senhor da Torre',    desc: 'Conquista os 100 andares da Torre',     almas: 200 },
+  { id: 'evolucao',  nome: 'Mudança de Classe',  desc: 'Passa a provação do nível 30',          almas: 50 },
+  { id: 'general',   nome: 'Primeiro General',   desc: 'Ergue um boss como general sombra',     almas: 40 },
+  { id: 'templo',    nome: 'Masmorra Dupla',     desc: 'Sobrevive ao Templo da Masmorra Dupla', almas: 60 },
 ];
 
 // ---------------------------------------------------------------------

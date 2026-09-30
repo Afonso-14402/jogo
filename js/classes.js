@@ -21,7 +21,7 @@ const CLASSES = {
     feit: [], habs: ['milCortes', 'redemoinho', 'investida'] },
   fogo: { nome: 'Imperador das Chamas', cor: '#ff5a1a', arma: 'Cajado Flamejante',
     hab: 'meteoros', habNome: 'Chuva de Meteoros', habDesc: 'Faz cair meteoros de fogo à volta do alvo',
-    passiva: '+40% poder mágico e Bola de Fogo nível 2', mana: 35, cd: 12, magia: 0.4,
+    passiva: '+60% poder mágico e Bola de Fogo nível 2', mana: 35, cd: 12, magia: 0.6,
     feit: ['fogo', 'raio'], habs: ['paredeFogo', 'supernova'] },
   besta: { nome: 'Tigre Branco', cor: '#f0f0f0', arma: 'Garras de Tigre',
     hab: 'forma', habNome: 'Forma Bestial', habDesc: 'Transformas-te em fera durante 8 s: +50% dano, +30% velocidade e roubo de vida',
@@ -33,7 +33,7 @@ const CLASSES = {
     feit: [], habs: ['investida', 'grito', 'onda'] },
   cura: { nome: 'Curandeiro Supremo', cor: '#5dff7a', arma: 'Bastão Sagrado',
     hab: 'luz', habNome: 'Luz Sagrada', habDesc: 'Cura 30% da vida, tira o veneno e queima os monstros à volta (x2 em mortos-vivos)',
-    passiva: '+2 vida por segundo e poções +15%', mana: 30, cd: 18, regen: 2, cura: 0.15,
+    passiva: '+2 vida/s, poções +15% e +30% poder mágico', mana: 30, cd: 18, regen: 2, cura: 0.15, magia: 0.3,
     feit: ['cura', 'raio'], habs: ['barreira', 'julgamento'] },
   vento: { nome: 'Mestre das Lâminas', cor: '#9fdcff', arma: 'Espadas Gémeas do Vento',
     hab: 'corte', habNome: 'Corte do Vento', habDesc: 'Lança um leque de lâminas de vento que atravessam os monstros',
@@ -41,7 +41,25 @@ const CLASSES = {
     feit: [], habs: ['redemoinho', 'tornado', 'furtivo'] },
 };
 const ORDEM_CLASSES = ['aventureiro', 'sombras', 'espada', 'fogo', 'besta', 'titan', 'cura', 'vento'];
-const classeJ = () => CLASSES[(J && J.classe) || 'aventureiro'] || CLASSES.aventureiro;
+
+// Mudança de classe (nível 30 + Provação): novo nome, passiva mais forte e habilidade única melhorada
+const EVOLUCOES = {
+  aventureiro: { nome: 'Herói Lendário', xp: 0.2, hp: 60, hab: 'heroi', habNome: 'Golpe Heróico', habDesc: 'Um corte enorme em leque à tua frente (dano x4)',
+    passiva: '+20% XP e +60 vida', mana: 20, cd: 8 },
+  sombras: { nome: 'Monarca das Sombras', cd: 5, passiva: '+7 sombras e as sombras fazem +40% dano', habDesc: 'Trocas de lugar com a tua sombra mais longe (recarga 5 s)' },
+  espada: { nome: 'Espada Santa', velAtaque: 0.25, crit: 0.12, passiva: '+25% vel. de ataque e +12% crítico', habDesc: 'Atravessa os monstros num relâmpago (dano x5)' },
+  fogo: { nome: 'Monarca das Chamas', magia: 1.0, passiva: '+100% poder mágico', habDesc: 'Uma chuva de 14 meteoros de fogo' },
+  besta: { nome: 'Rei das Feras', hp: 120, passiva: '+120 vida', habDesc: 'Forma de fera durante 14 s: +50% dano, +30% velocidade e roubo de vida' },
+  titan: { nome: 'Rei Titã', hp: 160, def: 12, passiva: '+160 vida e +12 defesa, -10% velocidade', habDesc: 'Esmaga o chão num raio enorme e levas -50% dano durante 4 s' },
+  cura: { nome: 'Santo', regen: 4, cura: 0.2, magia: 0.5, passiva: '+4 vida/s, poções +20% e +50% poder mágico', habDesc: 'Cura 40% da vida e queima os monstros à volta (x2 em mortos-vivos)' },
+  vento: { nome: 'Senhor da Tempestade', vel: 0.25, passiva: '+25% velocidade', habDesc: 'Um leque de 9 lâminas de vento' },
+};
+const cacheClasseEvo = {};
+function classeJ() {
+  const id = (J && J.classe) || 'aventureiro', base = CLASSES[id] || CLASSES.aventureiro;
+  if (!J || !J.evoluido) return base;
+  return cacheClasseEvo[id] || (cacheClasseEvo[id] = Object.assign({}, base, EVOLUCOES[id], { base: base.nome }));
+}
 const MORTOS_VIVOS = ['esqueleto', 'zumbi', 'fantasma', 'mumia', 'necromante', 'lich', 'sombra'];
 
 // Bónus passivos do caçador (entram nos stats)
@@ -68,7 +86,7 @@ function usarHabilidadeClasse() {
   if (!C.hab) return;
   if ((J.cdClasse || 0) > 0) return;
   if (J.mana < C.mana) { texto(J.x, J.y - 30, 'Sem mana!', '#b48cff', 15); som(150, 0.1, 'square', 0.03); return; }
-  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte })[C.hab]();
+  const feito = ({ troca: habTroca, danca: habDanca, meteoros: habMeteoros, forma: habForma, punho: habPunho, luz: habLuz, corte: habCorte, heroi: habHeroi })[C.hab]();
   if (!feito) return;
   J.mana -= C.mana;
   J.cdClasse = C.cd * (temRel('relogio') ? 0.7 : 1);
@@ -121,7 +139,7 @@ function habDanca() {
     if (e.morto || e.z > 20) continue;
     const px = e.x - x0, py = e.y - y0, proj = px * ux + py * uy;
     if (proj < -20 || proj > d + 20 || Math.abs(px * uy - py * ux) > 40 + e.r) continue;
-    const { dano, crit } = rolarDano(3);
+    const { dano, crit } = rolarDano(J.evoluido ? 5 : 3);
     danoInimigo(e, dano, crit, ux, uy, true);
   }
   revelar(mapa, J.x, J.y, 7);
@@ -141,14 +159,14 @@ function chuvaDeFogo(cx, cy, n, raio, dano, explode, cor, tipo) {
 
 function habMeteoros() {
   const p = pontoAlvo(170);
-  chuvaDeFogo(p.x, p.y, 8, 150, Math.round(S.poder * 1.3), 70, '#ff5a1a', 'fogo');
+  chuvaDeFogo(p.x, p.y, J.evoluido ? 14 : 8, J.evoluido ? 190 : 150, Math.round(S.poder * 1.3), 70, '#ff5a1a', 'fogo');
   texto(J.x, J.y - 40, 'CHUVA DE METEOROS', '#ff5a1a', 16);
   som(90, 0.8, 'sawtooth', 0.05, -30);
   return true;
 }
 
 function habForma() {
-  J.formaBestial = 8;
+  J.formaBestial = J.evoluido ? 14 : 8;
   S = stats();
   explosao(J.x, J.y, '#ffffff', 30, 220, 6);
   texto(J.x, J.y - 40, 'FORMA BESTIAL', '#ffffff', 18);
@@ -159,14 +177,14 @@ function habForma() {
 
 function habPunho() {
   for (const e of inimigos) {
-    if (e.morto || e.z > 20 || Math.hypot(e.x - J.x, e.y - J.y) > 200 + e.r) continue;
+    if (e.morto || e.z > 20 || Math.hypot(e.x - J.x, e.y - J.y) > (J.evoluido ? 280 : 200) + e.r) continue;
     const { dano, crit } = rolarDano(2.5);
     const l = Math.hypot(e.x - J.x, e.y - J.y) || 1;
     danoInimigo(e, dano, crit, (e.x - J.x) / l * 2, (e.y - J.y) / l * 2, true);
     e.medo = Math.max(e.medo || 0, e.boss ? 0.6 : 1.5);
   }
   J.escudoTitan = 4;
-  ondas.push({ x: J.x, y: J.y, r: 200, t: 0.5, dur: 0.5, cor: '#c0a060' });
+  ondas.push({ x: J.x, y: J.y, r: J.evoluido ? 280 : 200, t: 0.5, dur: 0.5, cor: '#c0a060' });
   tocarRachada(J.x, J.y, 200);
   tremor = Math.max(tremor, 14);
   som(50, 0.6, 'square', 0.07, -20);
@@ -174,7 +192,7 @@ function habPunho() {
 }
 
 function habLuz() {
-  const q = Math.round(S.maxHp * 0.3);
+  const q = Math.round(S.maxHp * (J.evoluido ? 0.4 : 0.3));
   J.hp = Math.min(S.maxHp, J.hp + q);
   J.veneno = 0;
   texto(J.x, J.y - 40, `+${q}`, '#5dff7a', 20);
@@ -191,7 +209,7 @@ function habCorte() {
   const [ux, uy] = mira();
   const base = Math.atan2(uy, ux);
   const { dano } = rolarDano(1.2);
-  for (const a of [-0.36, -0.18, 0, 0.18, 0.36]) {
+  for (const a of J.evoluido ? [-0.6, -0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45, 0.6] : [-0.36, -0.18, 0, 0.18, 0.36]) {
     projeteis.push({ x: J.x, y: J.y, vx: Math.cos(base + a) * 480, vy: Math.sin(base + a) * 480, r: 9, vida: 0.7, cor: '#9fdcff',
       tipo: 'lamina', dono: 'jogador', dano, perfura: 3, atingidos: [] });
   }
@@ -199,14 +217,66 @@ function habCorte() {
   return true;
 }
 
+// Golpe Heróico (Herói Lendário): leque grande à frente
+function habHeroi() {
+  const [ux, uy] = mira(), base = Math.atan2(uy, ux);
+  for (const e of inimigos) {
+    if (e.morto || e.z > 20) continue;
+    const d = Math.hypot(e.x - J.x, e.y - J.y);
+    let da = Math.abs(Math.atan2(e.y - J.y, e.x - J.x) - base); if (da > Math.PI) da = Math.PI * 2 - da;
+    if (d > 170 + e.r || da > 0.9) continue;
+    const { dano, crit } = rolarDano(4);
+    danoInimigo(e, dano, crit, ux * 2, uy * 2, true);
+  }
+  for (let k = -6; k <= 6; k++) { const a = base + k * 0.14; particulas.push({ x: J.x + Math.cos(a) * 60, y: J.y + Math.sin(a) * 60, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320, t: 0.35, cor: '#ffe680', tam: 6 }); }
+  tremor = Math.max(tremor, 8);
+  som(300, 0.4, 'sawtooth', 0.05, 600);
+  return true;
+}
+
+// ---------------------------------------------------------------------
+//  Provação da mudança de classe
+// ---------------------------------------------------------------------
+function verificarProvacao() {
+  if (J.nivel >= 30 && !J.evoluido && !J.provacao) {
+    J.provacao = 'pendente';
+    avisar('[Sistema] Missão de Mudança de Classe', 'O próximo andar é a tua Provação. Vence-a para evoluir!', '#4dc3ff');
+  }
+}
+// Chamado pelo proximoAndar: o andar da provação é uma arena com um boss
+function andarProvacao() {
+  if (J.provacao !== 'pendente' && J.provacao !== 'ativa') return false;
+  J.provacao = 'ativa';
+  mapa = gerarArenaBoss();
+  mapa.provacao = true;
+  return true;
+}
+function bossProvacao() {
+  const b = criarBoss(escolher(BOSSES.slice(0, Math.min(BOSSES.length, 2 + Math.floor(andar / 8)))).id, 1.3);
+  b.nome = `Provação: ${traduzir(b.nome)}`;
+  return b;
+}
+function concluirProvacao() {
+  J.provacao = 'feita';
+  J.evoluido = true;
+  S = stats();
+  J.hp = S.maxHp;
+  const C = classeJ();
+  mostrarBanner('MUDANÇA DE CLASSE!', `${C.base} → ${C.nome}`, C.cor);
+  avisar(`[Sistema] Agora és ${C.nome}`, C.passiva, '#4dc3ff');
+  desbloquear('evolucao');
+  explosao(J.x, J.y, C.cor, 60, 320, 7);
+  fanfarra([392, 523, 659, 784, 1046, 1318, 1568], 0.06);
+}
+
 // Dano que levas com o Punho do Titã ativo
 const reducaoClasse = () => (J.escudoTitan > 0 ? 0.5 : 1) * (J.grito > 0 ? 0.6 : 1);
 // Magias que o caçador pode usar (teclas 1 a 4, pela ordem da lista)
 const feiticosJ = () => classeJ().feit || [];
 // As sombras ficam mais fortes depois da Troca de Sombra
-const bonusSombras = () => (J.buffSombras > 0 ? 1.5 : 1);
+const bonusSombras = () => (J.buffSombras > 0 ? 1.5 : 1) * (J.evoluido && J.classe === 'sombras' ? 1.4 : 1);
 // O Caçador das Sombras tem o "Ergue-te!" desde o início e mais sombras
-const extraSombras = () => (J.classe === 'sombras' ? 2 : 0);
+const extraSombras = () => (J.classe === 'sombras' ? (J.evoluido ? 7 : 2) : 0);
 
 // Botão de toque da habilidade de classe
 function botaoClasseToque() {

@@ -250,17 +250,18 @@ function desenharMenuMeta(t) {
     const n = Object.keys(meta.conquistas).length;
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
     textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
+    const passo = Math.min(38, Math.floor(540 / Math.ceil(CONQUISTAS.length / 3)));
     CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
-      const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * 38, w = 304, h = 35;
+      const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * passo, w = 304, h = passo - 3;
       const tem = meta.conquistas[c.id];
       painel(x, y, w, h, tem ? 'rgba(40,34,14,0.95)' : 'rgba(18,14,28,0.95)', tem ? '#ffe14d' : '#3a3150');
       iconePerk({ cor: tem ? '#ffe14d' : '#4a4060', letra: tem ? '+' : '?' }, x + 20, y + h / 2, 13);
       const premio = c.almas ? `+${c.almas} almas` : `Skin ${SKINS[c.skin].nome}`;
-      textoDir(premio, x + w - 8, y + 13, 10, tem ? '#b48cff' : '#666');
-      textoEsq(c.nome, x + 40, y + 11, 12, tem ? '#ffe14d' : '#bbb');
+      textoDir(premio, x + w - 8, y + h * 0.36, 10, tem ? '#b48cff' : '#666');
+      textoEsq(c.nome, x + 40, y + h * 0.32, 12, tem ? '#ffe14d' : '#bbb');
       ctx.font = fonte(11, 'normal');
       const larg = ctx.measureText(traduzir(c.desc)).width;
-      textoEsq(c.desc, x + 40, y + 25, larg > w - 50 ? 9 : 11, tem ? '#ddd' : '#888', 'normal');
+      textoEsq(c.desc, x + 40, y + h * 0.74, larg > w - 50 ? 9 : 10, tem ? '#ddd' : '#888', 'normal');
     });
   }
 }

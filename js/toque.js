@@ -292,7 +292,7 @@ function linhasOpcoes() {
     { id: 'canhoto', nome: 'Joystick', valor: opcoes.canhoto ? 'À direita (canhoto)' : 'À esquerda' },
     { id: 'vibracao', nome: 'Vibração', valor: !navigator.vibrate ? 'Não suportada' : opcoes.vibracao ? 'Ligada' : 'Desligada' },
     { id: 'poupanca', nome: 'Poupança de bateria', valor: opcoes.poupanca ? 'Ligada (30 FPS)' : 'Desligada (60 FPS)' },
-    { id: 'som', nome: 'Som do jogo', valor: somLigado ? 'Ligado' : 'Desligado' },
+    { id: 'som', nome: 'Som e música', valor: !somLigado ? 'Desligado' : musicaLigada ? 'Tudo ligado' : 'Só efeitos' },
     { id: 'ecra', nome: 'Ecrã inteiro', valor: comoApp() ? 'Já está (app)' : emEcraInteiro() ? 'Ligado' : 'Desligado' },
     { id: 'tutorial', nome: 'Tutorial', valor: 'Ver outra vez' },
   ];
@@ -312,7 +312,7 @@ function atualizarOpcoes(dt) {
     else if (l.id === 'canhoto') opcoes.canhoto = !opcoes.canhoto;
     else if (l.id === 'vibracao') { opcoes.vibracao = !opcoes.vibracao; vibrar(80); }
     else if (l.id === 'poupanca') opcoes.poupanca = !opcoes.poupanca;
-    else if (l.id === 'som') somLigado = !somLigado;
+    else if (l.id === 'som') mudarSom();
     else if (l.id === 'tutorial') {
       opcoes.tutorialFeito = false;
       if (opcoesVoltar === 'pausa') {

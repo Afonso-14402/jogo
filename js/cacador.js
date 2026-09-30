@@ -103,11 +103,20 @@ function habErgue() {
   if (!perto.length) { texto(J.x, J.y - 30, 'Não há corpos perto', '#aaaaaa', 13); return false; }
   let n = 0;
   for (const c of perto) {
-    if (c.boss) { // só pode haver uma sombra de boss: a nova substitui a antiga
-      J.sombras = J.sombras.filter(s => !s.boss);
-      sombras = sombras.filter(s => !s.boss);
+    let nome = null;
+    if (c.boss) { // os bosses tornam-se generais com nome; se já tens o máximo, o mais antigo dá lugar ao novo
+      const gens = J.sombras.filter(s => s.boss);
+      if (gens.length >= maxGenerais()) {
+        const velho = gens[0];
+        J.sombras.splice(J.sombras.indexOf(velho), 1);
+        const vs = sombras.find(x => x.boss && x.nome === velho.nome);
+        if (vs) sombras.splice(sombras.indexOf(vs), 1);
+      }
+      nome = nomeGeneral(c.tipo);
+      avisar(`[Sistema] Novo general: ${nome}`, 'Um boss juntou-se ao teu Exército das Sombras', '#8a6aff');
+      desbloquear('general');
     } else if (J.sombras.filter(s => !s.boss).length >= max) continue;
-    const s = { tipo: c.tipo, boss: c.boss };
+    const s = { tipo: c.tipo, boss: c.boss, elite: c.elite, nome: nome || (c.elite ? 'Cavaleiro Sombrio' : null) };
     J.sombras.push(s);
     sombras.push(criarSombra(s, c.x, c.y));
     cadaveres.splice(cadaveres.indexOf(c), 1);
@@ -202,13 +211,7 @@ function habMilCortes() {
   const nx = a.x - ux * (a.r + J.r + 4), ny = a.y - uy * (a.r + J.r + 4);
   if (!colideCirculo(mapa, nx, ny, J.r)) { J.x = nx; J.y = ny; }
   J.invuln = Math.max(J.invuln, 0.6);
-  for (let k = 0; k < 6; k++) setTimeout(() => {
-    if (a.morto || estado !== 'jogo') return;
-    const { dano, crit } = rolarDano(0.7);
-    danoInimigo(a, dano, crit, 0, 0, true);
-    particulas.push({ x: a.x + rand(-14, 14), y: a.y + rand(-14, 14), vx: rand(-200, 200), vy: rand(-200, 200), t: 0.2, cor: '#fff6a0', tam: 5 });
-    som(1500 + k * 80, 0.04, 'sawtooth', 0.02, -900);
-  }, k * 70);
+  J.milCortes = { alvo: a, n: 6, t: 0 }; // 6 golpes seguidos (ver atualizarCacador)
   return true;
 }
 
@@ -293,6 +296,20 @@ function atualizarCacador(dt) {
   for (let i = 0; i < habsJ().length; i++) if (premiu(String(5 + i))) usarHabilidade(i);
   if (premiu('u')) abrirStatus();
   if (J.furtivo > 0) J.furtivo -= dt;
+  if (J.milCortes) { // Mil Cortes: um golpe a cada 0.07 s
+    const M = J.milCortes;
+    M.t -= dt;
+    if (M.t <= 0) {
+      M.t = 0.07; M.n--;
+      if (!M.alvo.morto) {
+        const { dano, crit } = rolarDano(0.7);
+        danoInimigo(M.alvo, dano, crit, 0, 0, true);
+        particulas.push({ x: M.alvo.x + rand(-14, 14), y: M.alvo.y + rand(-14, 14), vx: rand(-200, 200), vy: rand(-200, 200), t: 0.2, cor: '#fff6a0', tam: 5 });
+        som(1500 + M.n * 80, 0.04, 'sawtooth', 0.02, -900);
+      }
+      if (M.n <= 0 || M.alvo.morto) J.milCortes = null;
+    }
+  }
   if (J.grito > 0) J.grito -= dt;
   if (J.furia > 0) { J.furia -= dt; if (J.furia <= 0) S = stats(); }
   if (J.barreiraT > 0) { J.barreiraT -= dt; if (J.barreiraT <= 0) J.barreira = 0; }
@@ -305,6 +322,7 @@ const temErgue = () => habsJ().some(h => h.id === 'ergue' && temHabilidade(h));
 
 // Novas habilidades e pontos ao subir de nível
 function aoSubirNivelCacador() {
+  verificarProvacao();
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
   const h = habsJ().find(x => x.nivel === J.nivel);
   if (h) avisar(`[Sistema] Nova habilidade: ${h.nome}`, `${modoToque ? 'Novo botão' : `Tecla ${5 + habsJ().indexOf(h)}`} · ${h.desc}`, '#4dc3ff');
@@ -316,17 +334,28 @@ function aoSubirNivelCacador() {
 // ---------------------------------------------------------------------
 let cadaveres = [], sombras = [];
 const maxSombras = () => Math.min(10, 2 + Math.floor(J.nivel / 8)) + extraSombras();
+// Generais: bosses erguidos, com nome próprio (mais com o nível e com o Monarca das Sombras)
+const maxGenerais = () => Math.min(5, 1 + Math.floor(J.nivel / 15) + (J.evoluido ? 1 : 0));
+const NOMES_GENERAIS = {
+  reiSlime: 'Gelatinoso', lich: 'Arquimago Negro', dragao: 'Asa da Noite', golem: 'Rocha Eterna',
+  rainha: 'Rainha Tecelã', demonio: 'Chifre Negro', guardiao: 'Guarda Cristalino', senhorVazio: 'Eco do Vazio',
+};
+function nomeGeneral(tipo) {
+  const base = NOMES_GENERAIS[tipo] || 'General Sombrio';
+  const n = J.sombras.filter(s => s.nome && s.nome.startsWith(base)).length;
+  return n ? `${base} ${['II', 'III', 'IV', 'V'][Math.min(3, n - 1)]}` : base;
+}
 
 function deixarCadaver(e) {
   if (!J || !temErgue() || e.mini) return;
   if (!SPR[e.tipo]) return;
-  cadaveres.push({ tipo: e.tipo, boss: !!e.boss, x: e.x, y: e.y, t: e.boss ? 20 : 8 });
+  cadaveres.push({ tipo: e.tipo, boss: !!e.boss, elite: !!e.elite, x: e.x, y: e.y, t: e.boss ? 20 : 8 });
   if (cadaveres.length > 30) cadaveres.shift();
 }
 
 function criarSombra(s, x, y) {
   const r = s.boss ? 22 : Math.min(15, (INIMIGOS[s.tipo] || { r: 12 }).r);
-  return { tipo: s.tipo, boss: s.boss, x, y, r, t: Math.random() * 6, cd: 0.5, dir: 1, ang: Math.random() * Math.PI * 2 };
+  return { tipo: s.tipo, boss: s.boss, elite: s.elite, nome: s.nome, x, y, r, t: Math.random() * 6, cd: 0.5, dir: 1, ang: Math.random() * Math.PI * 2 };
 }
 
 // No início de cada andar o exército aparece à tua volta
@@ -340,7 +369,7 @@ function levantarExercito() {
   });
 }
 
-const danoSombra = s => Math.max(1, Math.round(S.dano * (s.boss ? 0.6 : 0.15) * (1 + 0.01 * J.nivel) * bonusSombras()));
+const danoSombra = s => Math.max(1, Math.round(S.dano * (s.boss ? 0.6 : s.elite ? 0.25 : 0.15) * (1 + 0.01 * J.nivel) * bonusSombras()));
 
 function atualizarSombras(dt) {
   sombras.forEach((s, i) => {
@@ -403,6 +432,14 @@ function desenharSombra(s, t) {
   spr(c, s.x, s.y - (s.andando ? Math.abs(Math.sin(s.t * 10)) * 2 : 0), s.dir < 0);
   ctx.globalAlpha = 1;
   ctx.restore();
+}
+
+// Nome por cima dos generais e cavaleiros (desenhado no ecrã)
+function desenharNomesSombras() {
+  for (const s of sombras) {
+    if (!s.nome || !explorado(s.x, s.y)) continue;
+    textoCentro(s.nome, ecraX(s.x), ecraY(s.y) - (s.boss ? 34 : 24) * ZOOM, s.boss ? 11 : 9, s.boss ? '#b48cff' : '#8a7fb8', false);
+  }
 }
 
 function desenharCadaveres(t) {
@@ -599,7 +636,7 @@ function desenharStatus(t) {
   }
   const n = (J.sombras || []).length;
   textoEsq('EXÉRCITO DAS SOMBRAS', 60, 556, 14, '#9fdcff');
-  textoDir(temErgue() ? `${J.sombras.filter(s => !s.boss).length} / ${maxSombras()} soldados${J.sombras.some(s => s.boss) ? ' + 1 boss' : ''}` : `Desbloqueia no nível ${habsJ()[0].nivel}`, 904, 556, 13, '#b48cff');
+  textoDir(temErgue() ? `${J.sombras.filter(s => !s.boss).length} / ${maxSombras()} soldados · ${J.sombras.filter(s => s.boss).length} / ${maxGenerais()} generais` : `Desbloqueia no nível ${habsJ()[0].nivel}`, 904, 556, 13, '#b48cff');
   (J.sombras || []).slice(0, 22).forEach((s, i) => {
     const c = spriteSombra(s), esc = Math.max(1, Math.floor(26 / Math.max(c.width, c.height)));
     sprEcra(c, 72 + i * 38, 584, Math.min(2, esc));

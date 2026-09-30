@@ -161,6 +161,7 @@ function atualizarPortal(dt) {
 function bossPortalMorto(e) {
   const P = mapa.portal;
   P.fase = 'feito';
+  registar('portalFeito');
   for (const o of inimigos) if (!o.morto && o !== e) { o.morto = true; explosao(o.x, o.y, o.cor, 10); }
   projeteis = []; perigos = [];
   const R = RANKS_PORTAL[P.gi], cx = mapa.posBoss.x, cy = mapa.posBoss.y + 60;

@@ -120,6 +120,7 @@ function registar(evento, q = 1) {
   if (!meta.stats) meta.stats = {};
   if (evento === 'andar') meta.stats.andarMax = Math.max(meta.stats.andarMax || 0, q);
   else meta.stats[evento] = (meta.stats[evento] || 0) + q;
+  progressoContratos(evento, q);
   for (const m of missoesDeHoje()) {
     if (m.feita || m.id !== evento) continue;
     const M = MISSOES.find(x => x.id === m.id);

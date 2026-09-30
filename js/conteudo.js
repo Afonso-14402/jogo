@@ -45,7 +45,7 @@ function dispararFlecha(dx, dy) {
 
 function dispararBolaCajado(dx, dy) {
   projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * 420, vy: dy * 420, r: 6, vida: 0.9, cor: '#b48cff',
-    tipo: 'bola', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.4 + S.poder * 0.4)) });
+    tipo: 'bola', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.45 + S.poder * 0.6)) });
 }
 
 // ---------------------------------------------------------------------
