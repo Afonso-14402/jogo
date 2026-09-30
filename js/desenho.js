@@ -1817,7 +1817,7 @@ function desenharPausa() {
       textoEsq(traduzir(RELIQUIAS[id].nome).split(' ')[0], x + 18, y, 10, RELIQUIAS[id].cor, 'normal');
     });
   }
-  textoCentro('O jogo guarda sozinho ao entrar em cada andar', LARGURA / 2, ALTURA - 24, 13, '#888', false);
+  textoCentro('O jogo guarda sozinho: continuas no mesmo sítio do andar', LARGURA / 2, ALTURA - 24, 13, '#888', false);
 
   if (confirmarDesistir) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';

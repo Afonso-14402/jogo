@@ -46,7 +46,60 @@ function guardarJogo() {
   if (!J || J.hp <= 0 || J.remoto) return; // o herói do parceiro não é guardado
   const dados = { v: 1, andar: naCidade() ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade, continuas no andar seguinte
   for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
-  try { localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e) { /* sem storage */ }
+  const chao = fotoAndar();
+  if (chao) dados.chao = chao;
+  try { localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e) {
+    try { delete dados.chao; localStorage.setItem(CHAVE_SAVE, JSON.stringify(dados)); saveInfo = dados; } catch (e2) { /* sem storage */ }
+  }
+}
+
+// Guardar a meio do andar: o mapa, os monstros vivos, os baús e os objetos ficam como estão.
+// Nos portais, no templo, na cidade e nos andares de boss continua-se do início do andar.
+function fotoAndar() {
+  if (!mapa || !mapa.tiles || guardaAndar || naCidade() || mapa.eBoss || mapa.provacao || boss || (J.modo === 'bossrush')) return null;
+  const simples = o => { const r = {}; for (const k in o) { const v = o[k]; if (k[0] !== '_' && (typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean')) r[k] = v; } return r; };
+  return {
+    andar, x: Math.round(J.x), y: Math.round(J.y), mapa: mapaParaGuardar(mapa),
+    inimigos: inimigos.filter(e => !e.morto && !e.boss && INIMIGOS[e.tipo]).map(e => Object.assign(simples(e), { hab: [...(e.hab || [])] })),
+    baus, drops, objetos, armadilhas,
+  };
+}
+// O mapa inteiro (as tabelas de números vão em base64; ao ler usa-se o desserializarMapa do co-op)
+function mapaParaGuardar(m) {
+  const o = {};
+  for (const k in m) {
+    const v = m[k];
+    if (ArrayBuffer.isView(v)) o[k] = { __u8: paraBase64(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
+    else if (v instanceof Set) o[k] = { __set: [...v] };
+    else if (typeof v !== 'function') o[k] = v;
+  }
+  return o;
+}
+let relogioGuardar = 0;
+function autoGuardar(dt) { // a meio do andar guarda sozinho de 30 em 30 segundos
+  relogioGuardar += dt;
+  if (relogioGuardar < 30) return;
+  relogioGuardar = 0;
+  guardarJogo();
+}
+function restaurarAndar(c) {
+  andar = c.andar;
+  atualizarFatorAdaptativo();
+  mapa = desserializarMapa(c.mapa);
+  mapaImg = renderizarMapa(mapa, andar);
+  inimigos = c.inimigos.map(o => Object.assign(criarInimigo(o.tipo, o.x, o.y), o, { hab: new Set(o.hab), nasceu: tempoJogo }));
+  projeteis = []; particulas = []; textos = []; perigos = []; raios = []; ondas = []; restos = [];
+  baus = c.baus || []; drops = c.drops || []; objetos = c.objetos || []; armadilhas = c.armadilhas || [];
+  reiniciarBioma();
+  boss = null;
+  reiniciarCampo();
+  J.x = c.x; J.y = c.y;
+  J.invuln = 2; J.golpe = null;
+  levantarExercito();
+  cam.x = J.x - vistaW() / 2; cam.y = J.y - vistaH() / 2;
+  revelar(mapa, J.x, J.y, 7);
+  criarPetEntidade();
+  mostrarBanner(`ANDAR ${andar}`, 'Continuas onde paraste', '#ffffff');
 }
 
 function apagarSave() {
@@ -387,7 +440,11 @@ function continuarJogo() {
   andar = d.andar - 1;
   tempoJogo = d.tempoJogo || 0;
   S = stats();
-  proximoAndar();
+  let feito = false;
+  if (d.chao && d.chao.andar === d.andar) {
+    try { restaurarAndar(d.chao); feito = true; } catch (e) { console.warn('andar guardado estragado', e); }
+  }
+  if (!feito) { andar = d.andar - 1; proximoAndar(); }
   estado = 'jogo';
 }
 
@@ -2398,7 +2455,7 @@ function loop(agora) {
     else if (premiu('c')) estado = 'personagem';
     else if (premiu('tab')) estado = 'mapa';
     else if (premiu('i')) abrirMochila();
-    else { atualizar(dt * ritmoJogo()); atualizarTutorial(dt); atualizarDicas(dt); }
+    else { atualizar(dt * ritmoJogo()); atualizarTutorial(dt); atualizarDicas(dt); autoGuardar(dt); }
     if (estado === 'jogo' && J.escolhasPendentes > 0) abrirEscolha();
   } else if (estado === 'nivel') {
     atualizarEscolha(dt);

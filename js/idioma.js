@@ -195,7 +195,7 @@ const EN = {
   'ENTER: jogar · N: novo · A: almas · L: coleção · T: conquistas · I: idioma': 'ENTER: play · N: new · A: souls · L: collection · T: achievements · I: language',
   'PAUSA': 'PAUSED', 'Continuar (P)': 'Continue (P)', 'Guardar e sair (G)': 'Save and quit (G)', 'Desistir (X)': 'Give up (X)',
   'As tuas melhorias': 'Your upgrades', 'Ainda não tens melhorias. Sobe de nível!': 'No upgrades yet. Level up!',
-  'O jogo guarda sozinho ao entrar em cada andar': 'The game saves automatically on every floor',
+  'O jogo guarda sozinho: continuas no mesmo sítio do andar': 'The game saves automatically: you continue from the same spot',
   'Desistir desta partida?': 'Give up this run?', 'A partida termina e a gravação é apagada.': 'The run ends and the save is deleted.',
   'O andar a que chegaste conta para o recorde.': 'The floor you reached counts for your record.', 'Sim, desistir (X)': 'Yes, give up (X)',
   'Não (Esc)': 'No (Esc)', 'DESISTISTE': 'YOU GAVE UP', 'MORRESTE': 'YOU DIED', 'Andar alcançado: ': 'Floor reached: ', 'Nível: ': 'Level: ',
