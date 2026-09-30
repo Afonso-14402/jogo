@@ -1,0 +1,18 @@
+{
+  "name": "masmorra-do-destino",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RPG 2D de masmorras em pixel art (versão web e app Android).",
+  "scripts": {
+    "www": "node scripts/copiar-www.js",
+    "android": "node scripts/copiar-www.js && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  }
+}

@@ -1,6 +1,6 @@
 'use strict';
 // =====================================================================
-//  MASMORRA DUPLA (inspirada no primeiro arco do Solo Leveling)
+//  MASMORRA DUPLA: o templo da estátua gigante e as suas três regras
 //  Uma Porta Antiga rara leva a um templo com uma estátua gigante.
 //  As regras: "Venera o deus. Louva o deus. Prova a tua fé."
 //  - Os olhos da estátua ficam vermelhos: NÃO TE MEXAS (ou és castigado)

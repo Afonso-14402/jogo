@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Masmorra do Destino</string>
+    <string name="title_activity_main">Masmorra do Destino</string>
+    <string name="package_name">io.github.afonso14402.masmorra</string>
+    <string name="custom_url_scheme">io.github.afonso14402.masmorra</string>
+</resources>

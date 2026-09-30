@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.afonso14402.masmorra",
+  "appName": "Masmorra do Destino",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#07060a",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

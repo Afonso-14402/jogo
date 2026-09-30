@@ -1,6 +1,6 @@
 'use strict';
 // =====================================================================
-//  CAÇADOR (inspirado em manhwas como Solo Leveling):
+//  CAÇADOR: atributos, habilidades, exército das sombras e rank de caçador
 //  - Atributos para distribuir (Força, Agilidade, Vitalidade, Inteligência, Perceção)
 //  - Habilidades de Caçador que desbloqueiam com o nível (teclas 5 a 8)
 //  - Exército das Sombras: os monstros mortos levantam-se para lutar contigo

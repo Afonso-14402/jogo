@@ -147,7 +147,10 @@ const BOTAO_ECRA = { x: LARGURA - 176, y: 14, w: 40, h: 36 };
 const ehIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const podeEcraInteiro = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
 const emEcraInteiro = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+// A correr dentro da app Android (Play Store)?
+const naAppAndroid = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 function comoApp() {
+  if (naAppAndroid()) return true;
   try { return navigator.standalone === true || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches; } catch (e) { return false; }
 }
 const mostrarBotaoEcra = () => modoToque && !comoApp();
@@ -477,3 +480,21 @@ function desenharTutorial(t) {
 }
 
 requestAnimationFrame(loop);
+
+// ---------------------------------------------------------------------
+//  Botão "voltar" do Android (na app da Play Store): no jogo põe em pausa,
+//  nos menus fecha-os (como o Esc) e no menu inicial sai da app
+// ---------------------------------------------------------------------
+try {
+  const C = window.Capacitor;
+  const App = C && naAppAndroid() ? (C.registerPlugin ? C.registerPlugin('App') : C.Plugins && C.Plugins.App) : null;
+  if (App) {
+    App.addListener('backButton', () => {
+      if (estado === 'jogo') { estado = 'pausa'; rato.baixo = false; return; }
+      if (estado === 'titulo') { App.exitApp(); return; }
+      premidas['escape'] = true;
+    });
+    // ao voltar à app, o som recomeça
+    App.addListener('appStateChange', s => { if (s.isActive && actx && actx.state === 'suspended') actx.resume().catch(() => {}); });
+  }
+} catch (e) { /* no browser não há botão voltar */ }
