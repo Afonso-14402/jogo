@@ -80,7 +80,7 @@ function iniciarAudioMusica() {
   if (!gMusica) {
     gMusica = actx.createGain();
     gMusica.gain.value = 0.55;
-    gMusica.connect(actx.destination);
+    gMusica.connect(saidaSom());
     bufRuido = actx.createBuffer(1, actx.sampleRate * 0.5, actx.sampleRate);
     const d = bufRuido.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -136,7 +136,8 @@ function tocarPasso(id, passo, t0, colcheia) {
 
 // Que música deve estar a tocar agora
 function faixaDesejada() {
-  if (['titulo', 'criar', 'almas', 'colecao', 'conquistas', 'pacto', 'registo', 'diario'].includes(estado)) return 'titulo';
+  if (estado === 'convidado') return null; // o som vem do telemóvel do parceiro
+  if (['titulo', 'coop', 'criar', 'almas', 'colecao', 'conquistas', 'pacto', 'registo', 'diario'].includes(estado)) return 'titulo';
   if (!mapa || !J) return 'titulo';
   if (estado === 'cidade' || mapa.cidade) return 'cidade';
   if (estado === 'morto') return null;
@@ -172,7 +173,7 @@ function ruido(dur, vol = 0.05, freq = 800) {
     f.type = 'lowpass'; f.frequency.setValueAtTime(freq, t0); f.frequency.exponentialRampToValueAtTime(Math.max(60, freq * 0.2), t0 + dur);
     g.gain.setValueAtTime(vol, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    src.connect(f).connect(g).connect(actx.destination);
+    src.connect(f).connect(g).connect(saidaSom());
     src.start(t0); src.stop(t0 + dur + 0.02);
   } catch (e) { /* ignora */ }
 }

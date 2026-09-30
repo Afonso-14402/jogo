@@ -495,8 +495,8 @@ function aplicarVeneno(dps, dur = 3) {
   J.venenoDps = Math.max(J.venenoDps || 0, dps);
 }
 
-function atualizarBioma(dt) {
-  // veneno: tira vida aos poucos, mas nunca te mata sozinho
+// veneno: tira vida aos poucos, mas nunca te mata sozinho
+function atualizarVeneno(dt) {
   if (J.veneno > 0) {
     J.veneno -= dt;
     J.venenoAcum = (J.venenoAcum || 0) + J.venenoDps * dt;
@@ -509,6 +509,10 @@ function atualizarBioma(dt) {
     if (Math.random() < 0.25) particulas.push({ x: J.x + rand(-8, 8), y: J.y + rand(-10, 6), vx: 0, vy: -30, t: 0.5, cor: '#7dff5a', tam: 3 });
     if (J.veneno <= 0) J.venenoDps = 0;
   }
+}
+
+function atualizarBioma(dt) {
+  atualizarVeneno(dt);
   // poças
   J.pocaCd = (J.pocaCd || 0) - dt;
   for (const p of pocas) {

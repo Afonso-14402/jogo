@@ -313,6 +313,7 @@ function atualizarCacador(dt) {
   if (J.grito > 0) J.grito -= dt;
   if (J.furia > 0) { J.furia -= dt; if (J.furia <= 0) S = stats(); }
   if (J.barreiraT > 0) { J.barreiraT -= dt; if (J.barreiraT <= 0) J.barreira = 0; }
+  if (J.remoto) return; // o exército e os corpos são do herói principal
   for (const c of cadaveres) c.t -= dt;
   cadaveres = cadaveres.filter(c => c.t > 0);
   atualizarSombras(dt);
@@ -322,6 +323,7 @@ const temErgue = () => habsJ().some(h => h.id === 'ergue' && temHabilidade(h));
 
 // Novas habilidades e pontos ao subir de nível
 function aoSubirNivelCacador() {
+  if (J.remoto) { subirNivelParceiro(); return; } // o herói do parceiro (a jogar a 2)
   verificarProvacao();
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
   const h = habsJ().find(x => x.nivel === J.nivel);

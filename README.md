@@ -44,6 +44,23 @@ No canto superior direito do menu inicial e da pausa há um botão **PT | EN** p
 
 O jogo guarda sozinho ao entrar em cada andar e quando fechas a página. No menu inicial aparece **Continuar** (ENTER) ou **Novo jogo** (N). Ao continuar recomeças o andar onde estavas, com tudo o que tinhas. Se morreres, a partida guardada é apagada.
 
+## Jogar a 2 (co-op em dois telemóveis)
+
+1. No telemóvel de quem vai correr o jogo: **Jogar a 2 → Criar sala**. Aparece um código de 4 letras.
+2. No outro telemóvel: **Jogar a 2 → Entrar numa sala**, escreve o código e escolhe o caçador.
+3. Quem criou a sala carrega em **Novo jogo** ou **Continuar** (pode começar já; o amigo entra quando quiser).
+
+Como funciona:
+- O jogo corre no telemóvel de quem criou a sala, que envia a **imagem e o som** ao outro. O convidado tem o seu joystick e os seus botões (atacar, esquiva, poção, ★, magias e habilidades) e controla o **2.º herói** (com anel da cor do caçador e "J2" por cima).
+- Os **monstros atacam o herói mais perto**. A **câmara segue os dois**, por isso não se podem afastar demasiado.
+- A **XP é partilhada**: o parceiro sobe de nível contigo e escolhe as melhorias no telemóvel dele. O ouro vai para a equipa.
+- Cada **baú** que abres também dá um prémio ao parceiro (se não for melhor do que o que ele tem, é vendido e o ouro fica para a equipa).
+- Se um **cair**, o outro reanima-o ficando ao lado dele uns segundos. Só perdem se caírem os dois.
+- Quando abres um menu (mochila, loja, pausa...) o jogo para para os dois.
+- O parceiro entra ao teu nível e com equipamento do andar. O Caçador das Sombras fica só para quem cria a sala.
+
+A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJS](https://peerjs.com), licença MIT, em `js/lib/`). Precisa de internet nos dois e só funciona no site do jogo (não dentro do Claude).
+
 ## O que há no jogo
 
 - **Progressão entre partidas** (menu inicial):
@@ -292,6 +309,8 @@ js/historia.js      falas do [Sistema] e do Monarca, bosses das zonas finais e o
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
 js/polimento.js     peso dos golpes, herói mais vivo, mira e joystick, comparar itens, monstros mais espertos, luz rápida
+js/coop.js          Jogar a 2: sala com código, 2.º herói, câmara dos dois, reanimar, envio da imagem e dos toques
+js/lib/peerjs.min.js  biblioteca PeerJS (MIT) para a ligação entre os dois telemóveis
 js/cenario.js       animação dos ataques dos monstros, detalhes das paredes, coisas que mexem (lava, água, teias), ícones da interface e dicas de morte
 js/musica.js        música gerada no momento para cada zona, boss, portal e cidade
 js/desenho.js       desenho do mundo em baixa resolução, luz, HUD, roleta, loja e ecrãs
@@ -327,6 +346,13 @@ node testes/equilibrio.js 5,10,20 2   # vários andares
 
 ```
 node testes/caca_bugs.js
+```
+
+`testes/jogar_a_2.js` liga dois browsers (um no PC a criar a sala e outro num "telemóvel" a entrar) através de um servidor PeerJS local e verifica o modo a 2: o código, a imagem e o som, mexer e atacar, as habilidades, a XP partilhada, as melhorias, os baús, cair e reanimar, mudar de andar, sala cheia e código errado:
+
+```
+npm install playwright peer
+node testes/jogar_a_2.js
 ```
 
 ## Jogar online (opcional)

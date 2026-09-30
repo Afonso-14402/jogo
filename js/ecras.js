@@ -63,7 +63,7 @@ function circuloEcra(x, y, r, fundo, borda, largura = 3) {
 }
 
 function desenharControlosToque(t) {
-  if (estado !== 'jogo') return;
+  if (estado !== 'jogo' && estado !== 'convidado') return;
   // joystick
   const vis = VISIBILIDADES[opcoes.visibilidade] / 0.7; // 1 = normal
   const alfa = a => { ctx.globalAlpha = Math.min(1, a * vis); };

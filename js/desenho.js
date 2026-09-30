@@ -284,7 +284,8 @@ function desenhar(t) {
   ctxTela.fillRect(0, 0, TELA_W, ALTURA);
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0); // o interface fica centrado
-  if (estado === 'titulo' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
+  if (estado === 'convidado') { desenharConvidado(t); desenharAvisos(); desenharAvisoRodar(); return; } // a jogar a 2, no telemóvel do parceiro
+  if (estado === 'titulo' || estado === 'coop' || estado === 'criar' || estado === 'almas' || estado === 'colecao' || estado === 'conquistas' ||
       estado === 'pacto' || estado === 'registo' || estado === 'diario' || estado === 'transferir' ||
       (estado === 'opcoes' && opcoesVoltar !== 'pausa')) {
     if (estado === 'titulo') desenharTitulo(t);
@@ -294,6 +295,7 @@ function desenhar(t) {
     else if (estado === 'registo') desenharRegisto(t);
     else if (estado === 'diario') desenharDiario(t);
     else if (estado === 'transferir') desenharTransferir();
+    else if (estado === 'coop') desenharLobby(t);
     else desenharMenuMeta(t);
     desenharAvisos();
     desenharAvisoRodar();
@@ -320,6 +322,7 @@ function desenhar(t) {
   ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
+  desenharEtiquetasCoop(t);
   if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado)) desenharHUD(t);
   desenharTutorial(t);
   desenharFalas();
@@ -367,6 +370,7 @@ function desenharMundo(t) {
   for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
   for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
   if (estado !== 'morto') lista.push({ y: J.y, f: () => desenharJogador(t) });
+  if (estado !== 'morto' && parceiroAtivo()) lista.push({ y: coop.p2.y, f: () => desenharParceiro(t) });
   lista.sort((a, b) => a.y - b.y);
   for (const it of lista) it.f();
 
@@ -420,6 +424,7 @@ function desenharLuz(t) {
     L.globalAlpha = 1;
   };
   luz(J.x, J.y, 330 + Math.sin(t * 7) * 6, 1);
+  luzParceiro(luz, t);
   if (pet && J.pet && J.pet.tipo !== 'lobo') luz(pet.x, pet.y, 70, 0.6);
   for (const tc of mapa.tochas) luz(tc.x, tc.y + 20, 150 + tremorTocha(t, tc.x), 0.85);
   for (const o of objetos) {
@@ -609,7 +614,8 @@ function desenharObjeto(o, t) {
 }
 
 function desenharJogador(t) {
-  desenharRastos();
+  if (J.caido) { desenharCaido(t); return; } // a jogar a 2: espera que o parceiro o reanime
+  if (!J.remoto) desenharRastos();
   const piscar = J.invuln > 0 && Math.floor(J.invuln * 20) % 2 === 0;
   sombra(J.x, J.y + 12, 10);
   let ang = J.angArma;
@@ -915,6 +921,7 @@ function desenharHUD(t) {
   });
   const yRel = 142 + Math.ceil(obtidas.length / 10) * 28;
   (J.reliquias || []).forEach((id, i) => sprEcra(iconeReliquia(id), 26 + (i % 10) * 28, yRel + Math.floor(i / 10) * 28, 2));
+  desenharHudParceiro(yRel + Math.ceil((J.reliquias || []).length / 10) * 28 + 4, t); // a jogar a 2
 
   ctx.restore();
   desenharMinimapa();
@@ -1702,7 +1709,7 @@ function desenharTitulo(t) {
 
   // botões do menu
   botoesTitulo().forEach((b, i) => {
-    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : '#ddd';
+    const cor = ['continuar', 'novo'].includes(b.id) && i === 0 ? '#ffe14d' : b.id === 'almas' ? '#b48cff' : b.id === 'diario' ? '#ffae00' : b.id === 'torre' || b.id === 'bossrush' ? '#ff8080' : b.id === 'transferir' ? '#4dc3ff' : b.id === 'coop' ? '#5dff7a' : '#ddd';
     botao(b, b.txt, cor, undefined, { continuar: 'jogar', novo: 'novo' }[b.id] || b.id);
   });
   if (saveInfo) {

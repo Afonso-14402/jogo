@@ -42,7 +42,9 @@ function botoesToque() {
   // as habilidades só aparecem quando já as tens
   const habs = emJogo ? feits.concat(botoesHabilidadeToque().filter(b => temHabilidade(habsJ()[b.hab]))) : [];
   if (J && estado !== 'titulo' && classeJ().hab) habs.push(botaoClasseToque()); // habilidade única do caçador
-  return BOTOES_BASE.concat(habs).map(b => {
+  // a jogar a 2, o convidado só tem os botões de lutar
+  const base = estado === 'convidado' ? BOTOES_BASE.filter(b => ['atacar', 'dash', 'pocao'].includes(b.id)) : BOTOES_BASE;
+  return base.concat(habs).map(b => {
     const [ax, ay] = b.ancora;
     const n = Object.assign({}, b, { x: ax + (b.x - ax) * k, y: ay + (b.y - ay) * k, r: Math.round(b.r * k) });
     const trocado = opcoes.canhoto && b.lado;
@@ -70,9 +72,10 @@ canvas.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     const p = posToque(t);
     rato.x = p.x; rato.y = p.y;
-    if (estado === 'jogo') {
-      if (tutorial && noRet(p, BOTAO_SALTAR_TUTORIAL)) { acabarTutorial(); continue; }
-      if (noRet(p, retMinimapa())) { estado = 'mapa'; continue; } // tocar no minimapa abre o mapa grande
+    if (estado === 'jogo' || (estado === 'convidado' && !escolha)) {
+      if (estado === 'convidado' && noRet(p, BOTAO_SAIR_COOP)) { premidas['rato'] = true; continue; }
+      if (estado === 'jogo' && tutorial && noRet(p, BOTAO_SALTAR_TUTORIAL)) { acabarTutorial(); continue; }
+      if (estado === 'jogo' && noRet(p, retMinimapa())) { estado = 'mapa'; continue; } // tocar no minimapa abre o mapa grande
       const b = botaoEm(p);
       if (b) {
         tutorialAcao(b.id);
@@ -223,6 +226,7 @@ canvas.addEventListener('click', e => gesto(posToque(e)));
 //  Vibração (só Android; o iPhone não deixa)
 // ---------------------------------------------------------------------
 function vibrar(padrao) {
+  if (J && J.remoto) { enviarCoop({ t: 'vib', p: padrao }); return; } // vibra o telemóvel do parceiro
   if (!modoToque || !opcoes.vibracao || !navigator.vibrate) return;
   try { navigator.vibrate(padrao); } catch (e) { /* ignora */ }
 }

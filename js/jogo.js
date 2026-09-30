@@ -79,7 +79,12 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) guard
 // ---------------------------------------------------------------------
 //  Som (WebAudio, sem ficheiros)
 // ---------------------------------------------------------------------
-let actx = null;
+let actx = null, mestreSom = null;
+// Todo o som passa por aqui (assim também o podemos enviar ao telemóvel do parceiro)
+function saidaSom() {
+  if (!mestreSom) { mestreSom = actx.createGain(); mestreSom.connect(actx.destination); }
+  return mestreSom;
+}
 function som(freq, dur, tipo = 'square', vol = 0.05, slide = 0, atraso = 0) {
   if (!somLigado) return;
   try {
@@ -92,7 +97,7 @@ function som(freq, dur, tipo = 'square', vol = 0.05, slide = 0, atraso = 0) {
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t0 + dur);
     g.gain.setValueAtTime(vol, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(actx.destination);
+    o.connect(g).connect(saidaSom());
     o.start(t0);
     o.stop(t0 + dur + 0.02);
   } catch (e) { /* ignora */ }
@@ -126,7 +131,7 @@ canvas.addEventListener('mousedown', e => { rato.baixo = true; premidas['rato'] 
 addEventListener('mouseup', () => { rato.baixo = false; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-const premiu = (...ks) => ks.some(k => premidas[k]);
+const premiu = (...ks) => !(J && J.remoto) && ks.some(k => premidas[k]); // o herói do convidado não usa o teu teclado
 
 // ---------------------------------------------------------------------
 //  Itens
@@ -658,6 +663,7 @@ function atualizarEfeitos(dt) {
 function xpProximo(n) { return Math.floor(20 * Math.pow(n, 1.5)); }
 
 function ganharXp(q) {
+  const base = q;
   q = Math.round(q * S.xpMult);
   J.xp += q;
   texto(J.x, J.y - 26, `+${q} XP`, '#7ec8ff', 13);
@@ -674,6 +680,7 @@ function ganharXp(q) {
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
     explosao(J.x, J.y, '#ffe14d', 30, 220, 5);
   }
+  partilharXp(base); // a jogar a 2, o parceiro ganha o mesmo
 }
 
 function atacar(dx, dy) {
@@ -766,6 +773,7 @@ function relampago(origem, dano, saltos = 3, fator = 0.6) {
 }
 
 function matarInimigo(e) {
+  if (J.remoto) { comHeroi(coop.principal, () => matarInimigo(e)); return; }
   if (e.tipo === 'zumbi' && !e.reviveu) { // os zumbis levantam-se uma vez
     e.reviveu = true;
     e.hp = Math.round(e.maxHp * 0.4);
@@ -847,7 +855,7 @@ function matarInimigo(e) {
 }
 
 function danoJogador(d, fx, fy, fonte = null) {
-  if (J.invuln > 0 || J.dashT > 0 || estado !== 'jogo') return;
+  if (J.invuln > 0 || J.dashT > 0 || J.caido || estado !== 'jogo') return;
   J.causa = fonte ? fonte.nome : (J.causaProxima || (boss ? boss.nome : 'uma armadilha'));
   J.causaTipo = fonte ? fonte.tipo : (!J.causaProxima && boss ? boss.tipo : null);
   J.causaProxima = null;
@@ -894,7 +902,7 @@ function danoJogador(d, fx, fy, fonte = null) {
       mostrarBanner('SEGUNDA VIDA!', 'As almas trouxeram-te de volta', '#fff0a0');
       explosao(J.x, J.y, '#fff0a0', 50, 280, 6);
       fanfarra([523, 784, 1046, 1568], 0.05);
-    } else morrer();
+    } else if (!caiuCoop()) morrer();
   }
 }
 
@@ -964,6 +972,7 @@ function atualizar(dt) {
   S = stats();
   atualizarJogador(dt);
   if (estado !== 'jogo') return;
+  atualizarCoop(dt); // o herói do parceiro (a jogar a 2)
   atualizarCacador(dt);
   atualizarClasse(dt);
   atualizarPortal(dt);
@@ -977,7 +986,7 @@ function atualizar(dt) {
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
-  for (const e of inimigos) if (!e.morto) atualizarInimigo(e, dt);
+  for (const e of inimigos) if (!e.morto) comHeroi(alvoDe(e), () => atualizarInimigo(e, dt)); // cada monstro vai ao herói mais perto
   separarInimigos();
   atualizarProjeteis(dt);
   atualizarPerigos(dt);
@@ -1033,9 +1042,10 @@ function atualizar(dt) {
   }
   atualizarEfeitos(dt);
 
-  // câmara
-  const alvoX = clamp(J.x - vistaW() / 2, 0, mapa.W * TILE - vistaW());
-  const alvoY = clamp(J.y - vistaH() / 2, 0, mapa.H * TILE - vistaH());
+  // câmara (a jogar a 2 fica no meio dos dois)
+  const foco = focoCamara();
+  const alvoX = clamp(foco.x - vistaW() / 2, 0, mapa.W * TILE - vistaW());
+  const alvoY = clamp(foco.y - vistaH() / 2, 0, mapa.H * TILE - vistaH());
   cam.x += (alvoX - cam.x) * Math.min(1, dt * 8);
   cam.y += (alvoY - cam.y) * Math.min(1, dt * 8);
   revelar(mapa, J.x, J.y, 7);
@@ -1073,14 +1083,13 @@ function atualizar(dt) {
 const danoArmadilha = () => Math.round(8 * escalaAndar(andar).dano * dif().dano);
 
 function atualizarArmadilhas(dt) {
-  const jtx = Math.floor(J.x / TILE), jty = Math.floor(J.y / TILE);
   for (const a of armadilhas) {
     if (a.tipo === 'espinhos') {
       const t = (tempoJogo + a.fase) % 3.2;
       const antes = a.estado;
       a.estado = t < 2.2 ? 0 : t < 2.7 ? 1 : 2; // 0 escondidos, 1 aviso, 2 levantados
       if (a.estado === 2 && antes !== 2 && Math.hypot(a.x - J.x, a.y - J.y) < 300) som(700, 0.05, 'square', 0.015, -300);
-      if (a.estado === 2 && a.tx === jtx && a.ty === jty) danoJogador(danoArmadilha(), a.x, a.y);
+      if (a.estado === 2) for (const H of heroisVivos()) if (a.tx === Math.floor(H.x / TILE) && a.ty === Math.floor(H.y / TILE)) comHeroi(H, () => danoJogador(danoArmadilha(), a.x, a.y));
     } else {
       a.cd -= dt;
       const frente = (a.ty + a.dy) * mapa.W + a.tx + a.dx;
@@ -1240,15 +1249,20 @@ function comprar(i) {
   else if (of.id === 'livro') { aprenderFeitico(of.feitico); loja.msg = { txt: `${FEITICOS[of.feitico].nome}: nível ${J.feiticos[of.feitico]}`, cor: FEITICOS[of.feitico].cor, t: 2 }; }
 }
 
-function atualizarJogador(dt) {
+// R: os comandos que chegam do telemóvel do parceiro (a jogar a 2); sem R usa o teclado e o toque
+function atualizarJogador(dt, R = null) {
+  if (J.caido) { J.andando = false; J.golpe = null; return; } // caído: espera que o parceiro o reanime
   let mx = 0, my = 0;
-  if (teclas['w'] || teclas['arrowup']) my -= 1;
-  if (teclas['s'] || teclas['arrowdown']) my += 1;
-  if (teclas['a'] || teclas['arrowleft']) mx -= 1;
-  if (teclas['d'] || teclas['arrowright']) mx += 1;
   let forca = 1;
-  const js = lerJoystick(); // joystick analógico e suavizado
-  if (js) { mx = js.x; my = js.y; forca = js.forca; }
+  if (R) { mx = R.mx; my = R.my; forca = R.forca || 1; }
+  else {
+    if (teclas['w'] || teclas['arrowup']) my -= 1;
+    if (teclas['s'] || teclas['arrowdown']) my += 1;
+    if (teclas['a'] || teclas['arrowleft']) mx -= 1;
+    if (teclas['d'] || teclas['arrowright']) mx += 1;
+    const js = lerJoystick(); // joystick analógico e suavizado
+    if (js) { mx = js.x; my = js.y; forca = js.forca; }
+  }
   J.andando = !!(mx || my);
   if (mx || my) {
     const l = Math.hypot(mx, my);
@@ -1260,7 +1274,7 @@ function atualizarJogador(dt) {
   J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt; J.lentoT -= dt;
   const fLento = (J.lentoT > 0 ? 0.5 : 1) * fatorTerreno();
 
-  if (premiu('shift') && J.cdDash <= 0) {
+  if ((R ? R.dash : premiu('shift')) && J.cdDash <= 0) {
     const dx = (mx || my) ? mx : J.dirX, dy = (mx || my) ? my : J.dirY;
     J.dashT = 0.16; J.dashVX = dx * 560; J.dashVY = dy * 560; J.cdDash = S.cdDash;
     som(500, 0.12, 'sine', 0.04, -300);
@@ -1276,12 +1290,12 @@ function atualizarJogador(dt) {
   J.kbx *= Math.max(0, 1 - dt * 10);
   J.kby *= Math.max(0, 1 - dt * 10);
 
-  if (toque.atacar) {
+  if (R ? R.atk : toque.atacar) {
     const a = alvoMelhor(S.alcance + J.r + 80);
     if (a) atacar(a.x - J.x, a.y - J.y); else atacar(J.dirX, J.dirY);
-  } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
+  } else if (R) { /* o parceiro só ataca com o botão */ } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
   else if (teclas[' '] || teclas['j']) atacar(J.dirX, J.dirY);
-  if (premiu('q')) { beberPocao(); tutorialEvento('pocao'); }
+  if (R ? R.pocao : premiu('q')) { beberPocao(); tutorialEvento('pocao'); }
   feiticosJ().forEach((id, i) => { if (premiu(String(i + 1))) lancarFeitico(id); });
   for (const k in J.cdFeitico) J.cdFeitico[k] -= dt;
   if (J.cdPocao > 0) J.cdPocao -= dt;
@@ -1715,26 +1729,31 @@ function atualizarProjeteis(dt) {
       }
       continue;
     }
-    if (J.dashT <= 0 && Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r - 2) {
-      if (p.efeito === 'teia') {
-        if (J.lentoT <= 0) texto(J.x, J.y - 30, 'PRESO NA TEIA!', '#e8e8f0', 15);
-        J.lentoT = 2.5;
-      }
-      if (p.efeito === 'gelo') J.lentoT = Math.max(J.lentoT, 1.5);
-      const hp0 = J.hp;
-      J.causaProxima = p.origem ? p.origem.nome : null;
-      danoJogador(p.dano, p.x - p.vx, p.y - p.vy);
-      if (J.hp < hp0 && p.efeito === 'veneno') aplicarVeneno(Math.max(2, p.dano * 0.35), 3);
-      if (J.hp < hp0 && p.efeito === 'puxar' && p.origem && !p.origem.morto) { // a ligadura da múmia puxa-te
-        const ox = p.origem.x - J.x, oy = p.origem.y - J.y, l = Math.hypot(ox, oy) || 1;
-        J.kbx = ox / l * 620; J.kby = oy / l * 620;
-        J.lentoT = Math.max(J.lentoT, 1);
-        texto(J.x, J.y - 30, 'Puxado!', '#d8c9a3', 14);
-      }
-      p.morto = true;
-    }
+    for (const H of heroisVivos()) if (!p.morto) comHeroi(H, () => acertarHeroi(p));
   }
   projeteis = projeteis.filter(p => !p.morto);
+}
+
+// Um tiro dos monstros acerta no herói J?
+function acertarHeroi(p) {
+  if (J.dashT <= 0 && Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r - 2) {
+    if (p.efeito === 'teia') {
+      if (J.lentoT <= 0) texto(J.x, J.y - 30, 'PRESO NA TEIA!', '#e8e8f0', 15);
+      J.lentoT = 2.5;
+    }
+    if (p.efeito === 'gelo') J.lentoT = Math.max(J.lentoT, 1.5);
+    const hp0 = J.hp;
+    J.causaProxima = p.origem ? p.origem.nome : null;
+    danoJogador(p.dano, p.x - p.vx, p.y - p.vy);
+    if (J.hp < hp0 && p.efeito === 'veneno') aplicarVeneno(Math.max(2, p.dano * 0.35), 3);
+    if (J.hp < hp0 && p.efeito === 'puxar' && p.origem && !p.origem.morto) { // a ligadura da múmia puxa-te
+      const ox = p.origem.x - J.x, oy = p.origem.y - J.y, l = Math.hypot(ox, oy) || 1;
+      J.kbx = ox / l * 620; J.kby = oy / l * 620;
+      J.lentoT = Math.max(J.lentoT, 1);
+      texto(J.x, J.y - 30, 'Puxado!', '#d8c9a3', 14);
+    }
+    p.morto = true;
+  }
 }
 
 function atualizarPerigos(dt) {
@@ -1745,7 +1764,7 @@ function atualizarPerigos(dt) {
       explosao(p.x, p.y, '#ff7b25', 22, 220, 6);
       tremor = Math.max(tremor, 6);
       som(80, 0.3, 'sawtooth', 0.05, -30);
-      if (Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r * 0.5) danoJogador(p.dano, p.x, p.y);
+      for (const H of heroisVivos()) comHeroi(H, () => { if (Math.hypot(p.x - J.x, p.y - J.y) < p.r + J.r * 0.5) danoJogador(p.dano, p.x, p.y); });
     }
   }
   perigos = perigos.filter(p => !p.morto);
@@ -1765,7 +1784,7 @@ function alvoProximo(raio) {
 }
 
 function mira() {
-  if (modoToque) {
+  if (modoToque || J.remoto) {
     const a = alvoMelhor(420);
     if (a) { const dx = a.x - J.x, dy = a.y - J.y, l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
     return [J.dirX, J.dirY];
@@ -2112,7 +2131,7 @@ const clicou = r => premiu('rato') && dentro(r);
 
 function botoesTitulo() {
   const l = saveInfo ? [['continuar', 'Continuar'], ['novo', 'Novo jogo']] : [['novo', 'Começar']];
-  l.push(['diario', 'Desafio Diário'], ['bossrush', `Boss Rush${meta.bossRush ? ` (${relogioRush(meta.bossRush)})` : ''}`], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
+  l.push(['coop', coop.papel === 'anfitriao' ? `Jogar a 2 (sala ${coop.codigo})` : 'Jogar a 2'], ['diario', 'Desafio Diário'], ['bossrush', `Boss Rush${meta.bossRush ? ` (${relogioRush(meta.bossRush)})` : ''}`], ['torre', `Torre dos 100 Andares${meta.torreMax ? ` (${meta.torreMax})` : ''}`]);
   const calor = calorDe(meta.pacto || {});
   const peq = [['almas', `Almas (${meta.almas})`], ['pacto', calor ? `Pacto (Calor ${calor})` : 'Pacto de Castigo'],
     ['colecao', 'Coleção'], ['conquistas', 'Conquistas'], ['registo', 'Missões'], ['transferir', 'Transferir progresso']];
@@ -2221,6 +2240,7 @@ function abrirBau(b) {
   progressoPedidos('baus');
   if (b.tipo === 'ouro' && Math.random() < 0.2) soltarReliquia(b.x, b.y + 30);
   iniciarRoleta(b.tipo, 'jogo');
+  presenteParceiro(b.tipo);
 }
 
 function iniciarRoleta(tipoBau, voltar) {
@@ -2300,6 +2320,7 @@ function loop(agora) {
 
   if (premiu('m')) mudarSom();
   atualizarMusica();
+  atualizarRedeCoop(dt);
 
   if (estado === 'titulo') {
     let acao = null;
@@ -2323,6 +2344,7 @@ function loop(agora) {
     else if (acao === 'torre') { modoProximo = 'torre'; abrirCriacao(); }
     else if (acao === 'bossrush') { modoProximo = 'bossrush'; abrirCriacao(); }
     else if (acao === 'transferir') abrirTransferir();
+    else if (acao === 'coop') abrirCoop();
     else if (acao) abrirMenuMeta(acao);
   } else if (estado === 'almas' || estado === 'colecao' || estado === 'conquistas') {
     atualizarMenuMeta(dt);
@@ -2338,6 +2360,10 @@ function loop(agora) {
     atualizarFim(dt);
   } else if (estado === 'transferir') {
     atualizarTransferir(dt);
+  } else if (estado === 'coop') {
+    atualizarLobby(dt);
+  } else if (estado === 'convidado') {
+    atualizarConvidado(dt);
   } else if (estado === 'diario') {
     atualizarDiario(dt);
   } else if (estado === 'opcoes') {
