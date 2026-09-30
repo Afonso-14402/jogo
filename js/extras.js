@@ -115,24 +115,64 @@ function missoesDeHoje() {
   return meta.missoes.lista;
 }
 
+// Missões da semana: 3 de cada vez, maiores e com mais almas (mudam à segunda-feira)
+const MISSOES_SEMANA = [
+  { id: 'matar',    desc: 'Mata {n} monstros',           n: 700,  almas: 60 },
+  { id: 'baus',     desc: 'Abre {n} baús',               n: 40,   almas: 60 },
+  { id: 'andar',    desc: 'Chega ao andar {n}',          n: 25,   almas: 80, maximo: true },
+  { id: 'boss',     desc: 'Derrota {n} bosses',          n: 8,    almas: 70 },
+  { id: 'elite',    desc: 'Mata {n} monstros de elite',  n: 35,   almas: 60 },
+  { id: 'ouro',     desc: 'Apanha {n} de ouro',          n: 6000, almas: 60 },
+  { id: 'feitico',  desc: 'Lança {n} feitiços',          n: 250,  almas: 50 },
+  { id: 'campeao',  desc: 'Mata {n} Campeões',           n: 15,   almas: 70 },
+  { id: 'reliquia', desc: 'Apanha {n} relíquias',        n: 6,    almas: 70 },
+  { id: 'secreta',  desc: 'Encontra {n} salas secretas', n: 5,    almas: 70 },
+  { id: 'portal',   desc: 'Conquista {n} portais',       n: 6,    almas: 70 },
+];
+// Segunda-feira desta semana (o "nome" da semana) e os dias que faltam
+function semanaTexto() {
+  const d = new Date(), dia = (d.getDay() + 6) % 7, seg = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dia);
+  return `${seg.getFullYear()}-${String(seg.getMonth() + 1).padStart(2, '0')}-${String(seg.getDate()).padStart(2, '0')}`;
+}
+const diasAteSegunda = () => 7 - (new Date().getDay() + 6) % 7;
+function missoesDaSemana() {
+  const semana = semanaTexto();
+  if (!meta.semana || meta.semana.id !== semana) {
+    let h = 7;
+    for (const ch of semana) h = (h * 131 + ch.charCodeAt(0)) >>> 0;
+    const r = aleatorio(h), pool = MISSOES_SEMANA.slice(), lista = [];
+    for (let k = 0; k < 3; k++) {
+      const M = pool.splice(Math.floor(r() * pool.length), 1)[0];
+      lista.push({ id: M.id, alvo: M.n, prog: 0, feita: false });
+    }
+    meta.semana = { id: semana, lista };
+    salvarMeta();
+  }
+  return meta.semana.lista;
+}
+function progredirMissoes(lista, defs, evento, q, titulo) {
+  for (const m of lista) {
+    if (m.feita || m.id !== evento) continue;
+    const M = defs.find(x => x.id === m.id);
+    m.prog = M.maximo ? Math.max(m.prog, q) : m.prog + q;
+    if (m.prog >= m.alvo) {
+      m.feita = true;
+      meta.almas += M.almas;
+      avisar(titulo, `${traduzir(M.desc).replace('{n}', m.alvo)}  (+${M.almas} almas)`, '#5dff7a');
+      fanfarra([523, 659, 784, 1046], 0.04);
+      if (contar('missoes') >= 10) desbloquear('missoes10');
+    }
+  }
+}
+
 // Regista um acontecimento (conta para as missões e para as estatísticas)
 function registar(evento, q = 1) {
   if (!meta.stats) meta.stats = {};
   if (evento === 'andar') meta.stats.andarMax = Math.max(meta.stats.andarMax || 0, q);
   else meta.stats[evento] = (meta.stats[evento] || 0) + q;
   progressoContratos(evento, q);
-  for (const m of missoesDeHoje()) {
-    if (m.feita || m.id !== evento) continue;
-    const M = MISSOES.find(x => x.id === m.id);
-    m.prog = M.maximo ? Math.max(m.prog, q) : m.prog + q;
-    if (m.prog >= m.alvo) {
-      m.feita = true;
-      meta.almas += M.almas;
-      avisar('Missão cumprida!', `${traduzir(M.desc).replace('{n}', m.alvo)}  (+${M.almas} almas)`, '#5dff7a');
-      fanfarra([523, 659, 784, 1046], 0.04);
-      if (contar('missoes') >= 10) desbloquear('missoes10');
-    }
-  }
+  progredirMissoes(missoesDeHoje(), MISSOES, evento, q, 'Missão cumprida!');
+  progredirMissoes(missoesDaSemana(), MISSOES_SEMANA, evento, q, 'Missão semanal cumprida!');
   salvarMeta();
 }
 
@@ -157,17 +197,21 @@ function atualizarRegisto(dt) {
 function desenharRegisto(t) {
   botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
   textoCentro('MISSÕES E ESTATÍSTICAS', LARGURA / 2, 32, 28, '#5dff7a');
-  // missões de hoje
+  // missões de hoje e da semana
+  const linhaMissao = (m, defs, y, cor) => {
+    const M = defs.find(x => x.id === m.id);
+    painel(40, y, 420, 44, m.feita ? 'rgba(20,40,20,0.96)' : 'rgba(18,14,28,0.95)', m.feita ? '#5dff7a' : '#3a3150');
+    textoEsqAjustado(traduzir(M.desc).replace('{n}', m.alvo), 54, y + 14, 14, m.feita ? '#5dff7a' : '#fff', 300);
+    textoDir(`+${M.almas} almas`, 448, y + 14, 12, '#b48cff');
+    barra(54, y + 30, 282, 8, Math.min(1, m.prog / m.alvo), m.feita ? '#5dff7a' : cor);
+    textoEsq(m.feita ? 'Feita!' : `${Math.min(m.prog, m.alvo)} / ${m.alvo}`, 346, y + 34, 11, '#ddd', 'normal');
+  };
   textoEsq('Missões de hoje', 40, 86, 18, '#ffe14d');
-  missoesDeHoje().forEach((m, i) => {
-    const M = MISSOES.find(x => x.id === m.id), y = 104 + i * 70;
-    painel(40, y, 420, 60, m.feita ? 'rgba(20,40,20,0.96)' : 'rgba(18,14,28,0.95)', m.feita ? '#5dff7a' : '#3a3150');
-    textoEsq(traduzir(M.desc).replace('{n}', m.alvo), 56, y + 18, 15, m.feita ? '#5dff7a' : '#fff');
-    textoDir(`+${M.almas} almas`, 448, y + 18, 12, '#b48cff');
-    barra(56, y + 36, 280, 10, Math.min(1, m.prog / m.alvo), m.feita ? '#5dff7a' : '#ffae00');
-    textoEsq(m.feita ? 'Feita!' : `${Math.min(m.prog, m.alvo)} / ${m.alvo}`, 346, y + 42, 12, '#ddd', 'normal');
-  });
-  textoEsq('Há missões novas todos os dias', 40, 326, 11, '#888', 'normal');
+  missoesDeHoje().forEach((m, i) => linhaMissao(m, MISSOES, 102 + i * 50, '#ffae00'));
+  const dias = diasAteSegunda();
+  textoEsq('Missões da semana', 40, 266, 18, '#ff8ce0');
+  textoDir(dias === 1 ? 'Mudam amanhã' : `Mudam daqui a ${dias} dias`, 460, 268, 11, '#888', 'normal');
+  missoesDaSemana().forEach((m, i) => linhaMissao(m, MISSOES_SEMANA, 282 + i * 50, '#ff8ce0'));
   // estatísticas
   const st = meta.stats || {}, c = meta.contadores || {};
   const min = Math.round((st.tempo || 0) / 60);
@@ -185,12 +229,12 @@ function desenharRegisto(t) {
     textoDir(`${v}`, 904, y, 13, '#fff');
   });
   // histórico
-  textoEsq('Últimas partidas', 40, 372, 18, '#ffae00');
-  const h = meta.historico || [];
-  painel(40, 388, 880, 216, 'rgba(18,14,28,0.95)');
-  if (!h.length) textoCentro('Ainda não acabaste nenhuma partida', LARGURA / 2, 490, 14, '#777', false);
+  textoEsq('Últimas partidas', 40, 448, 18, '#ffae00');
+  const h = (meta.historico || []).slice(0, 6);
+  painel(40, 462, 880, 158, 'rgba(18,14,28,0.95)');
+  if (!h.length) textoCentro('Ainda não acabaste nenhuma partida', LARGURA / 2, 540, 14, '#777', false);
   h.forEach((p, i) => {
-    const y = 408 + i * 25, D = DIFICULDADES[p.dif] || DIFICULDADES.normal;
+    const y = 480 + i * 24, D = DIFICULDADES[p.dif] || DIFICULDADES.normal;
     textoEsq(`Andar ${p.andar}`, 56, y, 14, '#ffe14d');
     textoEsq(`Nv ${p.nivel}`, 156, y, 13, '#9fc8ff', 'normal');
     textoEsq((RACAS[p.raca] || RACAS.humano).nome, 226, y, 13, (RACAS[p.raca] || RACAS.humano).cor, 'normal');

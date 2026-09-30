@@ -847,6 +847,9 @@ const EN = {
   'Toca no botão de ': 'Tap the button of ', ' para lançar magia': ' to cast magic', 'Carrega 1 para lançar ': 'Press 1 to cast ', ' (gasta mana)': ' (uses mana)',
   'Toca em ★ para usar ': 'Tap ★ to use ', 'Carrega F para usar ': 'Press F to use ',
   'Toca em »» para te esquivares': 'Tap »» to dodge', 'Shift: esquiva (ficas invencível)': 'Shift: dodge (you are invincible)',
+  // missões da semana
+  'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',
+  'Mudam daqui a ': 'New ones in ', ' dias': ' days',
   // Arqueira Lunar
   'Arqueira Lunar': 'Moon Archer', 'Arco Lunar': 'Moon Bow', 'Brilha mais nas noites sem lua.': 'Shines brighter on moonless nights.',
   'Chuva de Flechas': 'Arrow Rain', 'CHUVA DE FLECHAS': 'ARROW RAIN', 'Uma chuva de flechas cai do céu sobre o alvo e à volta dele': 'A rain of arrows falls from the sky on and around the target',
