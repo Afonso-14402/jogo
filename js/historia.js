@@ -94,7 +94,7 @@ function vitoriaFinal() {
 function atualizarFim(dt) {
   fimUI.t += dt;
   if (fimUI.t < 3) return;
-  if (premiu('enter', 'e') || clicou(BOTOES_FIM.continuar)) { estado = 'jogo'; fimUI = null; falar('sistema', 'Modo infinito: a masmorra continua. Até onde consegues ir?'); }
+  if (premiu('enter', 'e') || clicou(BOTOES_FIM.continuar)) { estado = 'jogo'; fimUI = null; falar('sistema', 'Modo infinito: a masmorra continua. Até onde consegues ir?'); falar('sistema', 'Nas Profundezas, de 10 em 10 andares, vêm dois bosses de uma vez.'); }
   else if (premiu('escape') || clicou(BOTOES_FIM.menu)) { guardarJogo(); estado = 'titulo'; fimUI = null; }
 }
 

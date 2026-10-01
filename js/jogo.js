@@ -219,6 +219,7 @@ function chancesBau(tipoBau) {
   let total = 0;
   // lá em cima os lendários e os míticos são muito mais raros (ficam normais no andar 15 e no 35)
   const fundo = { lendario: clamp(andar / 15, 0.2, 1), mitico: clamp((andar - 5) / 30, 0.05, 1) };
+  if (andar > 60) { fundo.lendario = 1 + Math.min(1, (andar - 60) * 0.03); fundo.mitico = 1 + Math.min(2, (andar - 60) * 0.05); } // Profundezas: baús melhores
   for (const r of ORDEM_RARIDADES) {
     pesos[r] = base[r] * Math.pow(EFEITO_SORTE[r], sorte) * (fundo[r] || 1);
     total += pesos[r];
@@ -479,6 +480,7 @@ function proximoAndar() {
     boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss());
     inimigos.push(boss);
     mostrarBanner(mapa.provacao ? 'PROVAÇÃO DE CLASSE' : `ANDAR ${andar} — BOSS`, boss.nome, mapa.provacao ? '#4dc3ff' : '#ff4d4d');
+    bossDuploProfundezas(); // Profundezas: de 10 em 10 andares vêm dois
     som(80, 1.2, 'sawtooth', 0.06, -30);
   } else {
     if (semente != null) comSemente(semente + 1, popularAndar); else popularAndar();
@@ -497,6 +499,8 @@ function proximoAndar() {
   historiaDoAndar();
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
+  if (andar >= 70) desbloquear('fundo70');
+  if (andar >= 100) desbloquear('fundo100');
   if (andar >= 10) conquistaEquipa('coopAndar10');
   if (andar >= 30) conquistaEquipa('coopAndar30');
   conquistasAoDescer();
@@ -649,10 +653,11 @@ function soltarOuro(x, y, total, n = 1) {
 // Quanto os monstros crescem com o andar: devagar no início e cada vez mais
 // depressa a partir do andar 20, para o herói nunca ficar imortal.
 function escalaAndar(a) {
-  const extra = Math.max(0, a - 20);
+  // nas Profundezas (depois do andar 60) cresce bem mais devagar: dá para ir longe
+  const extra = Math.max(0, Math.min(a, 60) - 20), fundo = Math.max(0, a - 60);
   return {
-    hp: (1 + (a - 1) * 0.3) * Math.pow(1.035, extra),
-    dano: (1 + (a - 1) * 0.18) * Math.pow(1.03, extra),
+    hp: (1 + (a - 1) * 0.3) * Math.pow(1.035, extra) * Math.pow(1.012, fundo),
+    dano: (1 + (a - 1) * 0.18) * Math.pow(1.03, extra) * Math.pow(1.01, fundo),
   };
 }
 
@@ -881,6 +886,8 @@ function matarInimigo(e) {
     if (e.tipo === 'senhorVazio') desbloquear('vazio');
     if (!J.levouDanoBoss) desbloquear('intocavel');
     if (mapa.portal) { bossPortalMorto(e); return; } // boss de um portal
+    const outro = inimigos.find(x => x.boss && !x.morto && x !== e); // boss duplo: ainda falta o outro
+    if (outro) { boss = outro; texto(e.x, e.y - 40, 'Falta um!', '#ff8080', 20); return; }
     vitoriaTorre();
     efeitoBossMorto();
     if (!meta.trofeus) meta.trofeus = {};
@@ -891,6 +898,7 @@ function matarInimigo(e) {
     const ex = mapa.escada.x, ey = mapa.escada.y;
     baus.push({ x: ex - 70, y: ey, tipo: 'ouro', semMimico: true, t: 0 });
     baus.push({ x: ex + 70, y: ey, tipo: 'madeira', semMimico: true, t: 0 });
+    premioBossDuplo(ex, ey);
     J.pocoes += 1;
     soltarOuro(e.x, e.y, Math.round(40 * (1 + (andar - 1) * 0.25)), 8);
     const livro = sortearLivro();

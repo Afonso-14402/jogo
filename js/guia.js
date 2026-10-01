@@ -133,3 +133,27 @@ function desenharDica() {
   barra(r.x + 8, r.y + r.h - 7, r.w - 16, 3, 1 - dicaAtual.t / dicaAtual.dur, '#4dc3ff', '#10303a');
   ctx.globalAlpha = 1;
 }
+
+// ---------------------------------------------------------------------
+//  Profundezas (depois do Soberano, andar 61 em diante)
+//  De 10 em 10 andares vêm dois bosses ao mesmo tempo; vencê-los dá mais prémios
+// ---------------------------------------------------------------------
+const ehBossDuplo = () => !!(J && !J.modo && andar > 60 && andar % 10 === 0 && mapa && !mapa.provacao);
+function bossDuploProfundezas() {
+  if (!ehBossDuplo() || !boss) return;
+  const outros = BOSSES.filter(b => b.id !== boss.tipo && b.id !== 'monarca');
+  const b2 = criarBoss(escolher(outros).id, 0.75); // são dois: cada um um pouco mais fraco
+  boss.hp = boss.maxHp = Math.round(boss.maxHp * 0.75);
+  for (const dx of [110, -110, 0]) {
+    if (!colideCirculo(mapa, boss.x + dx, boss.y + (dx ? 0 : 90), b2.r)) { b2.x = boss.x + dx; b2.y = boss.y + (dx ? 0 : 90); break; }
+  }
+  inimigos.push(b2);
+  viuMonstro(b2.tipo);
+  mostrarBanner(`ANDAR ${andar} — BOSS DUPLO`, `${boss.nome} + ${b2.nome}`, '#ff4d4d');
+}
+function premioBossDuplo(x, y) {
+  if (!ehBossDuplo()) return;
+  baus.push({ x: x, y: y + 70, tipo: 'ouro', semMimico: true, t: 0 });
+  soltarReliquia(x, y - 60);
+  avisar('BOSS DUPLO VENCIDO!', 'Mais um Baú Dourado e uma relíquia', '#ffd23f');
+}

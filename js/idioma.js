@@ -874,6 +874,9 @@ const EN = {
   'Fonte Arcana': 'Arcane Fountain', 'As magias custam -30% mana': 'Spells cost -30% mana',
   'Bastião': 'Bastion', 'O Escudo Divino volta em 5 s em vez de 10': 'Divine Shield comes back in 5 s instead of 10',
   'Olho Arcano': 'Arcane Eye', 'Cada golpe crítico dá-te 2 de mana': 'Every critical hit gives you 2 mana',
+  'Falta um!': 'One more!', ' — BOSS DUPLO': ' — DOUBLE BOSS', 'BOSS DUPLO VENCIDO!': 'DOUBLE BOSS DEFEATED!', 'Mais um Baú Dourado e uma relíquia': 'One more Golden Chest and a relic',
+  'Explorador do Abismo': 'Abyss Explorer', 'Chega ao andar 70': 'Reach floor 70', 'Sem Fundo': 'Bottomless', 'Chega ao andar 100': 'Reach floor 100',
+  'Nas Profundezas, de 10 em 10 andares, vêm dois bosses de uma vez.': 'In the Depths, every 10 floors, two bosses come at once.',
   'Poder': 'Power', 'Tremor do ecrã': 'Screen shake', 'Fraco': 'Weak',
   // missões da semana
   'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',

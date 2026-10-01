@@ -5,6 +5,9 @@
 // =====================================================================
 
 const ES = {
+  "Falta um!": "¡Falta uno!", " — BOSS DUPLO": " — JEFE DOBLE", "BOSS DUPLO VENCIDO!": "¡JEFE DOBLE VENCIDO!", "Mais um Baú Dourado e uma relíquia": "Un Cofre Dorado más y una reliquia",
+  "Explorador do Abismo": "Explorador del Abismo", "Chega ao andar 70": "Llega al piso 70", "Sem Fundo": "Sin Fondo", "Chega ao andar 100": "Llega al piso 100",
+  "Nas Profundezas, de 10 em 10 andares, vêm dois bosses de uma vez.": "En las Profundidades, cada 10 pisos, vienen dos jefes a la vez.",
   "COMBINAÇÃO: ": "COMBINACIÓN: ", "Fúria Sangrenta": "Furia Sangrienta", "Com menos de metade da vida fazes +30% dano": "Con menos de la mitad de la vida haces +30% daño",
   "Ventania": "Vendaval", "A esquiva corta os monstros por onde passas": "La esquiva corta a los monstruos por donde pasas",
   "Muralha Viva": "Muralla Viva", "Levas -15% dano": "Recibes -15% daño", "Elixir Vivo": "Elixir Vivo", "Elixir Vivo!": "¡Elixir Vivo!",

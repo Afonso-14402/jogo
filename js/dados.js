@@ -530,6 +530,9 @@ const CONQUISTAS = [
   { id: 'ajudante',  nome: 'Amigo da Cidade',    desc: 'Cumpre 5 pedidos dos habitantes',       almas: 40 },
   { id: 'conjunto',  nome: 'Conjunto Completo',  desc: 'Usa as 3 peças de um conjunto',         almas: 50 },
   { id: 'templo',    nome: 'Santuário do Vigia',     desc: 'Sobrevive ao Santuário do Vigia', almas: 60 },
+  // Profundezas (depois do andar 60)
+  { id: 'fundo70',      nome: 'Explorador do Abismo',   desc: 'Chega ao andar 70',                       almas: 120 },
+  { id: 'fundo100',     nome: 'Sem Fundo',              desc: 'Chega ao andar 100',                      almas: 400 },
   // de equipa (a jogar a 2): ganham os dois
   { id: 'coopJuntos',   nome: 'Juntos na Masmorra',     desc: 'Joga a 2 com um amigo',                   almas: 20 },
   { id: 'coopReanimar', nome: 'Ninguém Fica para Trás', desc: 'Reanima o teu parceiro (a jogar a 2)',    almas: 30 },

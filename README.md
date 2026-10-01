@@ -35,6 +35,14 @@ No telemóvel há ainda:
 | M | Ligar/desligar o som |
 | I (no menu inicial) | Mudar o idioma (Português, Português do Brasil, Inglês, Espanhol) |
 
+### Profundezas (depois do andar 60)
+
+Depois de vencer o Soberano do Vazio, a masmorra continua. Nas Profundezas:
+- a dificuldade sobe devagar (o bot de equilíbrio aguenta até ao andar ~100; no 120 já é muito difícil);
+- de 10 em 10 andares (70, 80, 90...) vêm **dois bosses de uma vez**; vencê-los dá mais um Baú Dourado e uma relíquia;
+- os baús dão mais lendários e míticos quanto mais fundo fores;
+- conquistas novas nos andares 70 e 100.
+
 ### Combinações
 
 Duas melhorias juntas dão um efeito novo (a carta mostra **+ COMBINAÇÃO** quando a completa): Fúria Sangrenta (Força Bruta + Sanguessuga), Ventania (Fúria + Pés Ligeiros), Muralha Viva (Pele de Pedra + Vitalidade), Elixir Vivo (Alquimista + Regeneração), Tempestade de Lâminas (Remoinho + Lâminas Voadoras), Chuva de Ouro (Morte Explosiva + Trevo da Sorte), Fonte Arcana (Canalizador + Poço de Mana), Bastião (Escudo Divino + Pele de Pedra) e Olho Arcano (Olho Certeiro + Mente Arcana). Estão em `js/combos.js`.
