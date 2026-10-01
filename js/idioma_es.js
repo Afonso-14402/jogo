@@ -5,6 +5,15 @@
 // =====================================================================
 
 const ES = {
+  "COMBINAÇÃO: ": "COMBINACIÓN: ", "Fúria Sangrenta": "Furia Sangrienta", "Com menos de metade da vida fazes +30% dano": "Con menos de la mitad de la vida haces +30% daño",
+  "Ventania": "Vendaval", "A esquiva corta os monstros por onde passas": "La esquiva corta a los monstruos por donde pasas",
+  "Muralha Viva": "Muralla Viva", "Levas -15% dano": "Recibes -15% daño", "Elixir Vivo": "Elixir Vivo", "Elixir Vivo!": "¡Elixir Vivo!",
+  "Beber uma poção dá +25% dano durante 6 s": "Beber una poción da +25% daño durante 6 s",
+  "Tempestade de Lâminas": "Tormenta de Hojas", "O remoinho lança 8 lâminas à tua volta": "El remolino lanza 8 hojas a tu alrededor",
+  "Chuva de Ouro": "Lluvia de Oro", "Os monstros dão +50% ouro": "Los monstruos dan +50% oro",
+  "Fonte Arcana": "Fuente Arcana", "As magias custam -30% mana": "Las magias cuestan -30% maná",
+  "Bastião": "Bastión", "O Escudo Divino volta em 5 s em vez de 10": "El Escudo Divino vuelve en 5 s en vez de 10",
+  "Olho Arcano": "Ojo Arcano", "Cada golpe crítico dá-te 2 de mana": "Cada golpe crítico te da 2 de maná",
   "ATALHO NOVO": "ATAJO NUEVO", "As partidas novas podem começar no andar ": "Las partidas nuevas pueden empezar en el piso ", "Começar no andar ": "Empezar en el piso ", "Toca para mudar": "Toca para cambiar",
   "Stick esquerdo": "Stick izquierdo", "Stick direito": "Stick derecho", "Mover (nos menus: cursor)": "Moverse (en los menús: cursor)",
   "Atacar (nos menus: carregar)": "Atacar (en los menús: elegir)", "Esquiva (nos menus: voltar)": "Esquivar (en los menús: volver)",
@@ -763,7 +772,7 @@ const ES = {
   "Tecla ": "Tecla ",
   "Mana ": "Maná ",
   " · tecla ": " · tecla ",
-  "[C] Personagem   [U] Estado   [I] Mochila   [M] Som: ": "[C] Personaje   [U] Estado   [I] Mochila   [M] Sonido: ",
+  "[C] Personagem   [I] Mochila   [M] Som: ": "[C] Personaje   [I] Mochila   [M] Sonido: ",
   "Rei das Sombras": "Rey de las Sombras",
   "Tem 10 sombras no teu exército": "Ten 10 sombras en tu ejército",
   "Caçador de Rank S": "Cazador de Rango S",

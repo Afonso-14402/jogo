@@ -35,6 +35,10 @@ No telemóvel há ainda:
 | M | Ligar/desligar o som |
 | I (no menu inicial) | Mudar o idioma (Português, Português do Brasil, Inglês, Espanhol) |
 
+### Combinações
+
+Duas melhorias juntas dão um efeito novo (a carta mostra **+ COMBINAÇÃO** quando a completa): Fúria Sangrenta (Força Bruta + Sanguessuga), Ventania (Fúria + Pés Ligeiros), Muralha Viva (Pele de Pedra + Vitalidade), Elixir Vivo (Alquimista + Regeneração), Tempestade de Lâminas (Remoinho + Lâminas Voadoras), Chuva de Ouro (Morte Explosiva + Trevo da Sorte), Fonte Arcana (Canalizador + Poço de Mana), Bastião (Escudo Divino + Pele de Pedra) e Olho Arcano (Olho Certeiro + Mente Arcana). Estão em `js/combos.js`.
+
 ### Atalhos por zona
 
 Quando chegas aos andares 11, 21, 31, 41 ou 51, as partidas novas podem começar lá: no ecrã de criação aparece o botão **Começar no andar N**. O herói começa ao nível desse andar (nível, atributos, equipamento e magias) e escolhe logo 3 melhorias.

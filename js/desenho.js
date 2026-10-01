@@ -1086,7 +1086,7 @@ function desenharHUD(t) {
   });
 
   desenharHUDFinal(t);
-  textoDir(`[C] Personagem   [U] Estado   [I] Mochila   [M] Som: ${nomeSom()}`, LARGURA - 70, ALTURA - 96, 12, 'rgba(255,255,255,0.45)', 'normal');
+  textoDir(`[C] Personagem   [I] Mochila   [M] Som: ${nomeSom()}`, LARGURA - 70, ALTURA - 96, 12, 'rgba(255,255,255,0.45)', 'normal');
   if (estado === 'jogo') {
     const b = BOTAO_PAUSA, sobre = dentro(b);
     painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(14,11,22,0.85)', sobre ? '#ffffff' : '#5a4d74');
@@ -1393,6 +1393,13 @@ function desenharEscolha(t) {
     if (linha) linhas.push(linha);
     linhas.forEach((l, k) => textoCentro(l, r.x + r.w / 2, y + 182 + k * 20, 14, '#e6e0f0', false));
     if (p.max > 1) textoCentro(`${nPerk(p.id)} / ${p.max}`, r.x + r.w / 2, y + r.h - 24, 13, '#999', false);
+    const novos = combosQueCompleta(p); // esta carta completa uma combinação
+    if (novos.length) {
+      const c = novos[0], pulso = 0.75 + 0.25 * Math.sin(t * 6);
+      ctx.globalAlpha = entrada * pulso;
+      textoCentroAjustado(`+ COMBINAÇÃO: ${traduzir(c.nome)}`, r.x + r.w / 2, y + r.h - 46, 13, c.cor, r.w - 16);
+      ctx.globalAlpha = entrada;
+    }
     ctx.globalAlpha = 1;
   });
   textoCentro('Carrega 1, 2 ou 3 (ou clica numa carta)', LARGURA / 2, 520, 16, '#aaa', false);
@@ -1542,6 +1549,7 @@ function desenharPersonagem() {
   // melhorias
   painel(340, 350, 600, 254);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
+  obtidas.unshift(...combosAtivos().map(c => ({ id: 'combo', nome: c.nome, desc: c.desc, cor: c.cor, letra: '+', max: 1 })));
   textoEsq(obtidas.length ? 'Melhorias' : 'Melhorias: ainda nenhuma. Sobe de nível!', 356, 370, 16, '#ffe14d');
   const extraP = [];
   if (J.pet) extraP.push(`${nomePet()} Nv ${J.pet.nivel}`);

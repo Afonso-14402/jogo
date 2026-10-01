@@ -366,6 +366,7 @@ function atualizarEscolha(dt) {
   }
   if (i < 0 || i >= escolha.opcoes.length) return;
   const p = escolha.opcoes[i];
+  const combosAntes = combosAtivos().map(c => c.id);
   J.perks[p.id] = nPerk(p.id) + 1;
   if (p.id === 'vitalidade') J.hp += 30;
   if (p.id === 'pocoes') J.pocoes += 2;
@@ -378,6 +379,7 @@ function atualizarEscolha(dt) {
   texto(J.x, J.y - 30, p.nome + '!', p.cor, 20);
   explosao(J.x, J.y, p.cor, 24, 200, 5);
   som(660, 0.2, 'triangle', 0.05, 300);
+  anunciarCombos(combosAntes);
 }
 
 function retCartaPerk(i, n) {
@@ -764,6 +766,7 @@ function atacar(dx, dy) {
   const alcance = classe === 'martelo' && !giro ? S.alcance * 0.9 : S.alcance;
   J.golpe = classe === 'arco' && !giro ? null : { ang, t: giro ? 0.25 : 0.15, dur: giro ? 0.25 : 0.15, alcance: alcance + J.r, giro, estilo: classe };
   som(giro ? 180 : 260, giro ? 0.15 : 0.07, 'square', 0.025, -150);
+  if (giro) tempestadeDeLaminas();
   if (nPerk('laminas') > 0) {
     projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * 430, vy: dy * 430, r: 7, vida: 0.55,
       cor: '#d9a6ff', tipo: 'lamina', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.5)) });
@@ -907,7 +910,7 @@ function matarInimigo(e) {
     }
   }
   if (Math.random() < 0.12) drops.push({ tipo: 'pocao', x: e.x, y: e.y, t: 0 });
-  soltarOuro(e.x, e.y, Math.max(1, Math.round(rand(1, 3) * (1 + (andar - 1) * 0.25) * (e.elite ? 5 : 1) * (e.ouroExtra || 1))), e.elite ? 4 : 1);
+  soltarOuro(e.x, e.y, Math.max(1, Math.round(rand(1, 3) * (1 + (andar - 1) * 0.25) * (e.elite ? 5 : 1) * (e.ouroExtra || 1) * (temCombo('chuvaOuro') ? 1.5 : 1))), e.elite ? 4 : 1);
   if (e.elite) {
     if (e.elite === 'explosivo') perigos.push({ x: e.x, y: e.y, r: 75, t: 0.7, dur: 0.7, dano: Math.round(e.dano * 1.3), cor: '#ff7b25' });
     if (Math.random() < 0.35) baus.push({ x: e.x, y: e.y, tipo: 'madeira', semMimico: true, t: 0 });
@@ -926,7 +929,7 @@ function danoJogador(d, fx, fy, fonte = null) {
   J.causaTipo = fonte ? fonte.tipo : (!J.causaProxima && boss ? boss.tipo : null);
   J.causaProxima = null;
   if (nPerk('escudo') > 0 && J.escudoCd <= 0) {
-    J.escudoCd = 10;
+    J.escudoCd = temCombo('bastiao') ? 5 : 10;
     J.invuln = 0.5;
     texto(J.x, J.y - 24, 'BLOQUEADO!', '#fff0a0', 18);
     explosao(J.x, J.y, '#fff0a0', 16, 180, 4);
@@ -934,7 +937,7 @@ function danoJogador(d, fx, fy, fonte = null) {
     return;
   }
   if (fonte && S.espinhos > 0 && !fonte.morto) danoInimigo(fonte, Math.max(1, Math.round(d * S.espinhos)), false, 0, 0);
-  let final = Math.max(1, Math.round(d * (1 - reducaoDefesa()) * (1 + S.danoRecebido) * reducaoClasse()));
+  let final = Math.max(1, Math.round(d * (1 - reducaoDefesa()) * (1 + S.danoRecebido) * reducaoClasse() * (temCombo('muralha') ? 0.85 : 1)));
   J.feridoT = 3;
   if (J.barreira > 0) { // a Barreira Sagrada absorve primeiro
     const abs = Math.min(J.barreira, final);
@@ -1008,6 +1011,7 @@ function beberPocao() {
   explosao(J.x, J.y, '#5dff7a', 14, 120, 4);
   J.bebeuT = 0.6;
   som(440, 0.25, 'sine', 0.06, 400);
+  if (temCombo('elixir')) { J.furia = Math.max(J.furia || 0, 6); S = stats(); texto(J.x, J.y - 44, 'Elixir Vivo!', '#5dff7a', 15); }
 }
 
 function disparar(x, y, ux, uy, vel, dano, cor, r, tipo = 'bola', vida = 3) {
@@ -1343,13 +1347,14 @@ function atualizarJogador(dt, R = null) {
 
   if ((R ? R.dash : premiu('shift')) && J.cdDash <= 0) {
     const dx = (mx || my) ? mx : J.dirX, dy = (mx || my) ? my : J.dirY;
-    J.dashT = 0.16; J.dashVX = dx * 560; J.dashVY = dy * 560; J.cdDash = S.cdDash;
+    J.dashT = 0.16; J.dashVX = dx * 560; J.dashVY = dy * 560; J.cdDash = S.cdDash; J.dashAtingidos = [];
     som(500, 0.12, 'sine', 0.04, -300);
   }
 
   if (J.dashT > 0) {
     J.dashT -= dt;
     moverEntidade(mapa, J, J.dashVX * dt, J.dashVY * dt);
+    ventaniaNaEsquiva();
     particulas.push({ x: J.x, y: J.y, vx: 0, vy: 0, t: 0.25, cor: 'rgba(120,170,255,0.6)', tam: 10 });
   } else {
     moverEntidade(mapa, J, (mx * S.vel * fLento + J.kbx) * dt, (my * S.vel * fLento + J.kby) * dt);
@@ -1867,7 +1872,7 @@ function mira() {
   return [J.dirX, J.dirY];
 }
 
-const custoMana = id => Math.round(FEITICOS[id].mana * (1 - 0.1 * ((J.feiticos[id] || 1) - 1)));
+const custoMana = id => Math.round(FEITICOS[id].mana * (1 - 0.1 * ((J.feiticos[id] || 1) - 1)) * (temCombo('fonte') ? 0.7 : 1));
 
 function lancarFeitico(id) {
   const nv = J.feiticos[id] || 0;
