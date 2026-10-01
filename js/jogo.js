@@ -580,7 +580,8 @@ function popularAndar() {
     const p = pontoLivreNaSala(mapa, escolher(salas), 18);
     const e = criarInimigo(escolherPeso(pesos), p.x, p.y);
     aplicarNivel(e, sortearNivel());
-    if (andar >= 2 && Math.random() < Math.min(0.4, (0.05 + andar * 0.01) * dif().elite * (1 + 0.6 * nPacto('elites')))) tornarElite(e);
+    // elites só a partir do andar 3, e nos primeiros andares nunca elite e veterano/campeão ao mesmo tempo
+    if (andar >= 3 && !(andar < 8 && e.nv >= 2) && Math.random() < Math.min(0.4, (0.05 + andar * 0.01) * dif().elite * (1 + 0.6 * nPacto('elites')))) tornarElite(e);
     inimigos.push(e);
   }
 
@@ -737,7 +738,9 @@ function atualizarEfeitos(dt) {
 // ---------------------------------------------------------------------
 //  Combate
 // ---------------------------------------------------------------------
-function xpProximo(n) { return Math.floor(20 * Math.pow(n, 1.5)); }
+// XP para o nível seguinte: igual nos primeiros níveis e cada vez mais depois do 6
+// (antes o herói chegava ao andar 60 no nível 140+ e o fim do jogo ficava fácil demais)
+function xpProximo(n) { return Math.floor(20 * Math.pow(n, 1.5) * Math.max(1, n / 6)); }
 
 function ganharXp(q) {
   const base = q;
@@ -1374,6 +1377,7 @@ function atualizarJogador(dt, R = null) {
     mx *= forca; my *= forca;
   }
   J.cdAtaque -= dt; J.invuln -= dt; J.cdDash -= dt; J.escudoCd -= dt; J.lentoT -= dt;
+  if (mapa && mapa.tiles) desencravar(mapa, J); // nunca ficar preso dentro de uma parede
   const fLento = (J.lentoT > 0 ? 0.5 : 1) * fatorTerreno();
 
   if ((R ? R.dash : premiu('shift')) && J.cdDash <= 0) {

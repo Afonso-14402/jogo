@@ -160,6 +160,20 @@ function moverEntidade(m, e, dx, dy) {
   return bateu;
 }
 
+// Se uma entidade ficou dentro de uma parede (teletransporte, porta que fechou...),
+// põe-na no sítio livre mais perto. Devolve true se teve de a mexer.
+function desencravar(m, e, r = e.r) {
+  if (!colideCirculo(m, e.x, e.y, r)) return false;
+  for (let raio = 4; raio <= TILE * 8; raio += 4) {
+    const passos = Math.max(8, Math.round(raio / 3));
+    for (let k = 0; k < passos; k++) {
+      const a = k / passos * Math.PI * 2, x = e.x + Math.cos(a) * raio, y = e.y + Math.sin(a) * raio;
+      if (!colideCirculo(m, x, y, r)) { e.x = x; e.y = y; return true; }
+    }
+  }
+  return false;
+}
+
 function pontoLivreNaSala(m, s, r, margem = 1) {
   for (let t = 0; t < 40; t++) {
     const x = (randInt(s.x + margem, s.x + s.w - 1 - margem) + 0.5) * TILE;

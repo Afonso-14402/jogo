@@ -596,6 +596,7 @@ function sortearNivel() {
   let p3 = ([0, 0.05, 0.12, 0.2, 0.3][pos] + ciclo * 0.25 + Math.min(0.1, andar * 0.003)) * k * kc;
   let p2 = ([0.15, 0.3, 0.4, 0.45, 0.45][pos] + Math.min(0.1, andar * 0.003)) * Math.min(1.3, k) * kc;
   if (andar <= 1) { p3 = 0; p2 = 0.1; }
+  else if (andar <= 3) { p3 = 0; p2 = Math.min(p2, 0.2); } // começo mais suave em todas as dificuldades
   const r = Math.random();
   return r < p3 ? 3 : r < p3 + p2 ? 2 : 1;
 }

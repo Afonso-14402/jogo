@@ -485,7 +485,10 @@ function atualizarSombras(dt) {
       danoInimigo(alvo, danoSombra(s), false, dx / d, dy / d);
       if (s.boss) ondas.push({ x: s.x, y: s.y, r: 60, t: 0.25, dur: 0.25, cor: '#6a4aff' });
     }
-    if (Math.hypot(s.x - J.x, s.y - J.y) > 520) { s.x = J.x + rand(-20, 20); s.y = J.y + rand(-20, 20); }
+    if (Math.hypot(s.x - J.x, s.y - J.y) > 520) { // ficou para trás: volta para perto do herói (num sítio livre)
+      const nx = J.x + rand(-20, 20), ny = J.y + rand(-20, 20);
+      if (!colideCirculo(mapa, nx, ny, s.r)) { s.x = nx; s.y = ny; } else { s.x = J.x; s.y = J.y; }
+    }
     if (Math.random() < 0.08) particulas.push({ x: s.x + rand(-s.r, s.r), y: s.y + rand(-s.r, s.r), vx: 0, vy: -30, t: 0.5, cor: '#4a2a8a', tam: 4 });
   });
   // as sombras sem vida desfazem-se em fumo; voltam a levantar-se no próximo andar

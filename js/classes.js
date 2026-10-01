@@ -132,8 +132,9 @@ function pontoAlvo(dist) {
 
 function habTroca() {
   if (!sombras.length) { texto(J.x, J.y - 30, 'Não tens sombras', '#aaaaaa', 13); return false; }
-  let s = sombras[0], md = -1;
-  for (const x of sombras) { const d = Math.hypot(x.x - J.x, x.y - J.y); if (d > md) { md = d; s = x; } }
+  let s = null, md = -1; // a sombra mais longe onde o herói cabe (nunca dentro de uma parede)
+  for (const x of sombras) { const d = Math.hypot(x.x - J.x, x.y - J.y); if (d > md && !colideCirculo(mapa, x.x, x.y, J.r)) { md = d; s = x; } }
+  if (!s) { texto(J.x, J.y - 30, 'Não há espaço', '#aaaaaa', 13); return false; }
   const px = J.x, py = J.y;
   explosao(J.x, J.y, '#6a4aff', 20, 180, 5);
   J.x = s.x; J.y = s.y; s.x = px; s.y = py;
