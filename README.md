@@ -318,6 +318,8 @@ Existem 3 tipos de equipamento: **arma**, **armadura** e **amuleto**. Quando sai
 
 ### Equilíbrio nos andares altos
 
+A XP para subir de nível cresce mais a partir do nível 6, por isso o herói fica mais ou menos ao nível do andar (antes chegava ao andar 60 no nível 140+ e o fim ficava fácil). Os andares 1 a 3 não têm monstros campeões, os 2 primeiros não têm mímicos e o 1.º boss é um pouco mais fraco. Se fores muito mais forte do que o andar, os monstros acompanham-te — mais cedo e com mais força no Difícil, Pesadelo e Inferno. Com o robô jogador, no modo normal e na Torre o Fácil e o Normal chegam ao fim, o Difícil e o Pesadelo têm apertos e algumas mortes, e o Inferno é para quem já conhece bem o jogo.
+
 A partir do andar 20 os monstros ficam mais fortes cada vez mais depressa, e a defesa vale menos contra monstros de andares fundos (tira no máximo 80% do dano). O roubo de vida tem um limite de 15% e cura no máximo 6% da vida por segundo, e o crítico vai até 60%. Se fores muito mais forte do que o andar, os monstros acompanham-te. Assim o herói já não fica imortal nem mata tudo com um golpe nos andares 50+. Quanto mais fundo chegares, maior o desafio.
 
 ## Estrutura
@@ -374,6 +376,16 @@ node testes/telemovel.js
 node testes/equilibrio.js          # andares 10, 25 e 45
 node testes/equilibrio.js 30 5     # só o andar 30, 5 lutas
 node testes/equilibrio.js 5,10,20 2   # vários andares
+```
+
+`testes/robo_jogador.js` é um robô que joga partidas inteiras como uma pessoa (anda pelo mapa, luta, bebe poções, abre baús, fica com o equipamento melhor, escolhe melhorias e sobe as escadas). Diz até que andar chegou, de que morreu e em que andares ficou com menos de 30% de vida. Serve para ver se cada modo e cada dificuldade estão justos:
+
+```bash
+node testes/robo_jogador.js                                   # modo normal, dificuldade normal
+MODO=torre DIF=dificil node testes/robo_jogador.js            # Torre no Difícil
+MODO=bossrush DIF=facil,normal,dificil node testes/robo_jogador.js
+MODO=diario JOGOS=5 node testes/robo_jogador.js               # 5 desafios diários diferentes
+CLASSES=espada,fogo ANDARES=30 JOGOS=2 node testes/robo_jogador.js
 ```
 
 `testes/caca_bugs.js` joga sozinho do andar 1 ao 60 (abre todos os baús, usa todos os objetos, entra em portais e na cidade, fala com os habitantes) e passa por todos os ecrãs em português e inglês, no PC e no telemóvel. Avisa se houver erros de JavaScript, coisas dentro das paredes, números estragados ou textos a sair do ecrã:

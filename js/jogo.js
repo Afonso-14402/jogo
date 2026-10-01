@@ -690,7 +690,7 @@ function criarBoss(idForcado = null, mult = 1) {
   const D = dif();
   const F = fatorAdapt();
   const E = escalaAndar(andar), fh = E.hp * D.hp * (1 + 0.25 * nPacto('pele')) * (nPacto('furia') ? 1.3 : 1) * F.hp, fd = E.dano * D.dano * (1 + 0.2 * nPacto('forca')) * F.dano;
-  const hp = Math.round(b.hp * fh * mult);
+  const hp = Math.round(b.hp * fh * mult * (andar === 5 && !idForcado ? 0.85 : 1)); // o 1.º boss é um pouco mais fraco
   return {
     tipo: b.id, nome: ciclo > 0 ? `${b.nome} +${ciclo}` : b.nome, x: mapa.posBoss.x, y: mapa.posBoss.y, r: b.r, hp, maxHp: hp,
     dano: Math.round(b.dano * fd * Math.pow(mult, 0.7)), vel: b.vel, xp: Math.round(b.xp * (1 + (andar - 1) * 0.2)),
@@ -2383,7 +2383,7 @@ function atualizarCriacao(dt) {
 function abrirBau(b) {
   baus.splice(baus.indexOf(b), 1);
   const tipo = TIPOS_BAU[b.tipo];
-  if (!b.semMimico && Math.random() < tipo.mimico) {
+  if (!b.semMimico && andar >= 3 && Math.random() < tipo.mimico) { // nos 2 primeiros andares não há mímicos
     const m = criarInimigo('mimico', b.x, b.y);
     m.acordado = true;
     inimigos.push(m);
