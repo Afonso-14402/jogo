@@ -45,7 +45,7 @@ const path = require('path');
       () => { menuMeta.aba = 'monstros'; }, () => { menuMeta.aba = 'reliquias'; }, () => abrirMenuMeta('conquistas'), () => abrirMenuMeta('pacto'),
       () => abrirMenuMeta('registo'), () => comecarDiario(), () => abrirTransferir(), () => abrirOpcoes(),
       () => { estado = 'titulo'; novoJogo(); tutorial = null; J.escolhasPendentes = 0; estado = 'jogo'; },
-      () => { estado = 'pausa'; }, () => { estado = 'personagem'; }, () => abrirStatus(), () => { estado = 'jogo'; abrirMochila(); },
+      () => { estado = 'pausa'; }, () => { estado = 'personagem'; }, () => { estado = 'jogo'; abrirMochila(); },
       () => { estado = 'mapa'; }, () => { estado = 'jogo'; iniciarRoleta('ouro', 'jogo'); roleta.t = roleta.dur; },
       () => { roleta = null; estado = 'jogo'; abrirLoja({ tipo: 'mercador', stock: null }); },
       () => { estado = 'jogo'; abrirMesa({ tipo: 'mesa' }); }, () => { estado = 'jogo'; J.escolhasPendentes = 1; abrirEscolha(); },
@@ -69,7 +69,7 @@ const path = require('path');
         const resolver = () => { // fecha menus que se abram
           if (estado === 'bau') { roleta.t = roleta.dur; roleta.fim = true; roleta.brilho = 1; estado = roleta.voltar; roleta = null; }
           if (estado === 'nivel') { J.escolhasPendentes = 0; estado = 'jogo'; }
-          if (['loja', 'encantar', 'cidade', 'mochila', 'personagem', 'status', 'mapa'].includes(estado)) estado = 'jogo';
+          if (['loja', 'encantar', 'cidade', 'mochila', 'personagem', 'mapa'].includes(estado)) estado = 'jogo';
         };
         for (let a = 1; a <= 60; a++) {
           try {

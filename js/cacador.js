@@ -8,19 +8,12 @@
 //  - Equilíbrio dinâmico: se ficares muito mais forte do que o andar,
 //    os monstros também sobem um pouco (mas o melhor equipamento continua a
 //    fazer-te matar tudo depressa)
-//  - A Janela de Estado com o aspeto azul do "Sistema"
 // =====================================================================
 
 // ---------------------------------------------------------------------
 //  Atributos
 // ---------------------------------------------------------------------
-const ATRIBUTOS = [
-  { id: 'for', nome: 'Força',        desc: '+1% dano',                           cor: '#ff6060' },
-  { id: 'agi', nome: 'Agilidade',    desc: '+0.8% vel. de ataque e +0.3% vel.',  cor: '#5dff7a' },
-  { id: 'vit', nome: 'Vitalidade',   desc: '+1.5% vida máxima',                  cor: '#ffae00' },
-  { id: 'int', nome: 'Inteligência', desc: '+2% poder mágico e +1 mana',         cor: '#b48cff' },
-  { id: 'per', nome: 'Perceção',     desc: '+0.4% crítico',                      cor: '#4dc3ff' },
-];
+// Os pontos de cada nível vão sozinhos (distribuirPontos): o atributo do caçador e a Vitalidade
 const PONTOS_POR_NIVEL = 2;
 const nAtr = id => (J && J.atributos ? J.atributos[id] || 0 : 0);
 
@@ -34,17 +27,6 @@ function bonusCacador() {
     mana: nAtr('int'),
     crit: 0.004 * nAtr('per'),
   };
-}
-
-function subirAtributo(id) {
-  if (!(J.pontos > 0)) return;
-  if (!J.atributos) J.atributos = {};
-  J.atributos[id] = (J.atributos[id] || 0) + 1;
-  J.pontos--;
-  const hpAntes = S.maxHp;
-  S = stats();
-  if (S.maxHp > hpAntes) J.hp += S.maxHp - hpAntes;
-  som(700 + (J.atributos[id] % 5) * 60, 0.06, 'square', 0.03, 200);
 }
 
 // ---------------------------------------------------------------------
@@ -370,7 +352,6 @@ function atualizarCacador(dt) {
   if (!J.cdHab) J.cdHab = {};
   for (const k in J.cdHab) J.cdHab[k] -= dt;
   for (let i = 0; i < habsJ().length; i++) if (premiu(String(5 + i))) usarHabilidade(i);
-  if (premiu('u')) abrirStatus();
   if (J.furtivo > 0) J.furtivo -= dt;
   if (J.milCortes) { // Mil Cortes: um golpe a cada 0.07 s
     const M = J.milCortes;
@@ -403,9 +384,10 @@ function aoSubirNivelCacador() {
   if (J.remoto) { subirNivelParceiro(); return; } // o herói do parceiro (a jogar a 2)
   verificarProvacao();
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
+  distribuirPontos(); // os pontos de cada nível vão sozinhos para os atributos do caçador
+  S = stats();
   const h = habsJ().find(x => x.nivel === J.nivel);
   if (h) avisar(`[Destino] Nova habilidade: ${h.nome}`, `${modoToque ? 'Novo botão' : `Tecla ${5 + habsJ().indexOf(h)}`} · ${h.desc}`, '#4dc3ff');
-  else if (J.nivel === 2) avisar('[Destino] Tens pontos de atributo', `Abre a Janela de Estado (${modoToque ? 'botão do herói' : 'tecla U'}) para os usar`, '#4dc3ff');
 }
 
 // ---------------------------------------------------------------------
@@ -621,107 +603,6 @@ function corPoder() {
   return r >= 1.3 ? '#5dff7a' : r >= 0.85 ? '#ffe14d' : '#ff5050';
 }
 const formatarPoder = p => p >= 10000 ? `${(p / 1000).toFixed(0)}k` : p >= 1000 ? `${(p / 1000).toFixed(1)}k` : `${p}`;
-
-// ---------------------------------------------------------------------
-//  Janela de Estado (estilo "Sistema")
-// ---------------------------------------------------------------------
-let voltarStatus = 'jogo';
-function abrirStatus() {
-  tutorialEvento('status');
-  voltarStatus = estado;
-  menuMeta = { t: 0 };
-  estado = 'status';
-  rato.baixo = false;
-}
-const retAtributo = i => ({ x: 60, y: 250 + i * 50, w: 400, h: 42 });
-const retMais = i => ({ x: 404, y: 254 + i * 50, w: 48, h: 34 });
-const BOTAO_STATUS = { x: LARGURA - 190, y: 20, w: 170, h: 34 };
-
-function atualizarStatus(dt) {
-  menuMeta.t += dt;
-  if (menuMeta.t < 0.1) return;
-  ATRIBUTOS.forEach((a, i) => { if (clicou(retMais(i))) subirAtributo(a.id); });
-  if (premiu('escape', 'u') || clicou(BOTAO_VOLTAR) || (premiu('rato') && !ATRIBUTOS.some((a, i) => dentro(retMais(i))))) {
-    estado = voltarStatus === 'status' ? 'jogo' : voltarStatus;
-    menuMeta = null;
-  }
-}
-
-// Janela azul do [Destino]: a mesma moldura de todas as janelas, com as cores do Sistema
-function janelaSistema(x, y, w, h) {
-  painel(x, y, w, h, 'rgba(6,20,40,0.94)', '#4dc3ff');
-  ctx.fillStyle = 'rgba(77,195,255,0.12)';
-  ctx.fillRect(x + 4, y + 4, w - 8, 3);
-}
-
-function desenharStatus(t) {
-  ctx.fillStyle = 'rgba(0,4,12,0.88)';
-  ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
-  botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
-  textoCentro('ESTADO', LARGURA / 2, 34, 30, '#4dc3ff');
-  const poder = poderJogador(), rec = poderRecomendado(andar), rk = rankJogador(), rp = rankDoAndar(andar);
-  // cabeçalho: rank, poder e o que o andar pede
-  janelaSistema(40, 64, 880, 150);
-  textoEsq('RANK', 64, 92, 14, '#9fdcff');
-  textoEsq(rk.letra, 64, 136, rk.letra.length > 2 ? 28 : 54, rk.cor);
-  textoEsq(`Nível ${J.nivel}   ·   ${RACAS[J.raca].nome}`, 250, 92, 16, '#ffffff');
-  textoEsq(`Poder de combate: ${poder}`, 250, 124, 20, corPoder());
-  textoEsq(`Andar ${andar} · Rank do andar ${rp.letra} · recomendado ${rec}`, 250, 152, 14, '#9fdcff', 'normal');
-  const r = poder / Math.max(1, rec);
-  const veredicto = r >= 2 ? 'Muito mais forte do que este portal. Os monstros também ficaram mais fortes.'
-    : r >= 1.3 ? 'Mais forte do que este portal.' : r >= 0.85 ? 'Ao nível deste portal. Cuidado.' : 'Mais fraco do que este portal. Perigo!';
-  textoEsq(veredicto, 250, 178, 13, corPoder(), 'normal');
-  const F = fatorAdapt();
-  if (F.hp > 1.01) textoEsq(`Equilíbrio: monstros +${Math.round((F.hp - 1) * 100)}% vida, +${Math.round((F.dano - 1) * 100)}% dano`, 250, 198, 11, '#ff9b45', 'normal');
-  // atributos
-  janelaSistema(40, 226, 440, 300);
-  textoEsq('ATRIBUTOS', 60, 240, 14, '#9fdcff');
-  textoDir(`Pontos: ${J.pontos || 0}`, 460, 240, 14, J.pontos > 0 ? '#ffe14d' : '#667');
-  ATRIBUTOS.forEach((a, i) => {
-    const rr = retAtributo(i), m = retMais(i);
-    textoEsq(a.nome, rr.x + 6, rr.y + 14, 16, a.cor);
-    textoEsq(a.desc, rr.x + 6, rr.y + 32, 11, '#9fb8d0', 'normal');
-    textoDir(`${nAtr(a.id)}`, rr.x + 330, rr.y + 20, 20, '#ffffff');
-    if (J.pontos > 0) {
-      painel(m.x, m.y, m.w, m.h, dentro(m) ? 'rgba(40,90,140,0.97)' : 'rgba(10,40,70,0.95)', '#4dc3ff');
-      textoCentro('+', m.x + m.w / 2, m.y + m.h / 2 + 1, 22, '#ffffff');
-    }
-  });
-  textoEsq(`Ganhas ${PONTOS_POR_NIVEL} pontos em cada nível`, 60, 512, 11, '#667', 'normal');
-  // habilidades
-  janelaSistema(500, 226, 420, 300);
-  textoEsq('HABILIDADES DE CAÇADOR', 520, 240, 14, '#9fdcff');
-  if (!habsJ().length) textoEsq('Este caçador não tem habilidades extra', 520, 280, 12, '#889', 'normal');
-  habsJ().forEach((h, i) => {
-    const y = 268 + i * 62, tem = temHabilidade(h);
-    ctx.globalAlpha = tem ? 1 : 0.45;
-    circuloEcra(538, y + 8, 16, 'rgba(10,30,60,0.9)', h.cor, 3);
-    textoCentro(`${5 + i}`, 538, y + 9, 14, '#fff');
-    textoEsq(`${h.nome}`, 564, y, 15, tem ? h.cor : '#889');
-    textoDir(tem ? `Mana ${h.mana} · ${h.cd}s` : `Nível ${h.nivel}`, 904, y, 11, tem ? '#9fdcff' : '#ff8080');
-    textoEsq(h.desc, 564, y + 20, 10, '#bcd', 'normal');
-    ctx.globalAlpha = 1;
-  });
-  // exército (só o Caçador das Sombras)
-  janelaSistema(40, 538, 880, 64);
-  if (J.classe !== 'sombras') {
-    const CL = classeJ();
-    textoEsq(`CAÇADOR: ${CL.nome}`, 60, 556, 14, CL.cor);
-    textoEsq(`Passiva: ${CL.passiva}`, 60, 580, 12, '#7dff9a', 'normal');
-    if (CL.hab) textoDir(`F: ${CL.habNome}`, 904, 556, 13, '#ffe680');
-    textoCentro(modoToque ? 'Toca fora dos botões para voltar' : 'U / Esc para voltar', LARGURA / 2, ALTURA - 14, 12, '#667', false);
-    return;
-  }
-  const n = (J.sombras || []).length;
-  textoEsq('EXÉRCITO DAS SOMBRAS', 60, 556, 14, '#9fdcff');
-  textoDir(temErgue() ? `${J.sombras.filter(s => !s.boss).length} / ${maxSombras()} soldados · ${J.sombras.filter(s => s.boss).length} / ${maxGenerais()} generais` : `Desbloqueia no nível ${habsJ()[0].nivel}`, 904, 556, 13, '#b48cff');
-  (J.sombras || []).slice(0, 22).forEach((s, i) => {
-    const c = spriteSombra(s), esc = Math.max(1, Math.floor(26 / Math.max(c.width, c.height)));
-    sprEcra(c, 72 + i * 38, 584, Math.min(2, esc));
-  });
-  if (!n && temErgue()) textoEsq('Mata monstros e usa "Serve-me!" (tecla 5) perto dos corpos', 60, 584, 12, '#889', 'normal');
-  textoCentro(modoToque ? 'Toca fora dos botões para voltar' : 'U / Esc para voltar', LARGURA / 2, ALTURA - 14, 12, '#667', false);
-}
 
 // Botões de toque das habilidades (segunda fila, por cima dos feitiços)
 function botoesHabilidadeToque() {

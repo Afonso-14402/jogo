@@ -382,7 +382,6 @@ const PASSOS_TUTORIAL = [
   { ev: 'atacar', alvo: 'atacar', pc: 'Ataca: clica com o rato (ou Espaço)', tel: 'Toca no botão grande para atacar' },
   { ev: 'bau', alvo: 'usar', pc: 'Vai até ao baú (seta amarela) e carrega E para o abrir', tel: 'Vai até ao baú (seta amarela) e toca em USAR' },
   { ev: 'mochila', alvo: 'mochila', pc: 'Abre a mochila com a tecla I: lá equipas ou vendes itens', tel: 'Toca no saco para abrir a mochila: lá equipas ou vendes itens' },
-  { ev: 'status', alvo: 'personagem', pc: 'Carrega U para abrir a Janela de Estado e gastar pontos', tel: 'Toca no herói e depois em Estado para gastar pontos' },
   { ev: 'pocao', alvo: 'pocao', pc: 'Q bebe uma poção (cura). Experimenta agora', tel: 'O botão da poção cura-te. Experimenta agora' },
   { ev: 'poder', alvo: null, pc: '', tel: '' }, // o texto depende do caçador (ver textoPasso)
   { ev: 'fim', alvo: null, tempo: 7, pc: 'Mata monstros e encontra a escada (vê o minimapa). Os portais são opcionais... e perigosos!', tel: 'Mata monstros e encontra a escada (vê o minimapa). Os portais são opcionais... e perigosos!' },

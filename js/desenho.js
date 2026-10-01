@@ -351,7 +351,7 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTextosMundo();
   desenharEtiquetasCoop(t);
-  if (!['pausa', 'opcoes', 'status', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['status', 'cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
+  if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
   desenharDica();
   desenharFalas();
@@ -364,7 +364,6 @@ function desenhar(t) {
   else if (estado === 'mochila') desenharMochila();
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'opcoes') desenharOpcoes(t);
-  else if (estado === 'status') desenharStatus(t);
   else if (estado === 'cidade') desenharPainelCidade(t);
   else if (estado === 'mapa') desenharMapaGrande();
   else if (estado === 'fim') desenharFim(t);
@@ -935,7 +934,6 @@ function desenharHUD(t) {
   const rk = rankJogador();
   textoEsq(`PODER ${formatarPoder(poderJogador())}`, 84, 28, 13, corPoder());
   textoEsq(rk.letra === 'Nacional' ? 'NAC' : rk.letra, 196, 28, 15, rk.cor);
-  if (J.pontos > 0 && Math.floor(t * 3) % 2) textoEsq(`+${J.pontos}`, 240, 28, 13, '#ffe14d');
   barra(22, 44, 256, 18, J.hp / S.maxHp, J.veneno > 0 ? '#5dbf3a' : J.hp / S.maxHp < 0.3 ? '#ff2d2d' : '#e0413e');
   textoCentro(`${Math.ceil(J.hp)} / ${S.maxHp}`, 150, 53, 13, '#fff');
   barra(22, 70, 256, 12, J.mana / S.maxMana, '#8a4dff', '#1e1438');
@@ -1476,7 +1474,6 @@ function desenharPersonagem() {
   ctx.fillStyle = 'rgba(0,0,0,0.85)';
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro('PERSONAGEM', LARGURA / 2, 34, 30, '#ffe14d');
-  botao(BOTAO_STATUS, J.pontos > 0 ? `Estado (+${J.pontos})` : 'Estado (U)', J.pontos > 0 ? '#ffe14d' : '#4dc3ff');
 
   // coluna de stats
   painel(20, 64, 300, 540);

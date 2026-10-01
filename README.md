@@ -15,7 +15,7 @@ No telemóvel há ainda:
 - **Opções**: tamanho dos botões, transparência, **modo canhoto** (joystick à direita), vibração, **poupança de bateria** (30 FPS), som, ecrã inteiro e rever o tutorial.
 - **Vibração** ao levar dano, subir de nível, tirar um item Lendário ou Mítico, matar um boss e morrer (só Android; o iPhone não deixa).
 - **Pausa automática** quando sais da app, bloqueias o ecrã ou recebes uma chamada.
-- **Tutorial** no andar 1 da primeira partida (no PC e no telemóvel): andar, atacar, abrir um baú (aparece um ao teu lado, com uma seta), abrir a mochila, a Janela de Estado, beber uma poção e usar a magia ou habilidade do teu caçador. Cada passo acaba quando fazes o que ele pede e podes saltá-lo.
+- **Tutorial** no andar 1 da primeira partida (no PC e no telemóvel): andar, atacar, abrir um baú (aparece um ao teu lado, com uma seta), abrir a mochila, beber uma poção e usar a magia ou habilidade do teu caçador. Cada passo acaba quando fazes o que ele pede e podes saltá-lo.
 - O jogo respeita o notch e as bordas curvas do ecrã, e as dicas mostram toques em vez de teclas.
 - Com o telemóvel deitado o jogo **ocupa o ecrã todo**: o mundo estica para a largura toda e aparece ampliado, e a vida, o minimapa e os botões ficam encostados às bordas.
 
@@ -29,7 +29,6 @@ No telemóvel há ainda:
 | Q | Beber poção (cura 40%) |
 | C | Ecrã de personagem (todos os stats, equipamento e melhorias) |
 | I | Mochila (guarda até 6 itens, equipa ou vende) |
-| U | Janela de Estado (atributos, poder, rank e habilidades) |
 | F | Habilidade única do teu caçador |
 | 5 6 7 8 | Habilidades de Caçador (desbloqueiam nos níveis 5, 10, 15 e 20) |
 | P / Esc (ou o botão ⏸ no canto) | Pausa, com botões **Continuar**, **Guardar e sair** (G) e **Desistir** (X, pede confirmação) |
@@ -61,7 +60,7 @@ Como funciona:
 - **Sem atraso no herói do convidado**: ele mexe-se, esquiva-se e golpeia logo no telemóvel dele, sem esperar pela rede; o outro telemóvel segue a posição dele. Os empurrões, as habilidades que o fazem saltar e os portais vêm do telemóvel de quem criou a sala.
 - Para gastar pouca internet só vai o que mudou (uma cópia completa de 2 em 2 segundos): uns 10 a 30 KB/s, conforme os monstros que houver no ecrã.
 - O convidado tem o seu joystick e os seus botões (atacar, esquiva, poção, **usar**, ★, magias, habilidades, **herói** e **mochila**) e controla o **2.º herói** (com anel da cor do caçador e "J2" por cima).
-- **Cada um tem os seus menus**: o convidado abre baús (a roleta aparece no telemóvel dele), compra nas lojas, usa a mesa de encantamentos, os altares e os edifícios da cidade, e tem a sua mochila e a sua Janela de Estado (pontos de atributo). Portais, escadas e a cidade levam os dois.
+- **Cada um tem os seus menus**: o convidado abre baús (a roleta aparece no telemóvel dele), compra nas lojas, usa a mesa de encantamentos, os altares e os edifícios da cidade, e tem a sua mochila e o seu ecrã de personagem. Portais, escadas e a cidade levam os dois.
 - **O mundo não para** quando um de vocês está num menu (só a pausa para os dois). Quem está num menu fica parado e não leva dano, e aparece "(menu)" por cima dele.
 - Os **monstros atacam o herói mais perto**. A **câmara segue os dois**, por isso não se podem afastar demasiado.
 - A **XP e o ouro são da equipa**: o parceiro sobe de nível contigo e escolhe as melhorias no telemóvel dele.
@@ -247,7 +246,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 - **Santuário do Vigia**: a partir do andar 6 pode aparecer uma **Porta Antiga**. Lá dentro está um templo com uma estátua gigante e três regras: *ajoelha-te, não te mexas quando ele olhar, aguenta*. Quando os olhos da estátua ficam vermelhos **não te podes mexer**. Pelo meio há raios, chuvas de pedra, anéis de fogo e guardiões de pedra. Se sobreviveres 50 segundos, a estátua desfaz-se e ganhas 3 Baús Dourados, uma relíquia, ouro, poções e almas.
 - **Portais (Gates) dentro das masmorras**: em **todos os andares** (menos nos de boss) abre pelo menos um portal, às vezes dois, e sentes onde estão: piscam sempre no minimapa. O rank (**E, D, C, B, A, S, SS ou SSS**) **não depende do andar**: um SSS pode abrir logo no andar 1 e podes entrar em qualquer um... se morreres, morreste. O rank e o tempo aparecem por cima e, ao chegares perto, vês o perigo (até MORTAL) e o boss. Se não entrares a tempo (3 minutos) dá-se a **Rutura do Portal**: os monstros do portal saem para a masmorra. Lá dentro enfrentas **3 ondas de monstros e o boss do portal** (cada rank tem o seu boss, do Rei Slime no E ao Senhor do Vazio no SSS). Quanto maior o rank em relação ao andar, mais fortes os monstros e melhores os prémios (Baús Dourados, relíquias e almas). Um **Portal Maldito** fecha-se atrás de ti: só sais depois de matar o boss, mas dá um prémio extra.
 - **Caçador** (inspirado em manhwas como Solo Leveling):
-  - **Atributos**: em cada nível ganhas 2 pontos para pôr em Força, Agilidade, Vitalidade, Inteligência ou Perceção, na **Janela de Estado** (tecla **U**, ou no ecrã de personagem → Estado).
+  - **Atributos**: em cada nível ganhas 2 pontos, que vão sozinhos para o atributo principal do teu caçador e para a Vitalidade (não há ecrã para os gastar).
   - **Habilidades de Caçador** (teclas **5 a 8**; no telemóvel aparece uma segunda fila de botões):
     | Nível | Habilidade | O que faz |
     |---|---|---|
@@ -256,7 +255,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
     | 15 | **Mão Invisível** | uma força invisível esmaga e empurra os monstros à tua frente |
     | 20 | **Furtividade** | ficas invisível 5 s e o golpe seguinte faz dano x3 |
   - **Exército das Sombras**: até 10 soldados (mais com o nível) e 1 sombra de boss. Ficam contigo de andar para andar.
-  - **Poder de combate e Rank de Caçador** (E, D, C, B, A, S, Nacional): o Poder aparece no topo do ecrã (verde = mais forte do que o andar, amarelo = ao nível, vermelho = perigo). Cada andar é um **portal** com um rank e um **poder recomendado** (aparece ao entrar no andar e na Janela de Estado).
+  - **Poder de combate e Rank de Caçador** (E, D, C, B, A, S, Nacional): o Poder aparece no topo do ecrã (verde = mais forte do que o andar, amarelo = ao nível, vermelho = perigo). Cada andar é um **portal** com um rank e um **poder recomendado** (aparece ao entrar no andar).
   - **Equilíbrio dinâmico**: se ficares muito mais forte do que o andar, os monstros também sobem (até 2x vida e 1.6x dano). Com equipamento normal o jogo continua difícil; só com o melhor equipamento (lendário/mítico e reforçado) é que matas tudo depressa.
 - **Níveis e melhorias**: ganhas XP ao matar inimigos. Cada nível dá +vida, +ataque e +defesa, cura-te por completo e deixa-te **escolher 1 de 3 melhorias** (teclas 1, 2, 3 ou clique). Há 16 melhorias, por exemplo:
   - Força Bruta, Fúria, Vitalidade, Olho Certeiro, Trevo da Sorte (baús dão itens melhores)…

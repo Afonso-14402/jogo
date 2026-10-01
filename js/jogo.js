@@ -439,6 +439,7 @@ function continuarJogo() {
   J.cdFeitico = {};
   andar = d.andar - 1;
   tempoJogo = d.tempoJogo || 0;
+  if (J.pontos > 0) distribuirPontos(); // jogos guardados antes de os pontos irem sozinhos
   S = stats();
   let feito = false;
   if (d.chao && d.chao.andar === d.andar) {
@@ -2499,10 +2500,7 @@ function loop(agora) {
   } else if (estado === 'pausa') {
     atualizarPausa();
   } else if (estado === 'personagem') {
-    if (clicou(BOTAO_STATUS) || premiu('u')) abrirStatus();
-    else if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo';
-  } else if (estado === 'status') {
-    atualizarStatus(dt);
+    if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo';
   } else if (estado === 'loja') {
     atualizarLoja(dt);
     if (!parceiroAtivo()) atualizarEfeitos(dt);

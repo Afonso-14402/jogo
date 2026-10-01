@@ -28,7 +28,7 @@ const coop = {
   principal: null,    // o herói de quem criou a sala (enquanto se joga com o outro)
   principalS: null,
   // os menus do convidado correm no anfitrião, com estas variáveis no lugar das tuas
-  ctxP2: { estado: 'jogo', roleta: null, escolha: null, loja: null, mesa: null, mochilaUI: null, cidade: null, menuMeta: null, voltarStatus: 'jogo',
+  ctxP2: { estado: 'jogo', roleta: null, escolha: null, loja: null, mesa: null, mochilaUI: null, cidade: null, menuMeta: null,
     rato: { x: 0, y: 0, baixo: false, movido: -1e9 }, premidas: {} },
   menuP2: false,      // a correr um menu do convidado
   usar: false,        // o convidado carregou em USAR
@@ -47,7 +47,7 @@ const PREFIXO_SALA = 'masmorra-do-destino-';
 const LETRAS_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CLASSES_CONVIDADO = ORDEM_CLASSES;
 // Menus do convidado e estados em que o mundo continua (a jogar a 2 só a pausa para os dois)
-const MENUS_P2 = ['bau', 'loja', 'encantar', 'mochila', 'nivel', 'personagem', 'status', 'cidade', 'mapa'];
+const MENUS_P2 = ['bau', 'loja', 'encantar', 'mochila', 'nivel', 'personagem', 'cidade', 'mapa'];
 const ESTADOS_MUNDO_VIVO = MENUS_P2;
 // Objetos que mudam o sítio dos dois (usam-se sempre com o teu herói)
 const OBJETOS_DA_EQUIPA = ['portal', 'saidaPortal', 'portaDupla', 'escadaCidade', 'escadaMasmorra', 'gaiola', 'aldeao', 'estatua'];
@@ -78,9 +78,9 @@ function comContextoP2(fn) {
   const p2 = coop.p2, C = coop.ctxP2;
   if (!p2) return;
   return comHeroi(p2, () => {
-    const guarda = { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta, voltarStatus };
+    const guarda = { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta };
     const rato0 = Object.assign({}, rato), prem0 = Object.assign({}, premidas);
-    const usar = C => { estado = C.estado; roleta = C.roleta; escolha = C.escolha; loja = C.loja; mesa = C.mesa; mochilaUI = C.mochilaUI; cidade = C.cidade; menuMeta = C.menuMeta; voltarStatus = C.voltarStatus; };
+    const usar = C => { estado = C.estado; roleta = C.roleta; escolha = C.escolha; loja = C.loja; mesa = C.mesa; mochilaUI = C.mochilaUI; cidade = C.cidade; menuMeta = C.menuMeta; };
     usar(C);
     Object.assign(rato, C.rato);
     for (const k in premidas) delete premidas[k];
@@ -88,7 +88,7 @@ function comContextoP2(fn) {
     coop.menuP2 = true;
     try { return fn(); } finally {
       coop.menuP2 = false;
-      Object.assign(C, { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta, voltarStatus });
+      Object.assign(C, { estado, roleta, escolha, loja, mesa, mochilaUI, cidade, menuMeta });
       if (!MENUS_P2.includes(C.estado)) C.estado = 'jogo'; // (por ex. "guardar e sair" não é para o convidado)
       C.rato = Object.assign({}, rato);
       usar(guarda);
@@ -129,7 +129,8 @@ function focoCamara() {
 // ---------------------------------------------------------------------
 //  O herói do convidado (criado ao nível do teu, com equipamento do andar)
 // ---------------------------------------------------------------------
-const ATRIBUTO_CLASSE = { aventureiro: 'for', espada: 'agi', fogo: 'int', besta: 'for', titan: 'vit', cura: 'int', vento: 'agi' };
+// Atributo principal de cada caçador (os pontos de cada nível vão para ele e para a Vitalidade)
+const ATRIBUTO_CLASSE = { aventureiro: 'for', sombras: 'for', espada: 'agi', fogo: 'int', besta: 'for', titan: 'vit', cura: 'int', vento: 'agi', arqueiro: 'agi', cronos: 'agi' };
 function distribuirPontos() {
   const a = ATRIBUTO_CLASSE[J.classe] || 'for';
   if (!J.atributos) J.atributos = {};
@@ -253,7 +254,6 @@ function atualizarCoop(dt) {
     if (A.includes('usar')) coop.usar = true; // trata-se no fim do atualizar()
     else if (A.includes('mochila')) comContextoP2(() => abrirMochila());
     else if (A.includes('personagem')) comContextoP2(() => { estado = 'personagem'; });
-    else if (A.includes('status')) comContextoP2(() => abrirStatus());
     else if (A.includes('mapa')) comContextoP2(() => { estado = 'mapa'; });
     else if (p2.escolhasPendentes > 0) comContextoP2(() => abrirEscolha()); // subiu de nível: escolhe a melhoria
   }
@@ -301,8 +301,8 @@ function atualizarMenuParceiro(dt) {
   comContextoP2(() => {
     const F = {
       bau: () => atualizarRoleta(dt), loja: () => atualizarLoja(dt), encantar: () => atualizarMesa(dt), mochila: () => atualizarMochila(dt),
-      nivel: () => atualizarEscolha(dt), status: () => atualizarStatus(dt), cidade: () => atualizarCidade(dt), mapa: () => { if (premiu('tab', 'escape', 'rato', 'm')) estado = 'jogo'; },
-      personagem: () => { if (clicou(BOTAO_STATUS) || premiu('u')) abrirStatus(); else if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo'; },
+      nivel: () => atualizarEscolha(dt), cidade: () => atualizarCidade(dt), mapa: () => { if (premiu('tab', 'escape', 'rato', 'm')) estado = 'jogo'; },
+      personagem: () => { if (premiu('c', 'tab', 'escape', 'rato')) estado = 'jogo'; },
     }[estado];
     if (F) F();
   });
@@ -408,12 +408,13 @@ function partilharXp(q) {
   try { comHeroi(J.remoto ? coop.principal : coop.p2, () => ganharXp(q)); } finally { coop.partilhando = false; }
 }
 
-// Subir de nível do parceiro: ganha pontos de atributo (usa-os na Janela de Estado)
+// Subir de nível do parceiro: os pontos de atributo vão sozinhos
 function subirNivelParceiro() {
   J.pontos = (J.pontos || 0) + PONTOS_POR_NIVEL;
+  distribuirPontos();
+  S = stats();
   const h = habsJ().find(x => x.nivel === J.nivel);
   if (h) enviarCoop({ t: 'aviso', titulo: `[Destino] Nova habilidade: ${h.nome}`, sub: h.desc, cor: '#4dc3ff' });
-  else if (J.nivel === 2) enviarCoop({ t: 'aviso', titulo: '[Destino] Tens pontos de atributo', sub: 'Toca no botão do herói → Estado para os usar', cor: '#4dc3ff' });
 }
 
 // Cada baú aberto dá também um prémio ao outro herói
@@ -832,7 +833,7 @@ function atualizarRedeCoop(dt) {
   const E = coop.env;
   if (!E.ents) { E.ents = {}; E.campos = {}; E.pes = {}; coop.jaEnv = new WeakSet(); }
   // os menus do convidado: só quando mudam (o tempo das animações conta-se lá)
-  const C = coop.ctxP2, menu = { estado: C.estado, roleta: C.roleta, escolha: C.escolha, loja: C.loja, mesa: C.mesa, mochilaUI: C.mochilaUI, cidade: C.cidade, menuMeta: C.menuMeta, voltarStatus: C.voltarStatus };
+  const C = coop.ctxP2, menu = { estado: C.estado, roleta: C.roleta, escolha: C.escolha, loja: C.loja, mesa: C.mesa, mochilaUI: C.mochilaUI, cidade: C.cidade, menuMeta: C.menuMeta };
   const cm = JSON.stringify(copiar(menu, 0, menu, 8), (k, v) => (k === 't' || k === 'pos' || k === 'brilho' || k === 'ultimoTick' ? undefined : v));
   if (cm !== E.menu) { E.menu = cm; enviarCoop({ t: 'menu', d: copiar(menu, 0, menu, 8) }); }
 
@@ -1065,7 +1066,6 @@ function aplicarMenu(d) {
   if (roleta && roleta.faixa) roleta.faixa = roleta.faixa.map(it => it || { nome: '?', r: 'lixo', tipo: 'arma' });
   loja = d.loja || null; mesa = d.mesa || null; mochilaUI = d.mochilaUI || null; cidade = d.cidade || null; menuMeta = d.menuMeta || null;
   escolha = d.escolha || null;
-  voltarStatus = d.voltarStatus || 'jogo';
   if (escolha && escolha.opcoes) escolha.opcoes = escolha.opcoes.map(o => PERKS.find(p => p.id === o.id) || o);
   // as animações de entrada continuam de onde estavam
   for (const k of ['loja', 'mesa', 'mochilaUI', 'escolha', 'cidade', 'menuMeta']) {
@@ -1225,7 +1225,6 @@ function atualizarConvidado(dt) {
     if (premiu('e')) acao('usar');
     if (premiu('i')) acao('mochila');
     if (premiu('c')) acao('personagem');
-    if (premiu('u')) acao('status');
     if (premiu('tab')) acao('mapa');
   }
   if (J.golpe) { J.golpe.t -= dt; if (J.golpe.t <= 0) J.golpe = null; }
@@ -1271,7 +1270,7 @@ const convidadoPronto = () => !!(coop.pronto && mapa && J && S && coop.p2);
 // Por cima do jogo, no telemóvel do convidado: os menus dele e os avisos
 function desenharExtrasConvidado(t) {
   const D = { bau: () => roleta && desenharRoleta(t), nivel: () => escolha && desenharEscolha(t), loja: () => loja && desenharLoja(t), encantar: () => mesa && desenharMesa(t),
-    personagem: () => desenharPersonagem(), mochila: () => mochilaUI && desenharMochila(), status: () => menuMeta && desenharStatus(t), cidade: () => cidade && desenharPainelCidade(t), mapa: () => desenharMapaGrande() }[coop.menu];
+    personagem: () => desenharPersonagem(), mochila: () => mochilaUI && desenharMochila(), cidade: () => cidade && desenharPainelCidade(t), mapa: () => desenharMapaGrande() }[coop.menu];
   if (D) D();
   if (coop.espera) {
     ctx.fillStyle = 'rgba(0,0,0,0.55)';

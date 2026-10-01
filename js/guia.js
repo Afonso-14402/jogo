@@ -60,7 +60,6 @@ const DICAS = {
   boss:         ['BOSS! Tem muita vida e ataques fortes.', 'Usa a esquiva (»») para passar pelos ataques: ficas invencível.'],
   elite:        ['Monstro de elite: mais forte do que os outros.', 'Dá mais XP e mais ouro quando o derrotas.'],
   vidaBaixa:    ['Vida baixa! Bebe uma poção.', 'No telemóvel é o botão da poção; no PC é a tecla Q.'],
-  pontos:       ['Tens pontos de atributo para gastar!', 'Toca no herói e depois em Estado (no PC: tecla U).'],
 };
 
 let dicaAtual = null;
@@ -88,7 +87,6 @@ function atualizarDicas(dt) {
   if (J.objPerto && DICAS[J.objPerto.tipo]) dica(J.objPerto.tipo);
   if (boss && boss.acordado) dica('boss');
   if (J.hp < S.maxHp * 0.3 && J.pocoes > 0) dica('vidaBaixa');
-  if (J.pontos > 0 && andar >= 2) dica('pontos');
   for (const e of inimigos) if (e.elite && !e.morto && Math.hypot(e.x - J.x, e.y - J.y) < 260) { dica('elite'); break; }
 }
 
