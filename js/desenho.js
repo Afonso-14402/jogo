@@ -1700,6 +1700,13 @@ function desenharCriacao(t) {
   });
   const Dsel = DIFICULDADES[escolhaDificuldade];
   textoEsq(`Dificuldade: ${Dsel.desc}`, 30, 610, 12, Dsel.cor, 'normal');
+  if (!modoProximo && atalhosLivres().length > 1) { // atalho: começar numa zona mais funda
+    if (!atalhosLivres().includes(andarInicial)) andarInicial = 1;
+    const a = BOTAO_ATALHO;
+    painel(a.x, a.y, a.w, a.h, dentro(a) ? 'rgba(30,50,70,0.97)' : 'rgba(14,24,36,0.95)', '#4dc3ff');
+    textoCentroAjustado(`Começar no andar ${andarInicial}`, a.x + a.w / 2, a.y + 14, 13, '#4dc3ff', a.w - 12);
+    textoCentroAjustado(andarInicial > 1 ? NOMES_ZONAS[zonaDoAndar(andarInicial)] : 'Toca para mudar', a.x + a.w / 2, a.y + 30, 10, '#8fb8d8', a.w - 12, false);
+  }
   const b = BOTAO_COMECAR;
   painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
   textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');

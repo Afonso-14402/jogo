@@ -426,6 +426,7 @@ function novoJogo() {
   J.mana = S.maxMana;
   registar('partidas');
   conquistasCalor();
+  if (!J.modo && andarInicial > 1 && atalhosLivres().includes(andarInicial)) prepararAtalho(andarInicial); // atalho para uma zona mais funda
   proximoAndar();
   estado = 'jogo';
   tutorial = null;
@@ -2323,6 +2324,11 @@ function atualizarCriacao(dt) {
       else criacao.msg = { txt: SKINS[id].conquista ? `Desbloqueia com a conquista "${CONQUISTAS.find(c => c.id === SKINS[id].conquista).nome}"` : `Chega ao andar ${SKINS[id].recorde} para desbloquear esta skin`, cor: '#ff8080', t: 2.5 };
     });
     if (dentro(BOTAO_COMECAR)) comecar = true;
+    if (!modoProximo && atalhosLivres().length > 1 && dentro(BOTAO_ATALHO)) { // muda o andar onde começas
+      const l = atalhosLivres();
+      andarInicial = l[(l.indexOf(andarInicial) + 1) % l.length];
+      som(700, 0.05, 'square', 0.02);
+    }
   }
   if (ir !== ORDEM_RACAS.indexOf(escolhaRaca) || is !== ORDEM_SKINS.indexOf(escolhaSkin)) som(700, 0.05, 'square', 0.02);
   escolhaRaca = ORDEM_RACAS[ir];

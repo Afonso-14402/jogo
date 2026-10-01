@@ -26,6 +26,39 @@ function progressoDesbloqueios() {
   meta.andarMax = andar;
   salvarMeta();
   for (const id of Object.keys(DESBLOQUEIOS)) if (!antes.includes(id) && modoLivre(id)) avisar('MODO NOVO NO MENU', DESBLOQUEIOS[id].nome, '#5dff7a');
+  if (andar > 1 && ANDARES_ATALHO.includes(andar)) avisar('ATALHO NOVO', `As partidas novas podem começar no andar ${andar}`, '#4dc3ff');
+}
+
+// ---------------------------------------------------------------------
+//  Atalhos: depois de chegares ao andar 11, 21, 31, 41 ou 51, as partidas
+//  novas podem começar lá (com um herói ao nível desse andar)
+// ---------------------------------------------------------------------
+const ANDARES_ATALHO = [1, 11, 21, 31, 41, 51];
+const atalhosLivres = () => ANDARES_ATALHO.filter(a => a === 1 || andarMaximo() >= a);
+let andarInicial = 1;
+const BOTAO_ATALHO = { x: 506, y: 586, w: 184, h: 40 };
+
+// O herói "típico" do andar n (o mesmo que o bot de equilíbrio usa): nível, atributos,
+// equipamento e magias à altura; ganha também 3 melhorias para escolher ao começar
+function prepararAtalho(n) {
+  const L = Math.round((n - 1) * 0.9) + 1;
+  while (J.nivel < L) { J.nivel++; J.hpBase += 10; J.atkBase += 2; J.defBase += 1; J.pontos += PONTOS_POR_NIVEL; }
+  distribuirPontos();
+  const rr = n < 16 ? 'raro' : n < 36 ? 'epico' : 'lendario';
+  const tipoArma = classeArma(J.arma);
+  for (const tipo of ['arma', 'armadura', 'amuleto']) {
+    let l = ITENS.filter(i => i.tipo === tipo && i.r === rr && !i.inicial);
+    if (tipo === 'arma') { const base = ITENS.find(i => i.nome === (J.arma && J.arma.nomeBase)); const m = l.filter(i => classeArma(i) === tipoArma); l = m.length ? m : l; if (base && Math.random() < 0.5) l = [base]; }
+    if (l.length) { J[tipo] = criarItem(escolher(l), n, true); registrarItem(J[tipo]); }
+  }
+  for (const f of feiticosJ()) J.feiticos[f] = Math.max(J.feiticos[f] || 0, Math.min(3, 1 + Math.floor(n / 15)));
+  J.ouro += n * 12;
+  J.pocoes += 2;
+  J.escolhasPendentes += 3;
+  J.atalho = n;
+  andar = n - 1; // o proximoAndar sobe para o andar n
+  S = stats();
+  J.hp = S.maxHp; J.mana = S.maxMana;
 }
 
 // Mensagem no menu inicial quando tocas num modo fechado

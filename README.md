@@ -35,6 +35,10 @@ No telemóvel há ainda:
 | M | Ligar/desligar o som |
 | I (no menu inicial) | Mudar o idioma (Português, Português do Brasil, Inglês, Espanhol) |
 
+### Atalhos por zona
+
+Quando chegas aos andares 11, 21, 31, 41 ou 51, as partidas novas podem começar lá: no ecrã de criação aparece o botão **Começar no andar N**. O herói começa ao nível desse andar (nível, atributos, equipamento e magias) e escolhe logo 3 melhorias.
+
 ### Idioma (PT / BR / EN / ES)
 
 No canto superior direito do menu inicial e da pausa há um botão **PT | BR | EN | ES**: português, português do Brasil, inglês e espanhol. A escolha fica guardada.

@@ -864,6 +864,7 @@ const EN = {
   'Atacar (nos menus: carregar)': 'Attack (in menus: select)', 'Esquiva (nos menus: voltar)': 'Dodge (in menus: back)',
   'Usar / Beber poção': 'Use / Drink potion', 'Poder único / 1.ª magia': 'Unique power / 1st spell', '1.ª e 2.ª habilidade': '1st and 2nd skill',
   'Apontar': 'Aim', 'Mochila / Pausa': 'Bag / Pause', 'Stick esquerdo: andar · A: atacar · B: esquiva': 'Left stick: move · A: attack · B: dodge',
+  'ATALHO NOVO': 'NEW SHORTCUT', 'As partidas novas podem começar no andar ': 'New runs can start on floor ', 'Começar no andar ': 'Start on floor ', 'Toca para mudar': 'Tap to change',
   'Poder': 'Power', 'Tremor do ecrã': 'Screen shake', 'Fraco': 'Weak',
   // missões da semana
   'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',

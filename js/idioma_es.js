@@ -5,6 +5,7 @@
 // =====================================================================
 
 const ES = {
+  "ATALHO NOVO": "ATAJO NUEVO", "As partidas novas podem começar no andar ": "Las partidas nuevas pueden empezar en el piso ", "Começar no andar ": "Empezar en el piso ", "Toca para mudar": "Toca para cambiar",
   "Stick esquerdo": "Stick izquierdo", "Stick direito": "Stick derecho", "Mover (nos menus: cursor)": "Moverse (en los menús: cursor)",
   "Atacar (nos menus: carregar)": "Atacar (en los menús: elegir)", "Esquiva (nos menus: voltar)": "Esquivar (en los menús: volver)",
   "Usar / Beber poção": "Usar / Beber poción", "Poder único / 1.ª magia": "Poder único / 1.ª magia", "1.ª e 2.ª habilidade": "1.ª y 2.ª habilidad",
