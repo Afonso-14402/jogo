@@ -80,6 +80,8 @@
   <script src="js/toque.js"></script>
   <script src="js/comando.js"></script>
   <script>
+    // o jogo só arranca depois de todos os ficheiros carregados (pela internet podem chegar devagar)
+    requestAnimationFrame(loop);
     // Funciona sem internet depois de instalado (só em http/https, não em file://)
     // (na app Android o jogo já vem dentro da app: não precisa)
     if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !window.Capacitor) {

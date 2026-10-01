@@ -491,7 +491,6 @@ function desenharTutorial(t) {
   }
 }
 
-requestAnimationFrame(loop);
 
 // ---------------------------------------------------------------------
 //  Botão "voltar" do Android (na app da Play Store): no jogo põe em pausa,
