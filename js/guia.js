@@ -41,17 +41,7 @@ const BOTAO_ATALHO = { x: 506, y: 586, w: 184, h: 40 };
 // O herói "típico" do andar n (o mesmo que o bot de equilíbrio usa): nível, atributos,
 // equipamento e magias à altura; ganha também 3 melhorias para escolher ao começar
 function prepararAtalho(n) {
-  const L = Math.round((n - 1) * 0.9) + 1;
-  while (J.nivel < L) { J.nivel++; J.hpBase += 10; J.atkBase += 2; J.defBase += 1; J.pontos += PONTOS_POR_NIVEL; }
-  distribuirPontos();
-  const rr = n < 16 ? 'raro' : n < 36 ? 'epico' : 'lendario';
-  const tipoArma = classeArma(J.arma);
-  for (const tipo of ['arma', 'armadura', 'amuleto']) {
-    let l = ITENS.filter(i => i.tipo === tipo && i.r === rr && !i.inicial);
-    if (tipo === 'arma') { const base = ITENS.find(i => i.nome === (J.arma && J.arma.nomeBase)); const m = l.filter(i => classeArma(i) === tipoArma); l = m.length ? m : l; if (base && Math.random() < 0.5) l = [base]; }
-    if (l.length) { J[tipo] = criarItem(escolher(l), n, true); registrarItem(J[tipo]); }
-  }
-  for (const f of feiticosJ()) J.feiticos[f] = Math.max(J.feiticos[f] || 0, Math.min(3, 1 + Math.floor(n / 15)));
+  prepararParaAndar(n);
   J.ouro += n * 12;
   J.pocoes += 2;
   J.escolhasPendentes += 3;
@@ -59,6 +49,29 @@ function prepararAtalho(n) {
   andar = n - 1; // o proximoAndar sobe para o andar n
   S = stats();
   J.hp = S.maxHp; J.mana = S.maxMana;
+}
+
+const valorItem = x => (x.dano || 0) + (x.def || 0) + (x.hp || 0) / 5 + (x.regen || 0) * 5;
+// Põe o herói ao nível e com o equipamento típicos do andar n (atalhos e Boss Rush).
+// Só melhora: o que já tens de melhor fica. Devolve quantos níveis subiu.
+function prepararParaAndar(n) {
+  const L = Math.round((n - 1) * 0.9) + 1, n0 = J.nivel;
+  while (J.nivel < L) { J.nivel++; J.hpBase += 10; J.atkBase += 2; J.defBase += 1; J.pontos += PONTOS_POR_NIVEL; }
+  distribuirPontos();
+  const rr = n < 16 ? 'raro' : n < 36 ? 'epico' : 'lendario';
+  const ordem = r => ORDEM_RARIDADES.indexOf(r);
+  const tipoArma = classeArma(J.arma);
+  for (const tipo of ['arma', 'armadura', 'amuleto']) {
+    if (J[tipo] && ordem(J[tipo].r) > ordem(rr)) continue;
+    let l = ITENS.filter(i => i.tipo === tipo && i.r === rr && !i.inicial);
+    if (tipo === 'arma') { const base = ITENS.find(i => i.nome === (J.arma && J.arma.nomeBase)); const m = l.filter(i => classeArma(i) === tipoArma); l = m.length ? m : l; if (base && base.r === rr && Math.random() < 0.5) l = [base]; }
+    if (!l.length) continue;
+    const novo = criarItem(escolher(l), n, true);
+    if (J[tipo] && ordem(J[tipo].r) === ordem(rr) && valorItem(J[tipo]) >= valorItem(novo) * 0.9) continue; // o teu ainda é bom
+    J[tipo] = novo; registrarItem(novo);
+  }
+  for (const f of feiticosJ()) J.feiticos[f] = Math.max(J.feiticos[f] || 0, Math.min(3, 1 + Math.floor(n / 15)));
+  return J.nivel - n0;
 }
 
 // Mensagem no menu inicial quando tocas num modo fechado

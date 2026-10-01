@@ -195,6 +195,7 @@ function juntarParceiro(p2) {
 // O exército de sombras do parceiro (se for Caçador das Sombras) aparece à volta dele
 function levantarExercitoParceiro(p2) {
   if (p2.classe !== 'sombras') p2.sombras = [];
+  comHeroi(p2, () => voltarSombrasCaidas(p2));
   p2.sombrasMundo = (p2.sombras || []).map((s, i) => {
     const a = i / Math.max(1, p2.sombras.length) * Math.PI * 2;
     let x = p2.x + Math.cos(a) * 40, y = p2.y + Math.sin(a) * 40;

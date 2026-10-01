@@ -450,7 +450,7 @@ function conquistasAoMatar(e) {
   if (e.nv === 3 && contar('campeoes') >= 25) desbloquear('campeoes');
   if (classeArma(J.arma) === 'arco' && contar('arco') >= 100) desbloquear('arqueiro');
   if (e.tipo === 'goblin' && e.roubou) desbloquear('ladrao');
-  if (temRel('dente') && !e.boss) J.hp = Math.min(S.maxHp, J.hp + S.maxHp * 0.02);
+  if (temRel('dente') && !e.boss) curarRoubo(S.maxHp * 0.02);
 }
 
 function conquistasAoDescer() {

@@ -239,7 +239,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 - **Pets que evoluem**: no nível 10 o companheiro evolui (Lobo Alfa, Fada Rainha, Dragão Jovem...), fica maior, com aura e +60% dano.
 - **Eventos nos andares**: mercador ambulante, chuva de ouro, andar escuro (+50% XP), lua de sangue (monstros mais fortes, mais XP e ouro) ou bênção da deusa.
 - **Mapa grande**: tecla **Tab**, ou tocar no minimapa no telemóvel.
-- **Boss Rush**: os 12 bosses seguidos, contra o relógio (recuperas 30% de vida entre bosses). Guarda o melhor tempo.
+- **Boss Rush**: os bosses seguidos, contra o relógio (recuperas 30% de vida entre bosses). Antes de cada boss o herói sobe ao nível do andar, ganha equipamento e melhorias para escolher. Guarda o melhor tempo.
 - **Transferir progresso**: no menu, copia um código no aparelho antigo e cola-o no novo para levar almas, conquistas, coleção e o jogo guardado.
 - **Sombras**: o Exército das Sombras só existe para o Caçador das Sombras.
 - **Sensação de jogo (polimento)**:
@@ -270,7 +270,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
     | 10 | **Sede de Sangue** | os monstros à tua volta ficam paralisados de medo e levam +30% dano |
     | 15 | **Mão Invisível** | uma força invisível esmaga e empurra os monstros à tua frente |
     | 20 | **Furtividade** | ficas invisível 5 s e o golpe seguinte faz dano x3 |
-  - **Exército das Sombras**: até 10 soldados (mais com o nível) e 1 sombra de boss. Ficam contigo de andar para andar.
+  - **Exército das Sombras**: até 10 soldados (mais com o nível) e 1 sombra de boss. Ficam contigo de andar para andar. Têm vida (barra roxa): os monstros atacam-nas e podem cair; as que caem voltam no andar seguinte.
   - **Poder de combate e Rank de Caçador** (E, D, C, B, A, S, Nacional): o Poder aparece no topo do ecrã (verde = mais forte do que o andar, amarelo = ao nível, vermelho = perigo). Cada andar é um **portal** com um rank e um **poder recomendado** (aparece ao entrar no andar).
   - **Equilíbrio dinâmico**: se ficares muito mais forte do que o andar, os monstros também sobem (até 2x vida e 1.6x dano). Com equipamento normal o jogo continua difícil; só com o melhor equipamento (lendário/mítico e reforçado) é que matas tudo depressa.
 - **Níveis e melhorias**: ganhas XP ao matar inimigos. Cada nível dá +vida, +ataque e +defesa, cura-te por completo e deixa-te **escolher 1 de 3 melhorias** (teclas 1, 2, 3 ou clique). Há 16 melhorias, por exemplo:
@@ -318,7 +318,7 @@ Existem 3 tipos de equipamento: **arma**, **armadura** e **amuleto**. Quando sai
 
 ### Equilíbrio nos andares altos
 
-A partir do andar 20 os monstros ficam mais fortes cada vez mais depressa, e a defesa vale menos contra monstros de andares fundos (tira no máximo 80% do dano). O roubo de vida tem um limite de 15% e o crítico de 60%. Assim o herói já não fica imortal nem mata tudo com um golpe nos andares 50+. Quanto mais fundo chegares, maior o desafio.
+A partir do andar 20 os monstros ficam mais fortes cada vez mais depressa, e a defesa vale menos contra monstros de andares fundos (tira no máximo 80% do dano). O roubo de vida tem um limite de 15% e cura no máximo 6% da vida por segundo, e o crítico vai até 60%. Se fores muito mais forte do que o andar, os monstros acompanham-te. Assim o herói já não fica imortal nem mata tudo com um golpe nos andares 50+. Quanto mais fundo chegares, maior o desafio.
 
 ## Estrutura
 

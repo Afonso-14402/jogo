@@ -188,7 +188,16 @@ function desenharMapaGrande() {
 // ---------------------------------------------------------------------
 function andarBossRush() { // no Boss Rush só há andares de boss
   andar = Math.ceil(andar / 5) * 5;
+  // antes de cada boss o herói fica com o nível e o equipamento do andar (senão o 1.º boss já era impossível)
+  const subiu = prepararParaAndar(andar);
+  if (subiu > 0) {
+    J.escolhasPendentes += Math.ceil(subiu / 2); // melhorias para escolher
+    J.pocoes = Math.max(J.pocoes, 3);
+    avisar(`Nível ${J.nivel}`, 'Ficaste mais forte para o próximo boss', '#ffe14d');
+  }
+  S = stats();
   if (J.hp > 0) J.hp = Math.min(S.maxHp, J.hp + S.maxHp * 0.3); // recupera um pouco entre bosses
+  if (subiu > 0 && J.hp > 0) { J.hp = S.maxHp; J.mana = S.maxMana; }
 }
 function bossRushVencido() {
   if (J.modo !== 'bossrush' || andar < BOSSES.length * 5) return false;

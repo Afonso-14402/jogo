@@ -300,7 +300,7 @@ const EN = {
   'EXÉRCITO DAS SOMBRAS': 'SHADOW ARMY', ' soldados': ' soldiers', ' + 1 boss': ' + 1 boss', 'Desbloqueia no nível 5': 'Unlocks at level 5',
   'Mata monstros e usa "Serve-me!" (tecla 5) perto dos corpos': 'Kill monsters and use "Serve me!" (key 5) near the bodies',
   'Toca fora dos botões para voltar': 'Tap outside the buttons to go back', 'U / Esc para voltar': 'U / Esc to go back',
-  'Não há corpos perto': 'No bodies nearby', 'Exército cheio (': 'Army full (', 'Desbloqueia no nível ': 'Unlocks at level ',
+  'Não há corpos perto': 'No bodies nearby', 'Sombra caiu': 'Shadow fell', 'General caiu': 'General fell', 'Ficaste mais forte para o próximo boss': 'You got stronger for the next boss', 'Exército cheio (': 'Army full (', 'Desbloqueia no nível ': 'Unlocks at level ',
   'EMBOSCADA!': 'AMBUSH!', '[Destino] Nova habilidade: ': '[Fate] New skill: ', '[Destino] Tens pontos de atributo': '[Fate] You have attribute points',
   'Abre a Janela de Estado (': 'Open the Status Window (', 'botão do herói': 'hero button', 'tecla U': 'key U', ') para os usar': ') to spend them',
   'Tecla ': 'Key ', 'Mana ': 'Mana ', ' · Recarga ': ' · Cooldown ', ' · tecla ': ' · key ', ' (nível ': ' (level ',

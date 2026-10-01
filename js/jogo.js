@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'sombrasCaidas', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
 
 function lerSave() {
   try {
@@ -799,11 +799,22 @@ function atacar(dx, dy) {
     const l2 = d || 1;
     danoInimigo(e, dano, crit, (classe === 'martelo' ? ex / l2 : dx) * empurrao, (classe === 'martelo' ? ey / l2 : dy) * empurrao, true);
     if (classe === 'martelo') e.lento = Math.max(e.lento || 0, 1.2);
-    if (classe === 'foice') J.hp = Math.min(S.maxHp, J.hp + dano * 0.04);
+    if (classe === 'foice') curarRoubo(dano * 0.04);
     acertou = true;
   }
   if (classe === 'martelo' && !giro) { ondas.push({ x: J.x, y: J.y, r: alcance + J.r, t: 0.25, dur: 0.25, cor: '#ffe680' }); tremor = Math.max(tremor, 4); }
   if (acertou) tremor = Math.max(tremor, 2);
+}
+
+// Roubo de vida: no máximo 6% da vida por segundo (antes, com muitas sombras, fogo e golpes
+// em grupos de monstros, a cura era tanta que o herói ficava imortal)
+function curarRoubo(v) {
+  const seg = Math.floor(tempoJogo);
+  if (J.rouboSeg !== seg) { J.rouboSeg = seg; J.rouboCurado = 0; }
+  const h = Math.min(v, S.maxHp * 0.06 - J.rouboCurado);
+  if (h <= 0) return;
+  J.rouboCurado += h;
+  J.hp = Math.min(S.maxHp, J.hp + h);
 }
 
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
@@ -818,7 +829,7 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   texto(e.x, e.y - e.r - 4, crit ? `${dano}!` : `${dano}`, crit ? '#ffe14d' : '#ffffff', crit ? 26 : 16);
   explosao(e.x, e.y, e.cor, 5, 120, 3);
   if (efeitos) faiscasGolpe(e, crit, dx, dy);
-  if (S.roubo > 0) J.hp = Math.min(S.maxHp, J.hp + dano * S.roubo);
+  if (S.roubo > 0) curarRoubo(dano * S.roubo);
   if (efeitos) sentirGolpe(e, dano, crit, dx, dy); // som da arma, faíscas e micro-pausa
   else som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
   const af = efeitos && J.arma.afixo ? J.arma.afixo.id : null;
@@ -1056,6 +1067,9 @@ function invocar(tipo, perto, raio) {
 function atualizar(dt) {
   tempoJogo += dt;
   S = stats();
+  // proteções: uma vida estragada (NaN) ou um "num menu" que ficou preso deixavam o herói imortal
+  if (!Number.isFinite(J.hp)) { console.warn('vida estragada', J.hp); J.hp = S.maxHp; }
+  if (J.emMenu && !parceiroAtivo()) J.emMenu = false;
   atualizarJogador(dt);
   if (estado !== 'jogo') return;
   atualizarCoop(dt); // o herói do parceiro (a jogar a 2)

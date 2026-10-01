@@ -414,15 +414,40 @@ function deixarCadaver(e) {
   if (cadaveres.length > 30) cadaveres.shift();
 }
 
+// Vida das sombras: como o herói, levam dano dos monstros e podem cair
+// (as que caem voltam a levantar-se no andar seguinte)
+const vidaSombra = s => Math.max(10, Math.round((S ? S.maxHp : 100) * (s.boss ? 1 : s.elite ? 0.5 : 0.3)));
 function criarSombra(s, x, y) {
   const r = s.boss ? 22 : Math.min(15, (INIMIGOS[s.tipo] || { r: 12 }).r);
-  return { tipo: s.tipo, boss: s.boss, elite: s.elite, nome: s.nome, x, y, r, t: Math.random() * 6, cd: 0.5, dir: 1, ang: Math.random() * Math.PI * 2 };
+  const hp = vidaSombra(s);
+  return { tipo: s.tipo, boss: s.boss, elite: s.elite, nome: s.nome, x, y, r, hp, maxHp: hp, t: Math.random() * 6, cd: 0.5, dir: 1, ang: Math.random() * Math.PI * 2 };
+}
+
+// Um monstro encostado a uma sombra ataca-a (cada monstro ataca no máximo uma vez a cada 0,9 s)
+function sombraLevaDano(s, e) {
+  if (e.golpeSombraT > tempoJogo || e.enterrado > 0 || e.z > 20) return;
+  e.golpeSombraT = tempoJogo + 0.9;
+  const d = Math.max(1, Math.round(e.dano * (1 - reducaoDefesa())));
+  s.hp -= d; s.flash = 0.12;
+  texto(s.x, s.y - s.r - 4, `-${d}`, '#b48cff', 13);
 }
 
 // No início de cada andar o exército aparece à tua volta
+// As sombras que caíram no andar anterior voltam (se ainda houver lugar no exército)
+function voltarSombrasCaidas(h) {
+  const caidas = h.sombrasCaidas || [];
+  h.sombrasCaidas = [];
+  if (h.classe !== 'sombras') return;
+  for (const x of caidas) {
+    const n = h.sombras.filter(y => !!y.boss === !!x.boss).length;
+    if (n < (x.boss ? maxGenerais() : maxSombras())) h.sombras.push(x);
+  }
+}
+
 function levantarExercito() {
   cadaveres = [];
   if (J.classe !== 'sombras') J.sombras = []; // o exército é só do Caçador das Sombras
+  voltarSombrasCaidas(J);
   sombras = (J.sombras || []).map((s, i) => {
     const a = i / Math.max(1, J.sombras.length) * Math.PI * 2;
     let x = J.x + Math.cos(a) * 40, y = J.y + Math.sin(a) * 40;
@@ -453,6 +478,8 @@ function atualizarSombras(dt) {
     s.andando = d > perto;
     if (s.andando) moverEntidade(mapa, s, dx / d * vel * dt, dy / d * vel * dt);
     if (Math.abs(dx) > 2) s.dir = dx > 0 ? 1 : -1;
+    if (s.flash > 0) s.flash -= dt;
+    for (const e of inimigos) if (!e.morto && Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r + 2) sombraLevaDano(s, e);
     if (alvo && d < alvo.r + s.r + 8 && s.cd <= 0) {
       s.cd = s.boss ? 1.2 : 0.9;
       danoInimigo(alvo, danoSombra(s), false, dx / d, dy / d);
@@ -461,6 +488,15 @@ function atualizarSombras(dt) {
     if (Math.hypot(s.x - J.x, s.y - J.y) > 520) { s.x = J.x + rand(-20, 20); s.y = J.y + rand(-20, 20); }
     if (Math.random() < 0.08) particulas.push({ x: s.x + rand(-s.r, s.r), y: s.y + rand(-s.r, s.r), vx: 0, vy: -30, t: 0.5, cor: '#4a2a8a', tam: 4 });
   });
+  // as sombras sem vida desfazem-se em fumo; voltam a levantar-se no próximo andar
+  // (até lá deixam lugar livre para ergueres outras)
+  for (const s of sombras) if (s.hp <= 0) {
+    explosao(s.x, s.y, '#6a4aff', 14, 140, 4);
+    texto(s.x, s.y - 24, s.boss ? 'General caiu' : 'Sombra caiu', '#8a7fb8', 12);
+    const i = (J.sombras || []).findIndex(x => x.tipo === s.tipo && !!x.boss === !!s.boss && !!x.elite === !!s.elite && (x.nome || null) === (s.nome || null));
+    if (i >= 0) (J.sombrasCaidas || (J.sombrasCaidas = [])).push(J.sombras.splice(i, 1)[0]);
+  }
+  if (sombras.some(s => s.hp <= 0)) sombras = sombras.filter(s => s.hp > 0);
 }
 
 function spriteSombra(s) {
@@ -494,6 +530,11 @@ function desenharSombra(s, t) {
   spr(c, s.x, s.y - (s.andando ? Math.abs(Math.sin(s.t * 10)) * 2 : 0), s.dir < 0);
   ctx.globalAlpha = 1;
   ctx.restore();
+  if (s.maxHp && s.hp < s.maxHp) { // barra de vida quando está ferida
+    const w = s.boss ? 30 : 18, y = s.y - s.r * (s.boss ? 0.9 : 1.1) - 6;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(alinhar(s.x - w / 2 - 1), alinhar(y - 1), w + 2, 4);
+    ctx.fillStyle = '#8a6aff'; ctx.fillRect(alinhar(s.x - w / 2), alinhar(y), Math.max(1, Math.round(w * clamp(s.hp / s.maxHp, 0, 1))), 2);
+  }
 }
 
 // Nome por cima dos generais e cavaleiros (desenhado no ecrã)
@@ -590,8 +631,8 @@ function atualizarFatorAdaptativo() {
   S = stats();
   const razao = poderJogador() / Math.max(1, poderRecomendado(andar));
   J.fatorAdapt = {
-    hp: clamp(Math.pow(razao / 1.6, 0.4), 1, 2),
-    dano: clamp(Math.pow(razao / 1.6, 0.3), 1, 1.6),
+    hp: clamp(Math.pow(razao / 1.6, 0.4), 1, 2.5),
+    dano: clamp(Math.pow(razao / 1.6, 0.3), 1, 2.2), // muito acima do andar já não ficas imortal
     razao,
   };
 }
