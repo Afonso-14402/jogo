@@ -437,14 +437,14 @@ function presenteParceiro(tipoBau) {
     if (depois > antes && !it.maldicao) {
       equipar(it);
       texto(J.x, J.y - 34, it.nome, RARIDADES[it.r].cor, 15);
-      enviarCoop({ t: 'aviso', titulo: `Novo equipamento: ${traduzir(it.nome)}`, sub: `${traduzir(RARIDADES[it.r].nome)} · ${traduzir('Poder')} +${depois - antes}`, cor: RARIDADES[it.r].cor });
+      enviarCoop({ t: 'aviso', titulo: `Novo equipamento: ${it.nome}`, sub: `${RARIDADES[it.r].nome} · Poder +${depois - antes}`, cor: RARIDADES[it.r].cor });
     } else if (J.mochila.length < TAMANHO_MOCHILA) {
       J.mochila.push(it);
-      enviarCoop({ t: 'aviso', titulo: `Guardado na mochila: ${traduzir(it.nome)}`, sub: traduzir(RARIDADES[it.r].nome), cor: RARIDADES[it.r].cor });
+      enviarCoop({ t: 'aviso', titulo: `Guardado na mochila: ${it.nome}`, sub: RARIDADES[it.r].nome, cor: RARIDADES[it.r].cor });
     } else {
       const v = valorVenda(it);
       J.ouro += v;
-      enviarCoop({ t: 'aviso', titulo: `Vendeste ${traduzir(it.nome)}`, sub: `+${v} ouro para a equipa`, cor: '#ffd23f' });
+      enviarCoop({ t: 'aviso', titulo: `Vendeste ${it.nome}`, sub: `+${v} ouro para a equipa`, cor: '#ffd23f' });
     }
   });
 }
@@ -528,6 +528,7 @@ function luzParceiro(luz, t) {
   if (p2) luz(p2.x, p2.y, 300 + Math.sin(t * 7 + 1) * 6, 1);
 }
 
+// (os avisos para o convidado vão em português: o telemóvel dele traduz para a língua dele)
 // ---------------------------------------------------------------------
 //  Rede (PeerJS): dois canais entre os telemóveis
 //   - "ctl" (seguro): entrar, botões, menus, mapa, avisos

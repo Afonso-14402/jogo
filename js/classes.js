@@ -321,7 +321,7 @@ function andarProvacao() {
 }
 function bossProvacao() {
   const b = criarBoss(escolher(BOSSES.slice(0, Math.min(BOSSES.length, 2 + Math.floor(andar / 8)))).id, 1.3);
-  b.nome = `Provação: ${traduzir(b.nome)}`;
+  b.nome = `Provação: ${b.nome}`; // traduz-se ao desenhar (a jogar a 2, cada um na sua língua)
   return b;
 }
 function concluirProvacao() {
