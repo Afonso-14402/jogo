@@ -68,6 +68,7 @@ const botaoEm = p => botoesToque().find(b => Math.hypot(p.x - b.x, p.y - b.y) <=
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
   if (!modoToque) { modoToque = true; ajustarTela(); }
+  comando.ativo = false; // voltou ao ecrã tátil: os botões aparecem outra vez
   for (const t of e.changedTouches) {
     const p = posToque(t);
     rato.x = p.x; rato.y = p.y;
@@ -127,7 +128,7 @@ canvas.addEventListener('touchcancel', largarToque, { passive: false });
 //  OPÇÕES DE TELEMÓVEL (guardadas entre partidas)
 // =====================================================================
 const CHAVE_OPCOES = 'masmorra_opcoes';
-const opcoes = { tamanho: 1, visibilidade: 1, letra: 1, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
+const opcoes = { tamanho: 1, visibilidade: 1, letra: 1, tremor: 2, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
 try { Object.assign(opcoes, JSON.parse(localStorage.getItem(CHAVE_OPCOES) || '{}')); } catch (e) { /* sem storage */ }
 function guardarOpcoes() {
   try { localStorage.setItem(CHAVE_OPCOES, JSON.stringify(opcoes)); } catch (e) { /* sem storage */ }
@@ -229,6 +230,7 @@ canvas.addEventListener('click', e => gesto(posToque(e)));
 // ---------------------------------------------------------------------
 function vibrar(padrao) {
   if (J && J.remoto) { enviarCoop({ t: 'vib', p: padrao }); return; } // vibra o telemóvel do parceiro
+  if (opcoes.vibracao) vibrarComando(padrao);
   if (!modoToque || !opcoes.vibracao || !navigator.vibrate) return;
   try { navigator.vibrate(padrao); } catch (e) { /* ignora */ }
 }
@@ -304,6 +306,7 @@ function linhasOpcoes() {
     { id: 'tamanho', nome: 'Tamanho dos botões', valor: ['Pequeno', 'Normal', 'Grande'][opcoes.tamanho] },
     { id: 'visibilidade', nome: 'Visibilidade dos botões', valor: ['Transparente', 'Normal', 'Forte'][opcoes.visibilidade] },
     { id: 'canhoto', nome: 'Joystick', valor: opcoes.canhoto ? 'À direita (canhoto)' : 'À esquerda' },
+    { id: 'tremor', nome: 'Tremor do ecrã', valor: ['Desligado', 'Fraco', 'Normal'][opcoes.tremor == null ? 2 : opcoes.tremor] },
     { id: 'vibracao', nome: 'Vibração', valor: !navigator.vibrate ? 'Não suportada' : opcoes.vibracao ? 'Ligada' : 'Desligada' },
     { id: 'poupanca', nome: 'Poupança de bateria', valor: opcoes.poupanca ? 'Ligada (30 FPS)' : 'Desligada (60 FPS)' },
     { id: 'som', nome: 'Som e música', valor: !somLigado ? 'Desligado' : musicaLigada ? 'Tudo ligado' : 'Só efeitos' },
@@ -311,7 +314,7 @@ function linhasOpcoes() {
     { id: 'tutorial', nome: 'Tutorial', valor: 'Ver outra vez' },
   ];
 }
-const retOpcao = i => ({ x: 170, y: 88 + i * 52, w: 620, h: 44 });
+const retOpcao = i => ({ x: 170, y: 84 + i * 48, w: 620, h: 42 });
 
 function atualizarOpcoes(dt) {
   menuOpcoes.t += dt;
@@ -327,6 +330,7 @@ function atualizarOpcoes(dt) {
     else if (l.id === 'canhoto') opcoes.canhoto = !opcoes.canhoto;
     else if (l.id === 'vibracao') { opcoes.vibracao = !opcoes.vibracao; vibrar(80); }
     else if (l.id === 'poupanca') opcoes.poupanca = !opcoes.poupanca;
+    else if (l.id === 'tremor') { opcoes.tremor = ((opcoes.tremor == null ? 2 : opcoes.tremor) + 2) % 3; }
     else if (l.id === 'som') mudarSom();
     else if (l.id === 'tutorial') {
       opcoes.tutorialFeito = false;

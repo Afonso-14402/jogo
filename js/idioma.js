@@ -859,7 +859,12 @@ const EN = {
   'Voltaste à sala!': 'You are back in the room!', 'Continuas com o mesmo herói': 'You keep the same hero',
   'Pode voltar com o código ': 'They can come back with the code ', ' (fica com o mesmo herói)': ' (keeping the same hero)',
   'A ligação caiu. A voltar a ligar... (': 'Connection lost. Reconnecting... (', 'A voltar a ligar à sala ': 'Reconnecting to room ',
-  'Poder': 'Power',
+  'Comando ligado': 'Controller connected',
+  'Stick esquerdo': 'Left stick', 'Stick direito': 'Right stick', 'Mover (nos menus: cursor)': 'Move (in menus: cursor)',
+  'Atacar (nos menus: carregar)': 'Attack (in menus: select)', 'Esquiva (nos menus: voltar)': 'Dodge (in menus: back)',
+  'Usar / Beber poção': 'Use / Drink potion', 'Poder único / 1.ª magia': 'Unique power / 1st spell', '1.ª e 2.ª habilidade': '1st and 2nd skill',
+  'Apontar': 'Aim', 'Mochila / Pausa': 'Bag / Pause', 'Stick esquerdo: andar · A: atacar · B: esquiva': 'Left stick: move · A: attack · B: dodge',
+  'Poder': 'Power', 'Tremor do ecrã': 'Screen shake', 'Fraco': 'Weak',
   // missões da semana
   'Missão semanal cumprida!': 'Weekly mission complete!', 'Missões da semana': 'Weekly missions', 'Mudam amanhã': 'New ones tomorrow',
   'Mudam daqui a ': 'New ones in ', ' dias': ' days',

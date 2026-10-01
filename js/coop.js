@@ -1182,7 +1182,7 @@ function atualizarConvidado(dt) {
   if (teclas['d'] || teclas['arrowright']) mx += 1;
   const js = lerJoystick();
   if (js) { mx = js.x; my = js.y; forca = js.forca; }
-  const atk = !!(toque.atacar || teclas[' '] || teclas['j']);
+  const atk = !!(toque.atacar || comando.atacar || teclas[' '] || teclas['j']);
   const acao = a => enviarCoop({ t: 'acao', a });
   J.cdDash = (J.cdDash || 0) - dt;
   J.cdAtaque = (J.cdAtaque || 0) - dt;

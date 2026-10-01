@@ -1356,7 +1356,7 @@ function atualizarJogador(dt, R = null) {
   J.kbx *= Math.max(0, 1 - dt * 10);
   J.kby *= Math.max(0, 1 - dt * 10);
 
-  if (R ? R.atk : toque.atacar) {
+  if (R ? R.atk : toque.atacar || comando.atacar) {
     const a = alvoMelhor(S.alcance + J.r + 80);
     if (a) atacar(a.x - J.x, a.y - J.y); else atacar(J.dirX, J.dirY);
   } else if (R) { /* o parceiro só ataca com o botão */ } else if (rato.baixo) atacar(rato.x + cam.x - J.x, rato.y + cam.y - J.y);
@@ -1852,7 +1852,9 @@ function alvoProximo(raio) {
 }
 
 function mira() {
-  if (modoToque || J.remoto) {
+  const mc = !J.remoto && miraComando(); // stick direito do comando
+  if (mc) return mc;
+  if (modoToque || J.remoto || comando.ativo) {
     const a = alvoMelhor(420);
     if (a) { const dx = a.x - J.x, dy = a.y - J.y, l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
     return [J.dirX, J.dirY];
@@ -2426,6 +2428,7 @@ function loop(agora) {
   if (opcoes.poupanca && modoToque && agora - ultimo < 30) { requestAnimationFrame(loop); return; }
   const dt = Math.min(0.05, (agora - ultimo) / 1000);
   ultimo = agora;
+  lerComando(dt); // comando (gamepad): vira teclas, movimento e cursor
 
   if (premiu('m')) mudarSom();
   atualizarMusica();
@@ -2518,6 +2521,7 @@ function loop(agora) {
   atualizarAvisos(dt);
 
   desenhar(agora / 1000);
+  desenharCursorComando();
   for (const k in premidas) delete premidas[k];
   requestAnimationFrame(loop);
 }

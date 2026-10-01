@@ -5,6 +5,12 @@
 // =====================================================================
 
 const ES = {
+  "Stick esquerdo": "Stick izquierdo", "Stick direito": "Stick derecho", "Mover (nos menus: cursor)": "Moverse (en los menús: cursor)",
+  "Atacar (nos menus: carregar)": "Atacar (en los menús: elegir)", "Esquiva (nos menus: voltar)": "Esquivar (en los menús: volver)",
+  "Usar / Beber poção": "Usar / Beber poción", "Poder único / 1.ª magia": "Poder único / 1.ª magia", "1.ª e 2.ª habilidade": "1.ª y 2.ª habilidad",
+  "Apontar": "Apuntar", "Mochila / Pausa": "Mochila / Pausa",
+  "Comando ligado": "Mando conectado", "Stick esquerdo: andar · A: atacar · B: esquiva": "Stick izquierdo: moverse · A: atacar · B: esquivar",
+  "Tremor do ecrã": "Temblor de pantalla", "Fraco": "Débil",
   "Lixo": "Basura",
   "Comum": "Común",
   "Raro": "Raro",

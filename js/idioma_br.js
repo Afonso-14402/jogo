@@ -21,6 +21,7 @@ const BR = {
   // jogar a 2
   'JOGAR A 2': 'JOGAR EM DUPLA', 'Jogar a 2': 'Jogar em Dupla', 'jogar a 2': 'jogar em dupla',
   'a jogar a 2': 'jogando em dupla', 'Joga a 2': 'Jogue em dupla', 'para a equipa': 'para a equipe', 'de equipa': 'de equipe',
+  'Comando ligado': 'Controle conectado',
   'Ligação': 'Conexão', 'ligação': 'conexão', 'Sem ligação': 'Sem conexão', 'Parceiro ligado': 'Parceiro conectado',
   'A ligar à sala': 'Conectando à sala', 'A voltar a ligar à sala': 'Reconectando à sala', 'A voltar a ligar': 'Reconectando',
   // "a + infinitivo" → gerúndio

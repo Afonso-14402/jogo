@@ -97,7 +97,7 @@ function alvoMelhor(raio) {
 // Joystick analógico: perto do centro andas devagar, e a direção é suavizada
 function lerJoystick() {
   const j = toque.joy;
-  if (!j) { J.joySuave = null; return null; }
+  if (!j) { J.joySuave = null; return comando.mov; } // sem dedo no ecrã: o stick do comando (ou nada)
   const jx = j.x - j.cx, jy = j.y - j.cy, d = Math.hypot(jx, jy);
   if (d < 8) return null;
   const alvo = [jx / d, jy / d];

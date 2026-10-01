@@ -330,8 +330,9 @@ function desenhar(t) {
     return;
   }
 
-  const sx = tremor > 0 ? rand(-tremor, tremor) : 0;
-  const sy = tremor > 0 ? rand(-tremor, tremor) : 0;
+  const kt = [0, 0.45, 1][opcoes.tremor == null ? 2 : opcoes.tremor]; // opção "Tremor do ecrã"
+  const sx = tremor > 0 ? rand(-tremor, tremor) * kt : 0;
+  const sy = tremor > 0 ? rand(-tremor, tremor) * kt : 0;
   vista.x = alinhar(cam.x - sx);
   vista.y = alinhar(cam.y - sy);
 
@@ -1749,7 +1750,16 @@ function desenharTitulo(t) {
   // como jogar
   painel(440, 212, 460, 286);
   textoCentro('Como jogar', 670, 232, 16, '#ffe14d');
-  const controlos = modoToque ? [
+  const controlos = comando.ativo ? [
+    ['Stick esquerdo', 'Mover (nos menus: cursor)'],
+    ['A', 'Atacar (nos menus: carregar)'],
+    ['B', 'Esquiva (nos menus: voltar)'],
+    ['X / Y', 'Usar / Beber poção'],
+    ['LB / RB', 'Poder único / 1.ª magia'],
+    ['LT / RT', '1.ª e 2.ª habilidade'],
+    ['Stick direito', 'Apontar'],
+    ['Back / Start', 'Mochila / Pausa'],
+  ] : modoToque ? [
     [opcoes.canhoto ? 'Joystick (direita)' : 'Joystick (esquerda)', 'Mover'],
     ['Botão grande', 'Atacar o inimigo mais perto'],
     ['»»', 'Esquiva'],
