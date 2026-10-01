@@ -353,6 +353,7 @@ function desenhar(t) {
   desenharTransicaoAndar();
   desenharTextosMundo();
   desenharEtiquetasCoop(t);
+  desenharSetasInimigos(t);
   if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
   desenharDica();
@@ -1118,7 +1119,7 @@ function desenharHUDFinal(t) {
     else if (J.escadaPerto) {
       const sx = ecraX(mapa.escada.x), sy = ecraY(mapa.escada.y) - 40;
       if (mapa.escada.ativa) textoCentro(modoToque ? 'Usar: Descer' : '[E] Descer', sx, sy, 16, '#ffe680');
-      else textoCentro('Derrota o boss para abrir', sx, sy, 14, '#ff8080');
+      else textoCentro(boss && !boss.morto ? 'Derrota o boss para abrir' : 'Derrota todos os monstros', sx, sy, 14, '#ff8080');
     }
   }
 

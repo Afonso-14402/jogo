@@ -87,7 +87,8 @@ const JOGOS = Number(process.env.JOGOS || 1);
         if (alvo) {
           const longe = ['arco', 'cajado'].includes(classeArma(J.arma));
           const quero = longe ? 170 : S.alcance + alvo.r - 4;
-          if (md > quero) destino = dirPara(alvo.x, alvo.y);
+          const ve = linhaDeVista(mapa, J.x, J.y, alvo.x, alvo.y, 4);
+          if (md > quero || !ve) destino = dirPara(alvo.x, alvo.y); // sem linha de vista: dá a volta à parede
           else if (longe && md < quero * 0.55) { const dx = J.x - alvo.x, dy = J.y - alvo.y, l = Math.hypot(dx, dy) || 1; destino = [dx / l, dy / l]; }
           comando.atacar = md < quero + 110;
           if (J.hp < S.maxHp * 0.35 && J.pocoes > 0 && !(J.cdPocao > 0)) { premidas.q = true; bebidas++; }
@@ -108,8 +109,8 @@ const JOGOS = Number(process.env.JOGOS || 1);
             if (mb < 40) { premidas.e = true; destino = null; }
           } else {
             let dorme = null, mdz = 1e9;
-            if (tAndar < 70) for (const e of inimigos) { if (e.morto || e.z > 20) continue; const d = Math.hypot(e.x - J.x, e.y - J.y); if (d < mdz) { mdz = d; dorme = e; } }
-            if (dorme && mdz < 900) destino = dirPara(dorme.x, dorme.y);
+            if (tAndar < 70 || !mapa.escada.ativa) for (const e of inimigos) { if (e.morto || e.z > 20) continue; const d = Math.hypot(e.x - J.x, e.y - J.y); if (d < mdz) { mdz = d; dorme = e; } }
+            if (dorme && (mdz < 900 || !mapa.escada.ativa)) destino = dirPara(dorme.x, dorme.y); // escada fechada: vai buscar os que faltam
             else if (mapa.escada.ativa) {
               destino = dirPara(mapa.escada.x, mapa.escada.y);
               if (Math.hypot(mapa.escada.x - J.x, mapa.escada.y - J.y) < 38) { proximoAndar(); return; }

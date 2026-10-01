@@ -633,9 +633,10 @@ function rankJogador() {
 function atualizarFatorAdaptativo() {
   S = stats();
   const razao = poderJogador() / Math.max(1, poderRecomendado(andar));
+  const [limiar, maxHp, maxDano] = dif().adapta || [1.6, 2.5, 2.2];
   J.fatorAdapt = {
-    hp: clamp(Math.pow(razao / 1.6, 0.4), 1, 2.5),
-    dano: clamp(Math.pow(razao / 1.6, 0.3), 1, 2.2), // muito acima do andar já não ficas imortal
+    hp: clamp(Math.pow(razao / limiar, 0.4), 1, maxHp),
+    dano: clamp(Math.pow(razao / limiar, 0.3), 1, maxDano), // muito acima do andar já não ficas imortal
     razao,
   };
 }

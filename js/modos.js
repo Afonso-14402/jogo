@@ -172,3 +172,26 @@ function vitoriaTorre() {
   mostrarBanner('CONQUISTASTE A TORRE!', 'Os 100 andares são teus. Continua, se tiveres coragem...', '#ffe14d');
   fanfarra([523, 659, 784, 1046, 1318, 1568, 2093], 0.06);
 }
+
+// Torre: quando faltam poucos monstros e estão fora do ecrã, setas na borda apontam para eles
+// (as plantas carnívoras não se mexem e ficavam esquecidas num canto)
+function desenharSetasInimigos(t) {
+  if (!J || J.modo !== 'torre' || !mapa || !mapa.torre || mapa.escada.ativa || !['jogo', 'convidado'].includes(estado)) return;
+  const vivos = inimigos.filter(e => !e.morto);
+  if (!vivos.length || vivos.length > 3) return;
+  const x0 = -MARGEM_X + 40, x1 = LARGURA + MARGEM_X - 40, y0 = 130, y1 = ALTURA - 120;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  for (const e of vivos) {
+    const sx = ecraX(e.x), sy = ecraY(e.y);
+    if (sx > x0 && sx < x1 && sy > y0 && sy < y1) continue; // já está à vista
+    const dx = sx - cx, dy = sy - cy, k = Math.min((x1 - cx) / Math.abs(dx || 1e-6), (y1 - cy) / Math.abs(dy || 1e-6));
+    const px = cx + dx * k, py = cy + dy * k, a = Math.atan2(dy, dx), pulso = 1 + 0.15 * Math.sin(t * 8);
+    ctx.save();
+    ctx.translate(px, py); ctx.rotate(a); ctx.scale(pulso, pulso);
+    ctx.fillStyle = '#ff4d4d'; ctx.strokeStyle = '#2a0a0a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-10, -12); ctx.lineTo(-4, 0); ctx.lineTo(-10, 12); ctx.closePath();
+    ctx.stroke(); ctx.fill();
+    ctx.restore();
+  }
+}
+

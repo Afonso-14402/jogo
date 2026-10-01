@@ -413,14 +413,16 @@ const ORDEM_FEITICOS = ['fogo', 'raio', 'gelo', 'cura'];
 //  hp/dano multiplicam os inimigos (e bosses e armadilhas); xp/ouro o que ganhas;
 //  elite multiplica a chance de aparecer um inimigo de elite; pocoes = poções extra ao começar
 // ---------------------------------------------------------------------
+// adapta: [a partir de quantas vezes o poder recomendado os monstros acompanham o herói,
+//          máximo de vida extra, máximo de dano extra] — nas dificuldades altas acompanham mais
 const DIFICULDADES = {
-  facil:    { nome: 'Fácil',    cor: '#5dff7a', desc: 'Inimigos mais fracos. Bom para aprender.',             hp: 0.65, dano: 0.6,  xp: 1,   ouro: 1,    elite: 0.5, pocoes: 2, almas: 0.5 },
-  normal:   { nome: 'Normal',   cor: '#ffe14d', desc: 'O jogo como foi pensado.',                             hp: 1,    dano: 1,    xp: 1,   ouro: 1,    elite: 1,   pocoes: 0, almas: 1 },
-  dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0, almas: 1.5 },
-  pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1, almas: 2 },
+  facil:    { nome: 'Fácil',    cor: '#5dff7a', desc: 'Inimigos mais fracos. Bom para aprender.',             hp: 0.65, dano: 0.6,  xp: 1,   ouro: 1,    elite: 0.5, pocoes: 2, almas: 0.5, adapta: [2, 2.5, 2.2] },
+  normal:   { nome: 'Normal',   cor: '#ffe14d', desc: 'O jogo como foi pensado.',                             hp: 1,    dano: 1,    xp: 1,   ouro: 1,    elite: 1,   pocoes: 0, almas: 1, adapta: [1.6, 2.5, 2.2] },
+  dificil:  { nome: 'Difícil',  cor: '#ff9f43', desc: 'Inimigos mais fortes e mais elites. Mais XP e ouro.',  hp: 1.4,  dano: 1.35, xp: 1.2, ouro: 1.25, elite: 1.5, pocoes: 0, almas: 1.5, adapta: [1.3, 3, 2.6] },
+  pesadelo: { nome: 'Pesadelo', cor: '#ff3355', desc: 'Só para os corajosos. Muito mais XP e ouro.',          hp: 2,    dano: 1.8,  xp: 1.4, ouro: 1.5,  elite: 2.2, pocoes: -1, almas: 2, adapta: [1.1, 3.5, 3] },
 };
 DIFICULDADES.inferno = { nome: 'Inferno', cor: '#ff5a1a', desc: 'Desbloqueia ao chegar ao andar 30. O desafio final.',
-  hp: 2.8, dano: 2.4, xp: 1.7, ouro: 1.8, elite: 3, pocoes: -2, almas: 3, conquista: 'andar30' };
+  hp: 2.8, dano: 2.4, xp: 1.7, ouro: 1.8, elite: 3, pocoes: -2, almas: 3, conquista: 'andar30', adapta: [1, 4, 3.4] };
 const ORDEM_DIFICULDADES = ['facil', 'normal', 'dificil', 'pesadelo', 'inferno'];
 
 // ---------------------------------------------------------------------
