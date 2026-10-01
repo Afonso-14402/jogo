@@ -350,6 +350,7 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(bufMundo, 0, 0, LB * ESCALA * ZOOM, AB * ESCALA * ZOOM);
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
+  desenharTransicaoAndar();
   desenharTextosMundo();
   desenharEtiquetasCoop(t);
   if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
@@ -426,6 +427,7 @@ function desenharMundo(t) {
     ctx.lineTo(r.x2, r.y2);
     ctx.stroke();
   }
+  desenharBrilhos(); // colunas de luz e anéis
   for (const p of particulas) {
     ctx.globalAlpha = clamp(p.t * 2, 0, 1);
     ctx.fillStyle = p.cor;
@@ -595,8 +597,9 @@ function desenharDrop(d) {
     spr(iconeReliquia(d.id), d.x, d.y + bob * 1.5 - 4);
     return;
   }
-  const n = d.valor >= 10 ? 3 : d.valor >= 4 ? 2 : 1;
-  for (let i = 0; i < n; i++) spr(SPR.moeda, d.x + (i - (n - 1) / 2) * 8, d.y - i * 4 + bob);
+  const n = d.valor >= 10 ? 3 : d.valor >= 4 ? 2 : 1, z = alturaDrop(d);
+  if (z > 0) sombra(d.x, d.y + 6, 5);
+  for (let i = 0; i < n; i++) spr(SPR.moeda, d.x + (i - (n - 1) / 2) * 8, d.y - i * 4 + (z > 0 ? 0 : bob) - z);
 }
 
 function desenharBau(b) {
@@ -792,8 +795,10 @@ function desenharInimigo(e, t) {
   {
     const resp = Math.sin(t * 3 + e.x * 0.05);
     let sx = 1 - 0.02 * resp, sy = 1 + 0.035 * resp;
-    const mov = e.x - (e.ultX ?? e.x);
-    e.ultX = e.x;
+    const mov = e.x - (e.ultX ?? e.x), movY = e.y - (e.ultY ?? e.y);
+    e.ultX = e.x; e.ultY = e.y;
+    // a andar, os que não voam balançam de um pé para o outro
+    const bamb = !s.voa && !e.boss && Math.hypot(mov, movY) > 0.25 ? Math.sin(t * 15 + e.x * 0.1) * 0.1 : 0;
     e.incl = (e.incl || 0) * 0.85 + clamp(mov * 0.05, -0.16, 0.16) * 0.15;
     if (e.flash > 0) { sx *= 1.16; sy *= 0.86; }
     if (e.preparar > 0 || e.prepInv > 0 || e.golpeT > 0 || e.ceifaT > 0 || (e.boss && e.investida > 0)) { sx *= 1.08; sy *= 1.08; }
@@ -802,7 +807,7 @@ function desenharInimigo(e, t) {
     PA = poseAtaque(e); // prepara-se antes de atacar e golpeia
     sx *= PA.sx; sy *= PA.sy;
     ctx.translate(x + PA.ox, pe + PA.oy);
-    ctx.rotate((e.boss ? e.incl * 0.4 : e.incl) + PA.rot);
+    ctx.rotate((e.boss ? e.incl * 0.4 : e.incl) + PA.rot + bamb);
     ctx.scale(sx, sy);
     ctx.translate(-x, -pe);
   }
@@ -905,7 +910,9 @@ function desenharProjetil(p, t) {
 function desenharTextosMundo() {
   for (const tx of textos) {
     ctx.globalAlpha = clamp(tx.t * 2, 0, 1);
-    textoCentro(tx.txt, ecraX(tx.x), ecraY(tx.y), tx.tam, tx.cor);
+    const k = escalaTexto(tx), sx = ecraX(tx.x), sy = ecraY(tx.y);
+    if (k > 1) { ctx.save(); ctx.translate(sx, sy); ctx.scale(k, k); textoCentro(tx.txt, 0, 0, tx.tam, tx.cor); ctx.restore(); }
+    else textoCentro(tx.txt, sx, sy, tx.tam, tx.cor);
   }
   ctx.globalAlpha = 1;
   if (pet && J.pet && estado !== 'morto') {

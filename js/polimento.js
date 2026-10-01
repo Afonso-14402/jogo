@@ -74,6 +74,7 @@ function poseHeroi(t) {
   }
   if (J.dorT > 0) { sx = 1.15; sy = 0.87; }
   else if (!J.andando) { const b = Math.sin(t * 3); sy = 1 + b * 0.03; sx = 1 - b * 0.015; }
+  else { const P = passoHeroi(); oy += P.oy; sx *= P.sx; sy *= P.sy; } // saltinho a cada passo
   return { ox, oy, sx, sy };
 }
 

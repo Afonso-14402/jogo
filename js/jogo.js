@@ -88,7 +88,8 @@ function restaurarAndar(c) {
   mapa = desserializarMapa(c.mapa);
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = c.inimigos.map(o => Object.assign(criarInimigo(o.tipo, o.x, o.y), o, { hab: new Set(o.hab), nasceu: tempoJogo }));
-  projeteis = []; particulas = []; textos = []; perigos = []; raios = []; ondas = []; restos = [];
+  projeteis = []; particulas = []; textos = []; perigos = []; raios = []; ondas = []; restos = []; brilhos = [];
+  comecarTransicaoAndar();
   baus = c.baus || []; drops = c.drops || []; objetos = c.objetos || []; armadilhas = c.armadilhas || [];
   reiniciarBioma();
   boss = null;
@@ -465,7 +466,8 @@ function proximoAndar() {
   andarProvacao(); // nível 30: o andar passa a ser a Provação da mudança de classe
   mapaImg = renderizarMapa(mapa, andar);
   inimigos = []; projeteis = []; baus = []; drops = []; particulas = []; textos = []; perigos = []; raios = [];
-  objetos = []; armadilhas = []; ondas = []; restos = [];
+  objetos = []; armadilhas = []; ondas = []; restos = []; brilhos = [];
+  comecarTransicaoAndar();
   reiniciarBioma();
   boss = null;
   reiniciarCampo();
@@ -638,7 +640,9 @@ function tornarElite(e) {
 function soltarOuro(x, y, total, n = 1) {
   const cada = Math.max(1, Math.round(total / n));
   for (let i = 0; i < n; i++) {
-    drops.push({ tipo: 'ouro', valor: cada, x: x + rand(-14, 14), y: y + rand(-14, 14), t: Math.random() * 3 });
+    const d = { tipo: 'ouro', valor: cada, x: x + rand(-8, 8), y: y + rand(-8, 8), t: Math.random() * 3 };
+    lancarMoeda(d); // salta para fora e quica
+    drops.push(d);
   }
 }
 
@@ -720,6 +724,7 @@ function atualizarEfeitos(dt) {
   textos = textos.filter(t => t.t > 0);
   for (const o of ondas) o.t -= dt;
   ondas = ondas.filter(o => o.t > 0);
+  atualizarBrilhos(dt);
   if (banner) { banner.t -= dt; if (banner.t <= 0) banner = null; }
   tremor = Math.max(0, tremor - dt * 30);
 }
@@ -746,6 +751,7 @@ function ganharXp(q) {
     J.hp = S.maxHp;
     texto(J.x, J.y - 40, 'SUBIU DE NÍVEL!', '#ffe14d', 22);
     explosao(J.x, J.y, '#ffe14d', 30, 220, 5);
+    colunaDeLuz(J.x, J.y, '#ffe14d', 0.9);
   }
   partilharXp(base); // a jogar a 2, o parceiro ganha o mesmo
 }
@@ -806,6 +812,7 @@ function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
   if (!e.boss) { e.kbx = dx * 300 * (crit ? 1.6 : 1); e.kby = dy * 300 * (crit ? 1.6 : 1); }
   texto(e.x, e.y - e.r - 4, crit ? `${dano}!` : `${dano}`, crit ? '#ffe14d' : '#ffffff', crit ? 26 : 16);
   explosao(e.x, e.y, e.cor, 5, 120, 3);
+  if (efeitos) faiscasGolpe(e, crit, dx, dy);
   if (S.roubo > 0) J.hp = Math.min(S.maxHp, J.hp + dano * S.roubo);
   if (efeitos) sentirGolpe(e, dano, crit, dx, dy); // som da arma, faíscas e micro-pausa
   else som(crit ? 620 : 340, 0.06, 'square', 0.03, -100);
@@ -978,6 +985,7 @@ function danoJogador(d, fx, fy, fonte = null) {
 function morrer(desistiu = false) {
   J.hp = 0;
   J.desistiu = desistiu;
+  if (!desistiu) animarMorteHeroi();
   J.almasGanhas = calcularAlmas();
   meta.almas += J.almasGanhas;
   if (J.modo === 'diario') fimDiario();
@@ -1062,6 +1070,7 @@ function atualizar(dt) {
   atualizarPerigos(dt);
   for (const d of drops) {
     d.t += dt;
+    animarDrop(d, dt);
     const dd = Math.hypot(d.x - J.x, d.y - J.y);
     if (d.tipo === 'ouro' && dd < 120 && dd > 1) { // íman
       d.x += (J.x - d.x) / dd * 380 * dt;
@@ -2358,6 +2367,7 @@ function abrirBau(b) {
     return;
   }
   J.bausAbertos++;
+  colunaDeLuz(b.x, b.y, tipo.aro);
   registar('baus');
   progressoPedidos('baus');
   if (b.tipo === 'ouro' && Math.random() < 0.2) soltarReliquia(b.x, b.y + 30);
@@ -2523,6 +2533,7 @@ function loop(agora) {
     if (!parceiroAtivo()) atualizarEfeitos(dt);
   } else if (estado === 'morto') {
     atualizarEfeitos(dt);
+    atualizarRestos(dt); // o herói a cair
     if (premiu('enter') || clicou(BOTOES_MORTE.denovo)) { if (J.modo === 'diario') iniciarDiario(); else { modoProximo = J.modo; novoJogo(); } }
     else if (premiu('escape') || clicou(BOTOES_MORTE.menu)) estado = 'titulo';
   }
