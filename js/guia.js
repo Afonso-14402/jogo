@@ -54,8 +54,8 @@ function prepararAtalho(n) {
 const valorItem = x => (x.dano || 0) + (x.def || 0) + (x.hp || 0) / 5 + (x.regen || 0) * 5;
 // Põe o herói ao nível e com o equipamento típicos do andar n (atalhos e Boss Rush).
 // Só melhora: o que já tens de melhor fica. Devolve quantos níveis subiu.
-function prepararParaAndar(n) {
-  const L = Math.round((n - 1) * 0.9) + 1, n0 = J.nivel;
+function prepararParaAndar(n, niveisExtra = 0) {
+  const L = Math.round((n - 1) * 0.9) + 1 + niveisExtra, n0 = J.nivel;
   while (J.nivel < L) { J.nivel++; J.hpBase += 10; J.atkBase += 2; J.defBase += 1; J.pontos += PONTOS_POR_NIVEL; }
   distribuirPontos();
   const rr = n < 16 ? 'raro' : n < 36 ? 'epico' : 'lendario';

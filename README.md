@@ -239,7 +239,7 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
 - **Pets que evoluem**: no nível 10 o companheiro evolui (Lobo Alfa, Fada Rainha, Dragão Jovem...), fica maior, com aura e +60% dano.
 - **Eventos nos andares**: mercador ambulante, chuva de ouro, andar escuro (+50% XP), lua de sangue (monstros mais fortes, mais XP e ouro) ou bênção da deusa.
 - **Mapa grande**: tecla **Tab**, ou tocar no minimapa no telemóvel.
-- **Boss Rush**: os bosses seguidos, contra o relógio (recuperas 30% de vida entre bosses). Antes de cada boss o herói sobe ao nível do andar, ganha equipamento e melhorias para escolher. Guarda o melhor tempo.
+- **Boss Rush**: os bosses seguidos, contra o relógio (recuperas metade da vida entre bosses). Antes de cada boss o herói sobe um pouco acima do nível do andar, ganha equipamento, uma melhoria por cada nível e fica com 4 a 8 poções; de 2 em 2 bosses ganha uma relíquia (o Caçador das Sombras recebe soldados). Para não ficar fácil, cada boss é mais forte do que o anterior. Guarda o melhor tempo.
 - **Transferir progresso**: no menu, copia um código no aparelho antigo e cola-o no novo para levar almas, conquistas, coleção e o jogo guardado.
 - **Sombras**: o Exército das Sombras só existe para o Caçador das Sombras.
 - **Sensação de jogo (polimento)**:

@@ -188,17 +188,37 @@ function desenharMapaGrande() {
 // ---------------------------------------------------------------------
 function andarBossRush() { // no Boss Rush só há andares de boss
   andar = Math.ceil(andar / 5) * 5;
-  // antes de cada boss o herói fica com o nível e o equipamento do andar (senão o 1.º boss já era impossível)
-  const subiu = prepararParaAndar(andar);
+  // antes de cada boss o herói fica um pouco acima do nível do andar, com equipamento
+  // à altura e uma melhoria por cada nível que subiu
+  const subiu = prepararParaAndar(andar, 2);
   if (subiu > 0) {
-    J.escolhasPendentes += Math.ceil(subiu / 2); // melhorias para escolher
-    J.pocoes = Math.max(J.pocoes, 3);
+    J.escolhasPendentes += subiu;
     avisar(`Nível ${J.nivel}`, 'Ficaste mais forte para o próximo boss', '#ffe14d');
   }
+  J.pocoes = clamp(J.pocoes, 4, 8); // sempre algumas poções, mas sem juntar dezenas
+  // de 2 em 2 bosses: uma relíquia de prémio
+  if (andar % 10 === 0) {
+    const id = sortearReliquia();
+    if (id) {
+      J.reliquias = J.reliquias || [];
+      J.reliquias.push(id);
+      if (id === 'fenix') J.vidasExtra = (J.vidasExtra || 0) + 1;
+      (meta.relVistas || (meta.relVistas = {}))[id] = true;
+      avisar(`Relíquia: ${RELIQUIAS[id].nome}`, RELIQUIAS[id].desc, RELIQUIAS[id].cor);
+    }
+  }
+  // o Caçador das Sombras não tem monstros para erguer no Boss Rush: recebe soldados
+  if (J.classe === 'sombras') {
+    const quer = Math.min(maxSombras(), 2 + Math.floor(J.nivel / 8));
+    while (J.sombras.filter(x => !x.boss).length < quer) J.sombras.push({ tipo: 'esqueleto' });
+  }
   S = stats();
-  if (J.hp > 0) J.hp = Math.min(S.maxHp, J.hp + S.maxHp * 0.3); // recupera um pouco entre bosses
-  if (subiu > 0 && J.hp > 0) { J.hp = S.maxHp; J.mana = S.maxMana; }
+  if (subiu > 0) J.mana = S.maxMana;
+  if (J.hp > 0) J.hp = Math.min(S.maxHp, J.hp + S.maxHp * 0.5); // recupera metade da vida entre bosses
 }
+// No Boss Rush o herói recebe muito; para não ficar fácil demais, cada boss é um pouco
+// mais forte do que o anterior (o 1.º é mais fraco, o último bem mais forte)
+const forcaBossRush = () => 0.9 + 0.07 * (andar / 5 - 1);
 function bossRushVencido() {
   if (J.modo !== 'bossrush' || andar < BOSSES.length * 5) return false;
   J.venceuRush = true;

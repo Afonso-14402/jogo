@@ -477,7 +477,7 @@ function proximoAndar() {
   levantarExercito();
   if (J.modo === 'torre' && !mapa.eBoss) popularTorre();
   else if (mapa.eBoss) {
-    boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss());
+    boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss(null, J.modo === 'bossrush' ? forcaBossRush() : 1));
     inimigos.push(boss);
     mostrarBanner(mapa.provacao ? 'PROVAÇÃO DE CLASSE' : `ANDAR ${andar} — BOSS`, boss.nome, mapa.provacao ? '#4dc3ff' : '#ff4d4d');
     bossDuploProfundezas(); // Profundezas: de 10 em 10 andares vêm dois
