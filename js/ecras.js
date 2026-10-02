@@ -30,9 +30,8 @@ function desenharPet(t) {
 // ---------------------------------------------------------------------
 function desenharAvisos() {
   const a = avisos[0];
-  if (!a) return;
+  if (!a || !avisosVisiveis()) return;
   ctx.globalAlpha = clamp(Math.min(a.t, 4 - a.t) * 3, 0, 1);
-  if (estado === 'fim') return;
   const w = 360, x = (LARGURA - w) / 2, y = typeof tutorial !== 'undefined' && tutorial ? 84 : 70;
   painel(x, y, w, 46, 'rgba(24,18,8,0.96)', a.cor);
   textoCentro(a.titulo, LARGURA / 2, y + 15, 15, a.cor);
@@ -264,7 +263,14 @@ function desenharMenuMeta(t) {
   } else {
     const n = Object.keys(meta.conquistas).length;
     textoCentro('CONQUISTAS', LARGURA / 2, 34, 30, '#ffe14d');
-    textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, 70, 14, '#aaa', false);
+    { // barra de progresso
+      const bw = 300, bx = LARGURA / 2 - bw / 2, by = 61;
+      ctx.fillStyle = '#000'; ctx.fillRect(bx - 2, by - 2, bw + 4, 22);
+      ctx.fillStyle = '#241c34'; ctx.fillRect(bx, by, bw, 18);
+      ctx.fillStyle = '#c99a2e'; ctx.fillRect(bx, by, Math.round(bw * n / CONQUISTAS.length), 18);
+      ctx.fillStyle = '#ffe14d'; ctx.fillRect(bx, by, Math.round(bw * n / CONQUISTAS.length), 4);
+      textoCentro(`${n} de ${CONQUISTAS.length} desbloqueadas`, LARGURA / 2, by + 10, 12, '#fff');
+    }
     const passo = Math.min(38, Math.floor(540 / Math.ceil(CONQUISTAS.length / 3)));
     CONQUISTAS.forEach((c, i) => { // 3 colunas para caberem todas
       const x = 16 + (i % 3) * 312, y = 86 + Math.floor(i / 3) * passo, w = 304, h = passo - 3;

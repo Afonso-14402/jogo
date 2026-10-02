@@ -1151,18 +1151,7 @@ function desenharMinimapa() {
   const x0 = LARGURA + MARGEM_X - w - 16, y0 = 40; // no canto direito do ecrã
   painel(x0 - 6, 10, w + 12, h + 40);
   textoCentro(naCidade() ? 'CIDADE' : emDuelo() ? 'DUELO' : J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
-  // o chão explorado muda devagar: desenha-se numa imagem que só se refaz 4 vezes por segundo
-  const agoraMs = performance.now();
-  if (!cacheMinimapa.c || cacheMinimapa.mapa !== mapa || agoraMs - cacheMinimapa.t > 250) {
-    const c = cacheMinimapa.c || (cacheMinimapa.c = document.createElement('canvas'));
-    c.width = w; c.height = h;
-    const g = c.getContext('2d');
-    g.clearRect(0, 0, w, h);
-    g.fillStyle = 'rgba(200,190,230,0.35)';
-    for (let y = 0; y < mapa.H; y++) for (let x = 0; x < mapa.W; x++) if (mapa.explorado[y * mapa.W + x] && mapa.tiles[y * mapa.W + x]) g.fillRect(x * esc, y * esc, esc, esc);
-    cacheMinimapa.mapa = mapa; cacheMinimapa.t = agoraMs;
-  }
-  ctx.drawImage(cacheMinimapa.c, x0, y0);
+  ctx.drawImage(imagemMapa(cacheMinimapa, esc), x0, y0); // o chão explorado (refaz-se devagar)
   for (const s of mapa.salas) {
     if (!s.tipo || !mapa.explorado[(s.y + 1) * mapa.W + s.x + 1]) continue;
     ctx.globalAlpha = 0.35;
@@ -1758,10 +1747,21 @@ function desenharTitulo(t) {
     ctx.fillStyle = e.s > 2 ? 'rgba(255,190,90,0.6)' : 'rgba(255,150,80,0.4)';
     ctx.fillRect(Math.round(e.x / 2) * 2, Math.round(e.y / 2) * 2, e.s, e.s);
   }
-  // desfile de personagens
+  // desfile de personagens, à frente de uma parede da masmorra com archotes
   const chao = 150;
+  const L = ladrilhosZona(1), x0 = -Math.ceil(MARGEM_X / 32) * 32;
+  for (let y = 0; y < chao + 34; y += 32) for (let x = x0; x < LARGURA + MARGEM_X; x += 32) ctx.drawImage((x / 32 + y / 32 * 3) % 5 ? L.face : L.faceAlt, x, y, 32, 32);
+  const sombraParede = ctx.createLinearGradient(0, 0, 0, chao + 34);
+  sombraParede.addColorStop(0, 'rgba(7,6,10,0.92)'); sombraParede.addColorStop(1, 'rgba(7,6,10,0.45)');
+  ctx.fillStyle = sombraParede; ctx.fillRect(-MARGEM_X, 0, TELA_W, chao + 34);
+  for (const tx of [44]) { // archote com luz a tremer (o dragão tapa o outro lado)
+    const luz = ctx.createRadialGradient(tx, 96, 4, tx, 96, 90 + Math.sin(t * 9 + tx) * 6);
+    luz.addColorStop(0, 'rgba(255,170,70,0.35)'); luz.addColorStop(1, 'rgba(255,170,70,0)');
+    ctx.fillStyle = luz; ctx.fillRect(tx - 100, 0, 200, chao + 34);
+    sprEcra(SPR.tocha[Math.floor(t * 8 + tx) % SPR.tocha.length], tx, 104, 3);
+  }
   ctx.fillStyle = '#1a1522';
-  ctx.fillRect(0, chao + 34, LARGURA, 4);
+  ctx.fillRect(-MARGEM_X, chao + 34, TELA_W, 4);
   sprEcra(SPR.dragao[0], 866, chao - 16, 3);
   sprEcra(framesHeroi(escolhaRaca, escolhaSkin)[Math.floor(t * 8) % 3], 150, chao, 4);
   sprEcra(SPR.slime[Math.floor(t * 3) % 2], 260, chao + 8, 3);
@@ -1838,6 +1838,12 @@ function desenharPausa() {
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   textoCentro('PAUSA', LARGURA / 2, 88, 48, '#fff');
+  { // o herói (e o companheiro) ao lado do título, a respirar
+    const tr = performance.now() / 1000, fr = framesHeroi(J.raca, J.skin);
+    sprEcra(fr[Math.floor(tr * 2) % 2 ? 0 : Math.min(1, fr.length - 1)], LARGURA / 2 - 150, 84 + Math.round(Math.sin(tr * 3)), 4);
+    const fp = J.pet && SPR.pet[J.pet.tipo];
+    if (fp && fp.length) sprEcra(fp[Math.floor(tr * 4) % fp.length], LARGURA / 2 + 150, 92 + Math.round(Math.sin(tr * 4) * 2), 4);
+  }
   if (!confirmarDesistir) { botaoIdioma(); botoesMenuToque(false); }
   const B = BOTOES_PAUSA;
   botao(B.continuar, modoToque ? 'Continuar' : 'Continuar (P)', '#5dff7a', undefined, 'jogar');
@@ -1846,6 +1852,8 @@ function desenharPausa() {
   const D = dif();
   textoCentro(`${classeJ().nome} · ${RACAS[J.raca].nome} · Dificuldade ${D.nome} · Andar ${andar}${calorAtual() ? ` · Calor ${calorAtual()}` : ''}`, LARGURA / 2, 218, 14, '#aaa', false);
   const obtidas = PERKS.filter(p => nPerk(p.id) > 0);
+  const linhasPerks = Math.ceil(obtidas.length / 2);
+  painel(LARGURA / 2 - 350, 240, 700, obtidas.length ? 46 + linhasPerks * 34 : 44, 'rgba(18,14,28,0.92)', '#3a3150');
   textoCentro(obtidas.length ? 'As tuas melhorias' : 'Ainda não tens melhorias. Sobe de nível!', LARGURA / 2, 262, 18, '#ffe14d');
   obtidas.forEach((p, i) => {
     const col = i % 2, lin = Math.floor(i / 2);

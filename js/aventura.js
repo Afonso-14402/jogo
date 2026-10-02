@@ -153,18 +153,45 @@ function retMinimapa() {
 function atualizarMapaGrande() {
   if (premiu('tab', 'escape', 'rato')) { estado = 'jogo'; rato.baixo = false; }
 }
+// O mapa (grande e mini) desenha-se numa imagem à parte, com as cores da zona e as
+// paredes à volta do chão já visto; só se refaz duas vezes por segundo
+const cacheMapaGrande = { c: null, mapa: null, t: 0 };
+function imagemMapa(cache, esc) {
+  const agora = performance.now();
+  if (cache.c && cache.mapa === mapa && cache.esc === esc && agora - cache.t < 500) return cache.c;
+  const c = cache.c || (cache.c = document.createElement('canvas'));
+  c.width = mapa.W * esc; c.height = mapa.H * esc;
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, c.width, c.height);
+  const Z = ZONAS[zonaAtual()] || ZONAS[0];
+  const chao = [clarear(Z.chao, 0.32), clarear(Z.chao, 0.26)], parede = clarear(Z.parede, 0.1), frente = escurecer(Z.parede, 0.35), topo = clarear(Z.parede, 0.4);
+  const W = mapa.W, livre = (x, y) => x >= 0 && y >= 0 && x < W && y < mapa.H && mapa.tiles[y * W + x] && mapa.explorado[y * W + x];
+  for (let y = 0; y < mapa.H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x;
+    if (livre(x, y)) { g.fillStyle = chao[(x + y) & 1]; g.fillRect(x * esc, y * esc, esc, esc); continue; }
+    if (mapa.tiles[i]) continue;
+    // parede: só as que tocam em chão já visto
+    let perto = false;
+    for (let dy = -1; dy <= 1 && !perto; dy++) for (let dx = -1; dx <= 1; dx++) if (livre(x + dx, y + dy)) { perto = true; break; }
+    if (!perto) continue;
+    g.fillStyle = parede; g.fillRect(x * esc, y * esc, esc, esc);
+    if (livre(x, y + 1)) { g.fillStyle = frente; g.fillRect(x * esc, y * esc + Math.ceil(esc / 2), esc, Math.floor(esc / 2)); }
+    if (!livre(x, y - 1) && !mapa.tiles[i - W]) continue;
+    g.fillStyle = topo; g.fillRect(x * esc, y * esc, esc, Math.max(1, Math.floor(esc / 5)));
+  }
+  cache.mapa = mapa; cache.esc = esc; cache.t = agora;
+  return c;
+}
+
 function desenharMapaGrande() {
   ctx.fillStyle = 'rgba(4,3,8,0.96)';
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
-  const esc = Math.floor(Math.min(880 / mapa.W, 540 / mapa.H)), w = mapa.W * esc, h = mapa.H * esc;
-  const x0 = Math.round(LARGURA / 2 - w / 2), y0 = Math.round(66 + (540 - h) / 2);
-  textoCentro(naCidade() ? traduzir(mapa.tema.nome) : `ANDAR ${andar} · ${NOMES_ZONAS[zonaAtual()]}`, LARGURA / 2, 34, 24, '#ffe14d');
-  for (let y = 0; y < mapa.H; y++) for (let x = 0; x < mapa.W; x++) {
-    const i = y * mapa.W + x;
-    if (!mapa.explorado[i]) continue;
-    ctx.fillStyle = mapa.tiles[i] ? 'rgba(200,190,230,0.45)' : 'rgba(90,80,120,0.5)';
-    ctx.fillRect(x0 + x * esc, y0 + y * esc, esc, esc);
-  }
+  const esc = Math.floor(Math.min(860 / mapa.W, 520 / mapa.H)), w = mapa.W * esc, h = mapa.H * esc;
+  const x0 = Math.round(LARGURA / 2 - w / 2), y0 = Math.round(70 + (520 - h) / 2);
+  const corZona = naCidade() ? '#4dc3ff' : clarear((ZONAS[zonaAtual()] || ZONAS[0]).parede, 0.45);
+  painel(x0 - 12, y0 - 12, w + 24, h + 24, 'rgba(10,8,16,0.98)', corZona);
+  textoCentro(naCidade() ? traduzir(mapa.tema.nome) : `ANDAR ${andar} · ${NOMES_ZONAS[zonaAtual()]}`, LARGURA / 2, 32, 24, '#ffe14d');
+  ctx.drawImage(imagemMapa(cacheMapaGrande, esc), x0, y0);
   for (const s of mapa.salas) {
     if (!s.tipo || !mapa.explorado[(s.y + 1) * mapa.W + s.x + 1]) continue;
     ctx.globalAlpha = 0.35; ctx.fillStyle = SALAS_ESPECIAIS[s.tipo].cor;
@@ -173,8 +200,13 @@ function desenharMapaGrande() {
   const vis = (px, py) => mapa.explorado[Math.floor(py / TILE) * mapa.W + Math.floor(px / TILE)];
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   const legenda = [];
-  if (vis(mapa.escada.x, mapa.escada.y)) { ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 12); legenda.push(['#ffe680', 'Escada']); }
-  for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 8);
+  const icone = (c, px, py, tam) => { const k = tam / Math.max(c.width, c.height); ctx.imageSmoothingEnabled = false; ctx.drawImage(c, Math.round(x0 + px / TILE * esc - c.width * k / 2), Math.round(y0 + py / TILE * esc - c.height * k / 2), Math.round(c.width * k), Math.round(c.height * k)); };
+  const tamIcone = Math.max(12, esc * 1.6);
+  if (vis(mapa.escada.x, mapa.escada.y)) {
+    if (mapa.escada.ativa) icone(SPR.escada, mapa.escada.x, mapa.escada.y, tamIcone); else ponto(mapa.escada.x, mapa.escada.y, '#ff5050', 12);
+    legenda.push(['#ffe680', 'Escada']);
+  }
+  for (const b of baus) if (vis(b.x, b.y)) icone(SPR.bau[b.tipo] || SPR.bau.madeira, b.x, b.y, tamIcone);
   if (baus.length) legenda.push(['#c98a4a', 'Baús']);
   for (const o of objetos) {
     if (o.tipo === 'portal') { ponto(o.x, o.y, o.vermelho ? '#ff2a2a' : RANKS_PORTAL[o.gi].cor, 14); continue; }
@@ -182,9 +214,14 @@ function desenharMapaGrande() {
   }
   if (objetos.some(o => o.tipo === 'portal')) legenda.push(['#ff4dff', 'Portais']);
   for (const e of inimigos) if (!e.morto && !e.ehRival && vis(e.x, e.y) && Math.hypot(e.x - J.x, e.y - J.y) < 500) ponto(e.x, e.y, e.boss ? '#ff4040' : '#ff8080', e.boss ? 12 : 5);
-  ponto(J.x, J.y, '#5da8ff', 12);
+  { // o herói, com um anel a pulsar à volta
+    const hx = x0 + J.x / TILE * esc, hy = y0 + J.y / TILE * esc, r = 10 + (tempoJogo * 1.5 % 1) * 10;
+    ctx.globalAlpha = 1 - (tempoJogo * 1.5 % 1); ctx.strokeStyle = '#5da8ff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    icone(framesHeroi(J.raca, J.skin)[0], J.x, J.y, Math.max(18, esc * 2));
+  }
   legenda.push(['#5da8ff', 'Tu'], ['#ff8080', 'Monstros perto']);
-  legenda.forEach(([c, n], i) => { ctx.fillStyle = c; ctx.fillRect(40 + i * 150, ALTURA - 30, 12, 12); textoEsq(n, 58 + i * 150, ALTURA - 24, 13, '#ccc', 'normal'); });
+  legenda.forEach(([c, n], i) => { ctx.fillStyle = '#000'; ctx.fillRect(39 + i * 150, ALTURA - 31, 14, 14); ctx.fillStyle = c; ctx.fillRect(40 + i * 150, ALTURA - 30, 12, 12); textoEsq(n, 58 + i * 150, ALTURA - 24, 13, '#ccc', 'normal'); });
   textoDir(modoToque ? 'Toca para fechar' : 'Tab / Esc para fechar', LARGURA - 30, ALTURA - 24, 12, '#777', 'normal');
 }
 

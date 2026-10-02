@@ -23,8 +23,10 @@ let avisos = [];
 function avisar(titulo, sub, cor) {
   avisos.push({ titulo, sub, cor, t: 4 });
 }
+// Os avisos só aparecem a jogar: nos menus esperam, para não taparem os títulos
+const avisosVisiveis = () => estado === 'jogo' || estado === 'convidado';
 function atualizarAvisos(dt) { // mostra um de cada vez
-  if (!avisos.length) return;
+  if (!avisos.length || !avisosVisiveis()) return;
   avisos[0].t -= dt;
   if (avisos[0].t <= 0) avisos.shift();
 }
