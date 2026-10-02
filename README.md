@@ -357,7 +357,8 @@ js/meta.js          o que fica guardado entre partidas (almas, coleção, conqui
 js/jogo.js          lógica: combate, IA, bosses, zonas, salas especiais, loja, mochila, companheiros e gravação
 js/toque.js         controlos de toque, opções, tutorial, ecrã inteiro e vibração (só em ecrãs táteis)
 manifest.webmanifest, sw.js, icones/   para instalar como app e jogar sem internet
-fontes/Tiny5.woff2  fonte pixel Tiny5 (SIL Open Font License, Google Fonts)
+fontes/Nunito.woff2 letra do jogo, Nunito (SIL Open Font License, Google Fonts): redonda e fácil de ler
+fontes/Tiny5.woff2  letra pixel Tiny5 (SIL Open Font License), usada só nas imagens da loja
 ```
 
 Para mudar as probabilidades ou criar itens novos, edita `js/dados.js`.

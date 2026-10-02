@@ -6,13 +6,15 @@
 //  O HUD e os textos são desenhados por cima, à resolução normal.
 // =====================================================================
 
-const FONTE = '"Tiny5", "Segoe UI", "Trebuchet MS", Arial, sans-serif';
+// Nunito: letra redonda e grossa, fácil de ler mesmo pequena no telemóvel
+const FONTE = '"Nunito", "Segoe UI", "Trebuchet MS", Arial, sans-serif';
 // no telemóvel as letras muito pequenas ficam um pouco maiores
 // No telemóvel o interface fica encolhido: as letras pequenas crescem (ver ajustarTela
 // e a opção "Tamanho da letra"); as grandes (títulos) ficam como estão.
 let escalaLetra = 1, alargarLetra = 1.18;
 const tamLetra = tam => (escalaLetra === 1 || tam >= 24 ? tam : Math.min(Math.round(tam * escalaLetra), Math.max(tam, 24)));
-const fonte = (tam, peso = 'bold') => `${peso} ${tamLetra(tam)}px ${FONTE}`;
+const PESOS = { bold: 800, normal: 600 }; // um pouco mais grossas do que o normal: leem-se melhor no escuro
+const fonte = (tam, peso = 'bold') => `${PESOS[peso] || peso} ${tamLetra(tam)}px ${FONTE}`;
 // Quanto a letra pode alargar (as letras crescem mais em altura do que em largura, para caberem nos painéis)
 const apertoLetra = tam => Math.min(1, alargarLetra * tam / tamLetra(tam));
 function escreverApertado(txt, x, y, tam, f) {
@@ -152,7 +154,7 @@ function botaoIdioma() {
   const b = BOTAO_IDIOMA, sobre = dentro(b);
   painel(b.x, b.y, b.w, b.h, sobre ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', sobre ? '#ffffff' : '#5a4d74');
   const n = IDIOMAS.length, w = (b.w - 8) / n;
-  ctx.font = `bold 16px ${FONTE}`; // (sem aumentar: tem de caber)
+  ctx.font = `800 16px ${FONTE}`; // (sem aumentar: tem de caber)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   IDIOMAS.forEach((l, i) => {
@@ -1757,7 +1759,7 @@ function desenharTitulo(t) {
   ctx.save();
   ctx.translate(LARGURA / 2, 70);
   ctx.scale(f, f);
-  textoCentro('MASMORRA DO DESTINO', 0, 0, 52, '#ffae00');
+  textoCentroAjustado('MASMORRA DO DESTINO', 0, 0, 52, '#ffae00', 470);
   ctx.restore();
   textoCentro('Um RPG de masmorras, bosses e baús da sorte', LARGURA / 2, 118, 17, '#ccc', false);
 
