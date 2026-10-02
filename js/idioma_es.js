@@ -1934,5 +1934,11 @@ const ES = {
   "Fragmento do Vazio": "Fragmento del Vacío",
   "Pena do Querubim": "Pluma del Querubín",
   "Estandarte dos Últimos": "Estandarte de los Últimos",
+  "Chão rachado: desfaz-se pouco depois de lhe tocares!": "¡Suelo agrietado: se deshace poco después de pisarlo!",
+  "Passa a correr ou com a esquiva (»»), que salta por cima.": "Pasa corriendo o con la esquiva (»»), que salta por encima.",
+  "Parede com lanças: quando as pontas brilham, sai da frente!": "Pared con lanzas: cuando brillen las puntas, ¡apártate!",
+  "As lanças chegam a 2 quadrados da parede.": "Las lanzas llegan a 2 casillas de la pared.",
+  "Sala de gás venenoso!": "¡Sala de gas venenoso!",
+  "O gás vem aos bocados: atravessa a sala quando o ar estiver limpo.": "El gas viene a ratos: cruza la sala cuando el aire esté limpio.",
 };
 const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

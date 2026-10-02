@@ -103,6 +103,9 @@ const DICAS = {
   estatua:      ['Estátuas do Anjo e do Diabo: presentes com um preço.', 'Do Anjo só podes levar um. O Diabo pede vida máxima.'],
   pedestal:     ['Pedestais: escolhe só um prémio.', 'Quando levas um, os outros desaparecem.'],
   escadaCidade: ['Escadas para cima: a Cidade dos Caçadores.', 'Lá há lojas, a Guilda e pedidos com prémios.'],
+  chao:         ['Chão rachado: desfaz-se pouco depois de lhe tocares!', 'Passa a correr ou com a esquiva (»»), que salta por cima.'],
+  lancas:       ['Parede com lanças: quando as pontas brilham, sai da frente!', 'As lanças chegam a 2 quadrados da parede.'],
+  gas:          ['Sala de gás venenoso!', 'O gás vem aos bocados: atravessa a sala quando o ar estiver limpo.'],
   banca:        ['Banca da cidade: coisas especiais pagas com ALMAS.', 'Cada cidade vende armas, armaduras e relíquias diferentes.'],
   teleporte:    ['Pedra de Teletransporte: viaja entre as cidades.', 'Podes voltar a uma cidade antiga e descer de novo a partir dela.'],
   boss:         ['BOSS! Tem muita vida e ataques fortes.', 'Usa a esquiva (»») para passar pelos ataques: ficas invencível.'],
@@ -135,6 +138,7 @@ function atualizarDicas(dt) {
   if (J.objPerto && DICAS[J.objPerto.tipo]) dica(J.objPerto.tipo);
   if (boss && boss.acordado) dica('boss');
   if (J.hp < S.maxHp * 0.3 && J.pocoes > 0) dica('vidaBaixa');
+  dicasArmadilhas();
   for (const e of inimigos) if (e.elite && !e.morto && Math.hypot(e.x - J.x, e.y - J.y) < 260) { dica('elite'); break; }
 }
 

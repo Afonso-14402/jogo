@@ -1007,6 +1007,13 @@ const EN = {
   "Fragmento do Vazio": "Void Shard",
   "Pena do Querubim": "Cherub Feather",
   "Estandarte dos Últimos": "Banner of the Last",
+  "Caíste!": "You fell!",
+  "Chão rachado: desfaz-se pouco depois de lhe tocares!": "Cracked floor: it crumbles soon after you step on it!",
+  "Passa a correr ou com a esquiva (»»), que salta por cima.": "Run across or use the dodge (»»), which jumps over it.",
+  "Parede com lanças: quando as pontas brilham, sai da frente!": "Spear wall: when the tips shine, get out of the way!",
+  "As lanças chegam a 2 quadrados da parede.": "The spears reach 2 squares from the wall.",
+  "Sala de gás venenoso!": "Poison gas room!",
+  "O gás vem aos bocados: atravessa a sala quando o ar estiver limpo.": "The gas comes in bursts: cross the room when the air is clear.",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.

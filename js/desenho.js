@@ -531,6 +531,7 @@ function desenharSalas() {
 }
 
 function desenharArmadilha(a) {
+  if (a.tipo !== 'espinhos' && a.tipo !== 'seta') { desenharArmadilhaNova(a, tempoJogo); return; }
   if (a.tipo === 'espinhos') {
     ctx.drawImage(SPR.espinhos[a.estado], a.tx * TILE, a.ty * TILE, TILE, TILE);
     return;

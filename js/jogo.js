@@ -626,6 +626,7 @@ function popularAndar() {
     armadilhas.push({ tipo: 'seta', tx, ty, dx, dy, x, y, cd: rand(0, 2) });
     feitas++;
   }
+  criarArmadilhasNovas(salasArm, livres); // chão que cai, lanças e gás (armadilhas.js)
 }
 
 function tornarElite(e) {
@@ -1186,7 +1187,9 @@ function atualizar(dt) {
 const danoArmadilha = () => Math.round(8 * escalaAndar(andar).dano * dif().dano);
 
 function atualizarArmadilhas(dt) {
+  lembrarSitioSeguro();
   for (const a of armadilhas) {
+    if (a.tipo !== 'espinhos' && a.tipo !== 'seta') { atualizarArmadilhaNova(a, dt); continue; }
     if (a.tipo === 'espinhos') {
       const t = (tempoJogo + a.fase) % 3.2;
       const antes = a.estado;
