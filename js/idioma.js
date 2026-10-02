@@ -965,6 +965,20 @@ const EN = {
   "Escada para ": "Stairs to ",
   "Pedra de Teletransporte: viaja entre as cidades.": "Teleport Stone: travel between cities.",
   "Podes voltar a uma cidade antiga e descer de novo a partir dela.": "You can go back to an old city and go down again from there.",
+  "Banca: ": "Stall: ",
+  " (vendido)": " (sold)",
+  " (já tens)": " (you have it)",
+  "Já tens esta relíquia": "You already have this relic",
+  "Não tens almas suficientes": "Not enough souls",
+  "Coisas especiais desta cidade, pagas com ALMAS. Tens ": "Special goods from this city, paid with SOULS. You have ",
+  " almas.": " souls.",
+  "Almas: ": "Souls: ",
+  "A banca só aceita as almas de quem criou a sala": "The stall only takes the room host's souls",
+  ": Ver (paga-se com almas)": ": Browse (paid with souls)",
+  "1-4 ou W/S: escolher · E: comprar com almas · Esc: sair": "1-4 or W/S: choose · E: buy with souls · Esc: leave",
+  "Banca da cidade: coisas especiais pagas com ALMAS.": "City stall: special goods paid with SOULS.",
+  "Cada cidade vende armas, armaduras e relíquias diferentes.": "Each city sells different weapons, armor and relics.",
+  "Equipaste: ": "Equipped: ",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.

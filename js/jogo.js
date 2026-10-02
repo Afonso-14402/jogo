@@ -201,12 +201,8 @@ function criarItem(modelo, nAndar, semAfixo = false) {
   if (it.regen) it.regen = +(modelo.regen * esc).toFixed(1);
   if (!semAfixo && Math.random() < CHANCE_AFIXO[it.r]) {
     const af = it.r === 'lixo' ? AFIXO_MALDICAO : escolher(AFIXOS[it.tipo]);
-    it.afixo = af;
+    aplicarAfixo(it, af);
     it.nome = `${modelo.nome} ${af.nome}`;
-    if (af.multDano) it.dano = Math.round(it.dano * af.multDano);
-    if (af.multVel) it.vel = +(it.vel * af.multVel).toFixed(2);
-    if (af.multDef) it.def = Math.round(it.def * af.multDef);
-    if (af.multHp && it.hp > 0) it.hp = Math.round(it.hp * af.multHp);
   }
   return it;
 }
@@ -1219,6 +1215,7 @@ function usarObjeto(o) {
   if (o.tipo === 'escadaMasmorra') { sairCidade(); return; }
   if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
   if (o.tipo === 'teleporte') { abrirTeletransporte(); return; }
+  if (o.tipo === 'banca') { abrirBanca(); return; }
   if (o.tipo === 'aldeao') { falarAldeao(o); return; }
   if (o.tipo === 'estatua') return;
   if (o.tipo === 'mercador') { abrirLoja(o); return; }

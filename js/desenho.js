@@ -622,6 +622,7 @@ function desenharObjeto(o, t) {
   if (o.tipo === 'escadaCidade' || o.tipo === 'escadaMasmorra') { desenharEscadaCidade(o, t); return; }
   if (o.tipo === 'edificio') return; // a porta já está desenhada no edifício
   if (o.tipo === 'teleporte') { desenharPedraTeletransporte(o, t); return; }
+  if (o.tipo === 'banca') { desenharBanca(o, t); return; }
   if (desenharObjetoExtra(o, t)) return;
   if (o.tipo === 'mercador') {
     sombra(o.x, o.y + 16, 12);
@@ -1167,7 +1168,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', escadaCidade: '#4dc3ff', escadaMasmorra: '#ffae00', edificio: '#ffe14d', teleporte: '#b48cff', pedestal: '#fff0a0', estatua: '#ff8080' };
+  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', escadaCidade: '#4dc3ff', escadaMasmorra: '#ffae00', edificio: '#ffe14d', teleporte: '#b48cff', banca: '#ffcf3a', pedestal: '#fff0a0', estatua: '#ff8080' };
   for (const o of objetos) {
     if (o.tipo === 'portal') { // os portais sentem-se de longe: aparecem sempre e a piscar
       ponto(o.x, o.y, Math.floor(performance.now() / 300) % 2 ? (o.vermelho ? '#ff2a2a' : RANKS_PORTAL[o.gi].cor) : '#ffffff', 8);

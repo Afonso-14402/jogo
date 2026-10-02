@@ -1894,5 +1894,18 @@ const ES = {
   "Escada para ": "Escalera a ",
   "Pedra de Teletransporte: viaja entre as cidades.": "Piedra de Teletransporte: viaja entre ciudades.",
   "Podes voltar a uma cidade antiga e descer de novo a partir dela.": "Puedes volver a una ciudad antigua y bajar de nuevo desde ella.",
+  "Banca: ": "Puesto: ",
+  " (vendido)": " (vendido)",
+  " (já tens)": " (ya lo tienes)",
+  "Já tens esta relíquia": "Ya tienes esta reliquia",
+  "Não tens almas suficientes": "No tienes almas suficientes",
+  "Coisas especiais desta cidade, pagas com ALMAS. Tens ": "Cosas especiales de esta ciudad, se pagan con ALMAS. Tienes ",
+  " almas.": " almas.",
+  "A banca só aceita as almas de quem criou a sala": "El puesto solo acepta las almas de quien creó la sala",
+  ": Ver (paga-se com almas)": ": Ver (se paga con almas)",
+  "1-4 ou W/S: escolher · E: comprar com almas · Esc: sair": "1-4 o W/S: elegir · E: comprar con almas · Esc: salir",
+  "Banca da cidade: coisas especiais pagas com ALMAS.": "Puesto de la ciudad: cosas especiales que se pagan con ALMAS.",
+  "Cada cidade vende armas, armaduras e relíquias diferentes.": "Cada ciudad vende armas, armaduras y reliquias diferentes.",
+  "Equipaste: ": "Equipaste: ",
 };
 const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

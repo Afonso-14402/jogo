@@ -118,34 +118,34 @@ function pagar(preco) {
 // ---------------------------------------------------------------------
 // Cada zona da masmorra tem a sua cidade: o nome, as cores, as árvores e a fonte mudam
 const CIDADES = [
-  { nome: 'Vila da Pedra', calc: ['#8a8078', '#7a7068', '#5e564e'], relva: ['#3f7a34', '#468a3a', '#6ab050'], flores: ['#ff7fd0', '#ffe14d', '#ffffff'], muralha: ['#4a4458', '#5e5870', '#2a2436'],
+  { nome: 'Vila da Pedra', banca: { arma: 'furia', armadura: 'muralha', amuleto: 'sorte', rel: 'trevo' }, calc: ['#8a8078', '#7a7068', '#5e564e'], relva: ['#3f7a34', '#468a3a', '#6ab050'], flores: ['#ff7fd0', '#ffe14d', '#ffffff'], muralha: ['#4a4458', '#5e5870', '#2a2436'],
     arvore: 'arvore', folhas: ['#2f6a2a', '#3f8a34'], tronco: '#5a3a1a', fonte: '#4d9fff', gota: '#bfe6ff', luz: '#ffd27a',
     conversas: ['Esta vila foi a primeira a ver um portal abrir.', 'Bem-vindo à Vila da Pedra, caçador!'] },
-  { nome: 'Vila dos Coveiros', calc: ['#6e6a72', '#625e68', '#46424e'], relva: ['#3a4a3a', '#34423a', '#5a6a50'], flores: ['#b48cff', '#d0d0d0', '#7d9a7d'], muralha: ['#3a3644', '#4a4656', '#1e1a26'],
+  { nome: 'Vila dos Coveiros', banca: { arma: 'vampiro', armadura: 'espinhos', amuleto: 'sabio', rel: 'dente' }, calc: ['#6e6a72', '#625e68', '#46424e'], relva: ['#3a4a3a', '#34423a', '#5a6a50'], flores: ['#b48cff', '#d0d0d0', '#7d9a7d'], muralha: ['#3a3644', '#4a4656', '#1e1a26'],
     arvore: 'morta', folhas: ['#3a3644', '#4a4656'], tronco: '#4a3a32', fonte: '#7dffb0', gota: '#c8ffe0', luz: '#9dffcf',
     conversas: ['Aqui enterramos os caçadores que não voltaram.', 'À noite ouvem-se ossos a bater nas campas.'] },
-  { nome: 'Forja das Brasas', calc: ['#5a4a44', '#4e3f3a', '#2e2420'], relva: ['#3a2a24', '#42302a', '#ff7b25'], flores: ['#ff9b45', '#ffd23f', '#ff5a1a'], muralha: ['#3a2a26', '#4e3a34', '#1a100c'],
+  { nome: 'Forja das Brasas', banca: { arma: 'fogo', armadura: 'vida', amuleto: 'crueldade', rel: 'brasa' }, calc: ['#5a4a44', '#4e3f3a', '#2e2420'], relva: ['#3a2a24', '#42302a', '#ff7b25'], flores: ['#ff9b45', '#ffd23f', '#ff5a1a'], muralha: ['#3a2a26', '#4e3a34', '#1a100c'],
     arvore: 'rocha', folhas: ['#5a4a44', '#6e5c54'], tronco: '#2a1a14', fonte: '#ff6a1a', gota: '#ffd27a', luz: '#ff9b45',
     conversas: ['As melhores espadas são forjadas no calor da lava.', 'Não toques na fonte. A sério.'] },
-  { nome: 'Porto Gelado', calc: ['#9aa8b8', '#8a98aa', '#6a788a'], relva: ['#dfeaf5', '#cfdcea', '#ffffff'], flores: ['#bfe6ff', '#ffffff', '#9fd0ff'], muralha: ['#5a6a80', '#7486a0', '#34405a'],
+  { nome: 'Porto Gelado', banca: { arma: 'gelo', armadura: 'muralha', amuleto: 'arcano', rel: 'floco' }, calc: ['#9aa8b8', '#8a98aa', '#6a788a'], relva: ['#dfeaf5', '#cfdcea', '#ffffff'], flores: ['#bfe6ff', '#ffffff', '#9fd0ff'], muralha: ['#5a6a80', '#7486a0', '#34405a'],
     arvore: 'pinheiro', folhas: ['#2a5a4a', '#e8f4ff'], tronco: '#4a3a2a', fonte: '#9fdcff', gota: '#ffffff', luz: '#cfe8ff',
     conversas: ['Os barcos estão presos no gelo há três invernos.', 'Bebe qualquer coisa quente antes de desceres.'] },
-  { nome: 'Aldeia das Palafitas', calc: ['#6a5a3a', '#5e4e32', '#3e3220'], relva: ['#2e4a2a', '#344f2c', '#7dff5a'], flores: ['#7dff5a', '#d0ff7a', '#5dff9a'], muralha: ['#3a4430', '#4a5640', '#1e2618'],
+  { nome: 'Aldeia das Palafitas', banca: { arma: 'vampiro', armadura: 'regen', amuleto: 'sorte', rel: 'antidoto' }, calc: ['#6a5a3a', '#5e4e32', '#3e3220'], relva: ['#2e4a2a', '#344f2c', '#7dff5a'], flores: ['#7dff5a', '#d0ff7a', '#5dff9a'], muralha: ['#3a4430', '#4a5640', '#1e2618'],
     arvore: 'salgueiro', folhas: ['#2a4a24', '#3a6a30'], tronco: '#3a2a1a', fonte: '#6ab04a', gota: '#bfffa0', luz: '#d0ff7a',
     conversas: ['As casas estão em cima de estacas por causa dos sapos gigantes.', 'Se te picar um escorpião, vai ao alquimista.'] },
-  { nome: 'Oásis das Areias', calc: ['#c8a870', '#b89860', '#8a6e40'], relva: ['#e0c890', '#d8bc80', '#f0dca0'], flores: ['#ff9b45', '#ffe14d', '#5dff7a'], muralha: ['#a08050', '#b89868', '#6a5030'],
+  { nome: 'Oásis das Areias', banca: { arma: 'rapidez', armadura: 'vento', amuleto: 'sabio', rel: 'bolsa' }, calc: ['#c8a870', '#b89860', '#8a6e40'], relva: ['#e0c890', '#d8bc80', '#f0dca0'], flores: ['#ff9b45', '#ffe14d', '#5dff7a'], muralha: ['#a08050', '#b89868', '#6a5030'],
     arvore: 'palmeira', folhas: ['#3a7a2a', '#5aa03a'], tronco: '#8a6a3a', fonte: '#4dc3ff', gota: '#bfe6ff', luz: '#ffe680',
     conversas: ['A água deste oásis nunca acaba. Ninguém sabe porquê.', 'As múmias do templo não gostam de visitas.'] },
-  { nome: 'Cidade de Cristal', calc: ['#6a6a9a', '#5e5e8a', '#3e3e6a'], relva: ['#3a3a6a', '#44447a', '#9fdcff'], flores: ['#ff9ff3', '#9fdcff', '#b48cff'], muralha: ['#4a4a7a', '#6060a0', '#24244a'],
+  { nome: 'Cidade de Cristal', banca: { arma: 'trovao', armadura: 'feiticeiro', amuleto: 'arcano', rel: 'grimorio' }, calc: ['#6a6a9a', '#5e5e8a', '#3e3e6a'], relva: ['#3a3a6a', '#44447a', '#9fdcff'], flores: ['#ff9ff3', '#9fdcff', '#b48cff'], muralha: ['#4a4a7a', '#6060a0', '#24244a'],
     arvore: 'cristal', folhas: ['#9fdcff', '#ff9ff3'], tronco: '#4a4a7a', fonte: '#ff9ff3', gota: '#ffd0f8', luz: '#9fdcff',
     conversas: ['Os cristais cantam quando um portal abre.', 'Não partas nada. Tudo aqui é caro.'] },
-  { nome: 'Bastião do Vazio', calc: ['#3a3044', '#32283c', '#1a1424'], relva: ['#241c30', '#2a2036', '#b44dff'], flores: ['#b44dff', '#6a4aff', '#ff4dff'], muralha: ['#2a2036', '#3a2e4a', '#100a18'],
+  { nome: 'Bastião do Vazio', banca: { arma: 'furia', armadura: 'espinhos', amuleto: 'crueldade', rel: 'runas' }, calc: ['#3a3044', '#32283c', '#1a1424'], relva: ['#241c30', '#2a2036', '#b44dff'], flores: ['#b44dff', '#6a4aff', '#ff4dff'], muralha: ['#2a2036', '#3a2e4a', '#100a18'],
     arvore: 'obelisco', folhas: ['#1a1424', '#b44dff'], tronco: '#2a2036', fonte: '#b44dff', gota: '#e0b0ff', luz: '#d08aff',
     conversas: ['Este é o último bastião antes do reino do Vazio.', 'Às vezes o chão sussurra o teu nome.'] },
-  { nome: 'Cidadela das Nuvens', calc: ['#e8e2cf', '#d8d0b8', '#b8ae90'], relva: ['#f4f4ff', '#e8ecff', '#ffffff'], flores: ['#ffe14d', '#ffffff', '#fff0a0'], muralha: ['#c8c0a8', '#e0d8c0', '#9a9078'],
+  { nome: 'Cidadela das Nuvens', banca: { arma: 'trovao', armadura: 'vida', amuleto: 'crueldade', rel: 'aguia' }, calc: ['#e8e2cf', '#d8d0b8', '#b8ae90'], relva: ['#f4f4ff', '#e8ecff', '#ffffff'], flores: ['#ffe14d', '#ffffff', '#fff0a0'], muralha: ['#c8c0a8', '#e0d8c0', '#9a9078'],
     arvore: 'coluna', folhas: ['#f0e8d0', '#ffe14d'], tronco: '#d8d0b8', fonte: '#ffe680', gota: '#fffbe0', luz: '#fff0a0',
     conversas: ['Os anjos daqui não confiam em caçadores.', 'Cuidado onde pões os pés: há nuvens que não seguram ninguém.'] },
-  { nome: 'Último Acampamento', calc: ['#5a4a4a', '#4e4040', '#2e2424'], relva: ['#3a2a2a', '#422e2e', '#ff3b3b'], flores: ['#ff3b3b', '#ff8080', '#ffae00'], muralha: ['#3a2a2a', '#4e3a3a', '#1a0e0e'],
+  { nome: 'Último Acampamento', banca: { arma: 'furia', armadura: 'regen', amuleto: 'crueldade', rel: 'fenix' }, calc: ['#5a4a4a', '#4e4040', '#2e2424'], relva: ['#3a2a2a', '#422e2e', '#ff3b3b'], flores: ['#ff3b3b', '#ff8080', '#ffae00'], muralha: ['#3a2a2a', '#4e3a3a', '#1a0e0e'],
     arvore: 'ruina', folhas: ['#5a4a4a', '#6e5a5a'], tronco: '#3a2a2a', fonte: '#ff3b3b', gota: '#ff9b9b', luz: '#ff8a5a',
     conversas: ['Daqui já se vê o trono.', 'Somos os últimos caçadores que ainda acreditam em ti.'] },
 ];
@@ -304,6 +304,7 @@ function objetosCidade() {
   const l = EDIFICIOS.map(E => ({ tipo: 'edificio', id: E.id, x: (E.tx + ED_W / 2) * TILE, y: (ED_Y + ED_H + 0.4) * TILE }));
   l.push({ tipo: 'escadaMasmorra', x: 23 * TILE, y: 22 * TILE, t: 0 });
   l.push({ tipo: 'teleporte', x: 29.5 * TILE, y: 15.5 * TILE, t: 0 });
+  l.push({ tipo: 'banca', x: 16.5 * TILE, y: 16.5 * TILE, t: 0 });
   return l;
 }
 
@@ -372,6 +373,34 @@ function abrirEdificio(id) {
   som(500, 0.08, 'triangle', 0.03, 100);
 }
 
+// Banca da cidade: coisas da especialidade de cada cidade, pagas com ALMAS
+// (equipamento com o poder da cidade, de uma raridade acima do andar, e uma relíquia)
+const BANCA = { id: 'banca', nome: 'Banca', cor: '#ffcf3a' };
+const precoBanca = (r, rel) => Math.round((rel ? 45 : { epico: 25, lendario: 45, mitico: 80 }[r] || 25) * (1 + andar / 30));
+function stockBanca() {
+  if (mapa.stockBanca) return mapa.stockBanca;
+  const T = mapa.tema || CIDADES[0], B = T.banca;
+  const rr = andar < 16 ? 'epico' : andar < 36 ? 'lendario' : 'mitico';
+  const l = [];
+  for (const tipo of ['arma', 'armadura', 'amuleto']) {
+    let lista = ITENS.filter(i => i.tipo === tipo && i.r === rr && !i.inicial);
+    if (tipo === 'arma' && J && J.arma) { const m = lista.filter(i => classeArma(i) === classeArma(J.arma)); if (m.length) lista = m; }
+    if (!lista.length) continue;
+    const it = criarItem(escolher(lista), andar + 2, true);
+    const af = AFIXOS[tipo].find(a => a.id === B[tipo]);
+    if (af) { aplicarAfixo(it, af); renomear(it); }
+    l.push({ tipo: 'bancaItem', item: it, preco: precoBanca(it.r) });
+  }
+  if (RELIQUIAS[B.rel]) l.push({ tipo: 'bancaRel', rel: B.rel, preco: precoBanca(null, true) });
+  return (mapa.stockBanca = l);
+}
+function abrirBanca() {
+  if (J.remoto) { texto(J.x, J.y - 30, 'A banca só aceita as almas de quem criou a sala', '#aaaaaa', 13); return; }
+  cidade = { t: 0, ed: -1, banca: true, sel: 0, msg: null, anim: null };
+  estado = 'cidade';
+  som(600, 0.1, 'triangle', 0.03, 200);
+}
+
 // Pedra de Teletransporte: viajar para as cidades onde já estiveste nesta partida
 // (e voltar a descer a partir de lá, para treinar em andares mais fáceis)
 const PEDRA_TELETRANSPORTE = { id: 'teleporte', nome: 'Pedra de Teletransporte', cor: '#b48cff' };
@@ -382,7 +411,7 @@ function abrirTeletransporte() {
   som(700, 0.2, 'sine', 0.04, 400);
 }
 const cidadesConhecidas = () => (J.cidadesVisitadas || [andar]).slice().sort((a, b) => a - b).slice(-12);
-const painelCidade = () => (cidade.tele ? PEDRA_TELETRANSPORTE : EDIFICIOS[cidade.ed]);
+const painelCidade = () => (cidade.tele ? PEDRA_TELETRANSPORTE : cidade.banca ? Object.assign({}, BANCA, { nome: `Banca: ${traduzir(mapa.tema.nome)}` }) : EDIFICIOS[cidade.ed]);
 
 function viajarParaCidade(a) {
   cidade = null;
@@ -394,6 +423,8 @@ function viajarParaCidade(a) {
 }
 
 function linhasCidade() {
+  if (cidade.banca) return stockBanca().map(o => o.vendido ? { tipo: 'nada', txt: `${o.item ? o.item.nome : RELIQUIAS[o.rel].nome} (vendido)` }
+    : { tipo: o.tipo, o, almas: true, preco: o.preco, txt: o.item ? `${o.item.nome} · ${RARIDADES[o.item.r].nome}` : `Relíquia: ${RELIQUIAS[o.rel].nome}${temRel(o.rel) ? ' (já tens)' : ''}`, cor: o.item ? RARIDADES[o.item.r].cor : RELIQUIAS[o.rel].cor });
   if (cidade.tele) return cidadesConhecidas().map(a => ({ tipo: 'viajar', a, txt: `${nomeCidade(a)} · andar ${a + 1}`, aqui: a === andar }));
   const id = EDIFICIOS[cidade.ed].id;
   if (id === 'casa') return [
@@ -446,6 +477,18 @@ function atualizarCidade(dt) {
   if (!acao) return;
   const msg = (txt, cor) => { C.msg = { txt, cor, t: 2.5 }; };
   const semOuro = () => msg('Não tens ouro suficiente', '#ff6060');
+  if (acao.tipo === 'bancaItem' || acao.tipo === 'bancaRel') {
+    const o = acao.o;
+    if (o.rel && temRel(o.rel)) return msg('Já tens esta relíquia', '#aaa');
+    if ((meta.almas || 0) < o.preco) { som(140, 0.2, 'square', 0.04); return msg('Não tens almas suficientes', '#ff6060'); }
+    meta.almas -= o.preco; salvarMeta();
+    o.vendido = true;
+    if (o.item) { const m = trocarEquipamento(o.item); msg(m || `Equipaste: ${o.item.nome}`, '#5dff7a'); }
+    else { ganharReliquia(o.rel); msg(`Relíquia: ${RELIQUIAS[o.rel].nome}`, RELIQUIAS[o.rel].cor); }
+    fanfarra([523, 659, 784, 1046], 0.04);
+    return;
+  }
+  if (acao.tipo === 'nada') return;
   if (acao.tipo === 'viajar') {
     if (acao.aqui) return msg('Já estás nesta cidade', '#aaa');
     if (J.modo === 'diario') return msg('No Desafio Diário a pedra não funciona', '#ff8080');
@@ -500,13 +543,15 @@ function desenharPainelCidade(t) {
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   painel(100, 130, 760, 420, 'rgba(14,11,22,0.97)', E.cor);
   textoCentro(E.nome, LARGURA / 2 - 80, 164, 28, E.cor);
-  textoDir(`Ouro: ${J.ouro}`, 840, 164, 18, '#ffd23f');
+  if (cidade.banca) textoDir(`Almas: ${meta.almas || 0}`, 840, 164, 18, '#b48cff');
+  else textoDir(`Ouro: ${J.ouro}`, 840, 164, 18, '#ffd23f');
   const info = {
     casa: 'A tua casa na cidade. Aqui descansas e guardas o jogo.',
     assoc: `A Guilda mede o teu poder. Rank atual: ${RANKS[meta.rankCacador || 0].letra} (cada rank: +3% dano e vida para sempre)`,
     ferreiro: 'O ferreiro melhora o teu equipamento sem nunca falhar (até +5).',
     alquimista: 'Poções e elixires que duram até ao fim da partida.',
     teleporte: 'Viaja para uma cidade onde já estiveste. Quando desceres, continuas a partir dessa cidade.',
+    banca: `Coisas especiais desta cidade, pagas com ALMAS. Tens ${meta.almas || 0} almas.`,
   }[E.id];
   textoCentroAjustado(info, LARGURA / 2, 206, 13, '#ccc', 700, false);
   linhasCidade().forEach((l, i) => {
@@ -514,13 +559,18 @@ function desenharPainelCidade(t) {
     const direita = l.preco != null || l.premio;
     painel(r.x, r.y, r.w, r.h, s ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', s ? '#ffffff' : l.pronto ? '#ffe14d' : '#3a3150');
     textoEsq(teclaLinha(i) || '', r.x + 10, r.y + r.h / 2 + 1, 13, '#777');
-    textoCentroAjustado(l.aqui ? `${l.txt} (aqui)` : l.txt, r.x + r.w / 2 - (direita ? 40 : 0), r.y + r.h / 2 + 1, 14, l.aqui ? '#777' : l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor, r.w - (direita ? 150 : 40));
-    if (l.preco != null) textoDir(`${l.preco} ouro`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, J.ouro >= l.preco ? '#ffd23f' : '#ff8080');
+    textoCentroAjustado(l.aqui ? `${l.txt} (aqui)` : l.txt, r.x + r.w / 2 - (direita ? 40 : 0), r.y + r.h / 2 + 1, 14, l.aqui ? '#777' : l.cor ? l.cor : l.tipo === 'nada' ? '#777' : l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor, r.w - (direita ? 150 : 40));
+    if (l.preco != null && l.almas) textoDir(`${l.preco} almas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, (meta.almas || 0) >= l.preco ? '#b48cff' : '#ff8080');
+    else if (l.preco != null) textoDir(`${l.preco} ouro`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, J.ouro >= l.preco ? '#ffd23f' : '#ff8080');
     if (l.premio) textoDir(l.pronto ? `Receber ${l.premio} almas` : `${l.premio} almas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, l.pronto ? '#ffe14d' : '#887');
   });
   // quem te atende
   const npc = { casa: ['humano', J.skin], assoc: ['humano', 'real'], ferreiro: ['anao', 'dourado'], alquimista: ['elfo', 'gelo'] }[E.id];
   if (npc) sprEcra(framesHeroi(npc[0], npc[1])[Math.floor(t * 2) % 2 ? 0 : 1], 770, 360, 5);
+  if (cidade.banca) { // o que faz o item ou a relíquia escolhida
+    const o = stockBanca()[cidade.sel];
+    if (o && !o.vendido) textoCentroAjustado(o.item ? linhasItem(o.item).join(' · ') : RELIQUIAS[o.rel].desc, LARGURA / 2 - 40, 470, 13, '#ddd', 640, false);
+  }
   if (cidade.tele && cidadesConhecidas().length < 2) textoCentro('Ainda só conheces esta cidade. Cada boss leva-te a uma nova.', LARGURA / 2, 300, 14, '#aaa');
   if (E.id === 'casa') { // troféus dos bosses que já derrotaste (em qualquer partida)
     textoEsq('Troféus:', 130, 400, 14, '#ffae00');
@@ -535,7 +585,7 @@ function desenharPainelCidade(t) {
   if (E.id === 'assoc' && J.pedidos && J.pedidos.length) textoEsq(`Pedidos da cidade: ${J.pedidos.map(textoPedido).join(' · ')}`, 130, 460, 11, '#ffe680', 'normal');
   if (cidade.msg) textoCentro(cidade.msg.txt, LARGURA / 2, 516, 15, cidade.msg.cor);
   botao(BOTAO_FECHAR, 'Sair', '#ff8080');
-  if (!modoToque) textoCentro(cidade.tele ? '1-0 ou W/S: escolher · E: viajar · Esc: sair' : '1-4 ou W/S: escolher · E: comprar · Esc: sair', LARGURA / 2, 568, 12, '#777', false);
+  if (!modoToque) textoCentro(cidade.tele ? '1-0 ou W/S: escolher · E: viajar · Esc: sair' : cidade.banca ? '1-4 ou W/S: escolher · E: comprar com almas · Esc: sair' : '1-4 ou W/S: escolher · E: comprar · Esc: sair', LARGURA / 2, 568, 12, '#777', false);
   if (cidade.anim) { // animação da reavaliação
     const a = cidade.anim, al = Math.min(1, a.t * 2) * Math.min(1, (3 - a.t) * 2);
     ctx.globalAlpha = al * 0.85; ctx.fillStyle = '#000'; ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
@@ -649,6 +699,22 @@ function desenharArvoreCidade(C, x, y, t) {
   }
 }
 
+// Banca do mercado (toldo às riscas com as cores da cidade)
+function desenharBanca(o, t) {
+  const C = mapa.tema || CIDADES[0], x = o.x, y = o.y;
+  sombra(x, y + 18, 30);
+  ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x - 28, y - 30, 4, 46); ctx.fillRect(x + 24, y - 30, 4, 46);
+  ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 30, y - 2, 60, 16);
+  ctx.fillStyle = '#a07040'; ctx.fillRect(x - 30, y - 4, 60, 4);
+  for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#f0e8d0' : C.luz; ctx.fillRect(x - 34 + k * 11.3, y - 40, 11.3, 14); }
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(x - 34, y - 28, 68, 2);
+  // mercadorias
+  ctx.fillStyle = C.fonte; ctx.fillRect(x - 20, y - 12, 8, 8);
+  ctx.fillStyle = '#ffcf3a'; ctx.fillRect(x - 6, y - 10, 6, 6);
+  ctx.fillStyle = C.flores[0]; ctx.fillRect(x + 8, y - 12, 7, 8);
+  ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 3); ctx.fillStyle = '#b48cff'; ctx.fillRect(x + 22, y - 22, 3, 3); ctx.globalAlpha = 1;
+}
+
 // Pedra de Teletransporte na praça
 function desenharPedraTeletransporte(o, t) {
   const x = o.x, y = o.y;
@@ -719,6 +785,11 @@ function desenharInfoCidade(o, sx, sy) {
   if (o.tipo === 'escadaMasmorra') {
     textoCentro(`Escada para a masmorra (andar ${andar + 1})`, sx, sy - 18, 15, '#ffae00');
     textoCentro(`${usar}: Descer à masmorra`, sx, sy, 15, '#ffe680');
+    return true;
+  }
+  if (o.tipo === 'banca') {
+    textoCentro(`Banca: ${traduzir(nomeCidade(andar))}`, sx, sy - 18, 15, '#ffcf3a');
+    textoCentro(`${usar}: Ver (paga-se com almas)`, sx, sy, 15, '#ffe680');
     return true;
   }
   if (o.tipo === 'teleporte') {
