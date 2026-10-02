@@ -336,7 +336,7 @@ function aplicarRaca(g, raca) {
     pixel(g, 6, 5, '#ff2040'); pixel(g, 9, 5, '#ff2040');
     for (let y = 8; y <= 13; y++) { pixel(g, 0, y, '#6a0f1f'); pixel(g, 15, y, '#6a0f1f'); }
     pixel(g, 3, 7, '#8a1a2a'); pixel(g, 12, 7, '#8a1a2a');
-  }
+  } else if (typeof aplicarRacaNova === 'function') aplicarRacaNova(g, raca); // raças novas (almas.js)
 }
 
 function gerarHeroi(raca, skinId) {

@@ -502,6 +502,7 @@ function proximoAndar() {
   if (andar >= 10) conquistaEquipa('coopAndar10');
   if (andar >= 30) conquistaEquipa('coopAndar30');
   conquistasAoDescer();
+  verificarTitulosNovos();
   registar('andar', andar);
   if (boss) viuMonstro(boss.tipo);
   guardarJogo();
@@ -1014,6 +1015,7 @@ function morrer(desistiu = false) {
   if (J.modo === 'diario') fimDiario();
   recordeTorre();
   salvarMeta();
+  verificarTitulosNovos();
   estado = 'morto';
   confirmarDesistir = false;
   tutorial = null;
@@ -2317,7 +2319,10 @@ function atualizarPausa() {
 // ---------------------------------------------------------------------
 const ABAS_CRIACAO = ['classe', 'raca'];
 const retAbaCriacao = i => ({ x: 30 + i * 150, y: 50, w: 142, h: 26 });
-function retRaca(i) { return { x: 30 + (i % 2) * 228, y: 80 + Math.floor(i / 2) * 118, w: 220, h: 110 }; }
+function retRaca(i) { // com mais raças os cartões ficam mais baixos
+  const linhas = Math.ceil(ORDEM_RACAS.length / 2), h = Math.min(110, Math.floor((462 - (linhas - 1) * 8) / linhas));
+  return { x: 30 + (i % 2) * 228, y: 80 + Math.floor(i / 2) * (h + 8), w: 220, h };
+}
 // Cartões dos caçadores: com mais de 8 ficam mais baixos para caberem todos
 function retClasse(i) {
   const linhas = Math.ceil(ORDEM_CLASSES.length / 2), h = Math.min(110, Math.floor((462 - (linhas - 1) * 8) / linhas));
@@ -2382,6 +2387,7 @@ function atualizarCriacao(dt) {
   if (ir !== ORDEM_RACAS.indexOf(escolhaRaca) || is !== ORDEM_SKINS.indexOf(escolhaSkin)) som(700, 0.05, 'square', 0.02);
   escolhaRaca = ORDEM_RACAS[ir];
   escolhaSkin = ORDEM_SKINS[is];
+  if (comecar && !racaLivre(escolhaRaca)) { comecar = false; criacao.msg = { txt: `Raça bloqueada: compra-a no Altar das Almas (${RACAS[escolhaRaca].almas} almas)`, cor: '#ff8080', t: 3 }; }
   if (comecar) { guardarEscolha(); rato.baixo = false; novoJogo(); }
   else if (premiu('escape') || clicou(BOTAO_VOLTAR)) estado = 'titulo';
 }

@@ -227,13 +227,14 @@ function criarSpritesConteudo() {
 
 // 3 companheiros diferentes para a Sala do Companheiro
 function escolherPets(n) {
-  const l = ORDEM_PETS.slice();
+  const l = ORDEM_PETS.filter(id => typeof petLivre !== 'function' || petLivre(id)); // os comprados com almas também
   for (let i = l.length - 1; i > 0; i--) { const j = randInt(0, i); [l[i], l[j]] = [l[j], l[i]]; }
   return l.slice(0, n);
 }
 
 // Comportamento dos companheiros novos. Devolve true se tratou do companheiro.
 function atualizarPetNovo(tipo, alvo, dano, dt) {
+  if (typeof atualizarPetExtra === 'function' && atualizarPetExtra(tipo, alvo, dano, dt)) return true; // corvo e golem (almas.js)
   if (!['gato', 'coruja', 'rochinha', 'fenix'].includes(tipo)) return false;
   const segueChao = (tx, ty, vel, perto) => {
     const dx = tx - pet.x, dy = ty - pet.y, d = Math.hypot(dx, dy) || 1;

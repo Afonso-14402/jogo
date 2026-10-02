@@ -354,6 +354,7 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, MARGEM_X, 0);
   desenharTransicaoAndar();
   desenharTextosMundo();
+  desenharTituloHeroi();
   desenharEtiquetasCoop(t);
   desenharSetasInimigos(t);
   if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
@@ -1676,11 +1677,15 @@ function desenharCriacao(t) {
   if (criacao.aba === 'raca') ORDEM_RACAS.forEach((id, i) => {
     const r = retRaca(i), R = RACAS[id], sel = escolhaRaca === id;
     painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? R.cor : dentro(r) ? '#ffffff' : '#3a3150');
-    sprEcra(framesHeroi(id, escolhaSkin)[0], r.x + 36, r.y + r.h / 2, 3);
-    textoEsq(R.nome, r.x + 70, r.y + 22, 16, R.cor);
-    textoEsq(R.bonus[0], r.x + 70, r.y + 48, 11, '#7dff9a', 'normal');
-    if (R.bonus[1]) textoEsq(R.bonus[1], r.x + 70, r.y + 66, 11, '#7dff9a', 'normal');
-    if (R.contra.length) textoEsq(R.contra[0], r.x + 70, r.y + 88, 11, '#ff8080', 'normal');
+    const livre = racaLivre(id), k = r.h / 110; // os cartões encolhem quando há muitas raças
+    sprEcra(livre ? framesHeroi(id, escolhaSkin)[0] : silhueta(framesHeroi(id, escolhaSkin)[0], '#3a3150'), r.x + 36, r.y + r.h / 2, k < 0.8 ? 2 : 3);
+    textoEsqAjustado(R.nome, r.x + 70, r.y + 22 * k, 16, livre ? R.cor : '#777', r.w - 76);
+    if (!livre) textoEsq(`${R.almas} almas (Altar das Almas)`, r.x + 70, r.y + 48 * k, 11, '#b48cff', 'normal');
+    else {
+      textoEsqAjustado(R.bonus[0], r.x + 70, r.y + 48 * k, 11, '#7dff9a', r.w - 76, 'normal');
+      if (R.bonus[1] && k > 0.75) textoEsqAjustado(R.bonus[1], r.x + 70, r.y + 66 * k, 11, '#7dff9a', r.w - 76, 'normal');
+      if (R.contra.length) textoEsqAjustado(R.contra[0], r.x + 70, r.y + (k > 0.75 ? 88 : 66) * k, 11, '#ff8080', r.w - 76, 'normal');
+    }
   });
   // pré-visualização
   const R = RACAS[escolhaRaca];

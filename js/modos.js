@@ -35,7 +35,8 @@ function desafioDeHoje() {
   const dia = hojeTexto();
   return comSemente(hashTexto('diario' + dia), () => {
     const classe = ORDEM_CLASSES[1 + Math.floor(Math.random() * (ORDEM_CLASSES.length - 1))];
-    const raca = ORDEM_RACAS[Math.floor(Math.random() * ORDEM_RACAS.length)];
+    const racas = ORDEM_RACAS.filter(r => !RACAS[r].almas); // (as raças compradas com almas não entram)
+    const raca = racas[Math.floor(Math.random() * racas.length)];
     const lista = PACTOS.filter(p => p.calor === 1).slice();
     const pacto = {};
     for (let k = 0; k < 2; k++) pacto[lista.splice(Math.floor(Math.random() * lista.length), 1)[0].id] = 1;

@@ -107,6 +107,7 @@ function atualizarMenuMeta(dt) {
   if (menuMeta.t < 0.1) return;
   if (premiu('escape') || clicou(BOTAO_VOLTAR)) { estado = 'titulo'; menuMeta = null; return; }
   if (estado === 'almas') {
+    if (atualizarAbasAlmas()) return; // separadores Loja e Títulos (almas.js)
     MELHORIAS_ALMA.forEach((m, i) => {
       if (dentro(retAlma(i))) menuMeta.sel = i;
       if (!(premiu(String(i + 1)) || clicou(retAlma(i)))) return;

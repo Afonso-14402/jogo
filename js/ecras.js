@@ -209,7 +209,8 @@ function desenharMochila() {
 function desenharMenuMeta(t) {
   botao(BOTAO_VOLTAR, '< Voltar', '#aaa');
   if (estado === 'almas') {
-    textoCentro('ALTAR DAS ALMAS', LARGURA / 2, 34, 30, '#b48cff');
+    if (desenharLojaAlmas(t)) return; // separadores Loja e Títulos (almas.js)
+    textoCentro('ALTAR DAS ALMAS', LARGURA / 2 - 40, 34, 30, '#b48cff');
     textoCentro(`Tens ${meta.almas} almas  ·  Ganhas almas quando morres ou desistes (mais em dificuldades altas)`, LARGURA / 2, 72, 13, '#aaa', false);
     textoCentro('As melhorias são permanentes e valem para todas as partidas novas', LARGURA / 2, 92, 12, '#888', false);
     MELHORIAS_ALMA.forEach((m, i) => {
