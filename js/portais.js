@@ -32,9 +32,14 @@ const multPortal = gi => Math.max(0.6, Math.pow(1.4, gi - rankIndiceAndar(andar)
 const TEMPO_RUTURA = 180;
 
 // Em todos os andares abre pelo menos um portal (às vezes dois)
+// Os portais são uma questão de sorte: há andares sem nenhum, outros com um e,
+// raramente, com dois. A sorte do herói ajuda um pouco a encontrá-los.
+const CHANCE_PORTAL = 0.4, CHANCE_DOIS_PORTAIS = 0.15;
 function criarPortalNoAndar(salas) {
+  const sorte = Math.min(5, (S && S.sorte) || 0);
+  if (Math.random() >= CHANCE_PORTAL + sorte * 0.04) return;
   const livres = salas.filter(s => !s.tipo && s !== mapa.salaEscada && !s.oculto);
-  const n = Math.random() < 0.25 ? 2 : 1;
+  const n = Math.random() < CHANCE_DOIS_PORTAIS ? 2 : 1;
   for (let k = 0; k < n && livres.length; k++) {
     const s = livres.splice(randInt(0, livres.length - 1), 1)[0];
     const p = pontoLivreNaSala(mapa, s, 24, 1);
