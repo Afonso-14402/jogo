@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'sombrasCaidas', 'cidadesVisitadas', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'sombrasCaidas', 'cidadesVisitadas', 'missao', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
 
 function lerSave() {
   try {
@@ -493,6 +493,7 @@ function proximoAndar() {
   criarPetEntidade();
   sortearEvento();
   historiaDoAndar();
+  missaoNoAndar(); // missão da cidade: o monstro raro
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
   if (andar >= 70) desbloquear('fundo70');
@@ -876,6 +877,7 @@ function matarInimigo(e) {
   J.kills++;
   registar('matar');
   progressoPedidos('matar', e);
+  missaoMatou(e);
   if (e.elite) registar('elite');
   if (e.nv === 3) registar('campeao');
   if (e.boss) { registar('boss'); conquistaEquipa('coopBoss'); }

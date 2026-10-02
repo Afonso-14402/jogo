@@ -1176,6 +1176,7 @@ function desenharMinimapa() {
   }
   ponto(J.x, J.y, '#5da8ff', 6);
   if (boss) ponto(boss.x, boss.y, '#ff4040', 8);
+  for (const e of inimigos) if (e.alvoMissao && !e.morto) ponto(e.x, e.y, '#ffcf3a', 8); // o alvo da missão da cidade
 }
 
 function tabelaChances(tipoBau, x, y, largura) {

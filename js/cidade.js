@@ -149,6 +149,85 @@ const CIDADES = [
     arvore: 'ruina', folhas: ['#5a4a4a', '#6e5a5a'], tronco: '#3a2a2a', fonte: '#ff3b3b', gota: '#ff9b9b', luz: '#ff8a5a',
     conversas: ['Daqui já se vê o trono.', 'Somos os últimos caçadores que ainda acreditam em ti.'] },
 ];
+// Missão de cada cidade: caçar um monstro raro nos andares seguintes. O prémio é um
+// amuleto único dessa cidade (e almas)
+const PREMIOS_MISSAO = [
+  { nome: 'Medalha do Primeiro Portal', danoPct: 0.2, crit: 0.05 },
+  { nome: 'Coroa do Rei dos Ossos', roubo: 0.05, regen: 3 },
+  { nome: 'Coração de Magma', danoPct: 0.3, crit: 0.04 },
+  { nome: 'Lágrima Gelada', magia: 0.3, mana: 30, regen: 2 },
+  { nome: 'Olho do Sapo-Rei', regen: 4, velMov: 0.1, danoPct: 0.1 },
+  { nome: 'Escaravelho Dourado', crit: 0.12, velMov: 0.1 },
+  { nome: 'Prisma Cantante', magia: 0.4, crit: 0.08 },
+  { nome: 'Fragmento do Vazio', danoPct: 0.35, roubo: 0.04 },
+  { nome: 'Pena do Querubim', velMov: 0.2, regen: 5, danoPct: 0.15 },
+  { nome: 'Estandarte dos Últimos', danoPct: 0.4, regen: 5, crit: 0.1 },
+];
+const ANDARES_MISSAO = 4; // o monstro raro aparece num dos próximos 4 andares
+
+function novaMissaoCidade() {
+  const z = zonaDoAndar(andar + 1);
+  const lista = Object.keys(INIMIGOS).filter(k => INIMIGOS[k].peso && INIMIGOS[k].zonas.includes(z) && INIMIGOS[k].minAndar <= andar + 1 && SPR[k]);
+  if (!lista.length) return null;
+  const tipo = escolher(lista);
+  return { tipo, nome: `${INIMIGOS[tipo].nome} Ancestral`, cidade: andar, de: andar + 1, ate: andar + ANDARES_MISSAO, apareceu: false, feito: false };
+}
+function premioMissao(m) {
+  const P = PREMIOS_MISSAO[zonaDoAndar(m.cidade) % PREMIOS_MISSAO.length];
+  const it = criarItem(Object.assign({ tipo: 'amuleto', r: m.cidade < 30 ? 'lendario' : 'mitico', desc: 'Prémio único de uma missão da cidade.' }, P), m.cidade + 2, true);
+  it.unico = true;
+  return it;
+}
+// Chamado ao chegar a um andar: o monstro raro pode aparecer
+function missaoNoAndar() {
+  const m = J && J.missao;
+  if (!m || m.feito || m.apareceu || mapa.eBoss || naCidade() || mapa.portal || J.modo) return;
+  if (andar > m.ate) { J.missao = null; avisar('Missão falhada', `Fugiu para longe: ${m.nome}`, '#ff8080'); return; }
+  if (andar < m.de || (andar < m.ate && Math.random() < 0.5)) return;
+  const salas = mapa.salas.filter(s => s !== mapa.salaInicio);
+  if (!salas.length) return;
+  const p = pontoLivreNaSala(mapa, escolher(salas), 18);
+  const e = criarInimigo(m.tipo, p.x, p.y);
+  aplicarNivel(e, 3);
+  e.hp = e.maxHp = Math.round(e.maxHp * 6);
+  e.dano = Math.round(e.dano * 1.5);
+  e.xp *= 8;
+  e.r = Math.min(16, Math.round(e.r * 1.35));
+  e.nome = m.nome; e.alvoMissao = true;
+  inimigos.push(e);
+  m.apareceu = true;
+  avisar('Monstro raro neste andar!', `${m.nome} · vê o ponto dourado no minimapa`, '#ffcf3a');
+}
+// Chamado quando um monstro morre
+function missaoMatou(e) {
+  if (!e.alvoMissao || !J.missao || J.missao.feito) return;
+  J.missao.feito = true;
+  avisar('Missão cumprida!', 'Fala com a Capitã Vera na próxima cidade para o prémio', '#ffcf3a');
+  fanfarra([523, 659, 784, 1046], 0.05);
+  colunaDeLuz(e.x, e.y, '#ffcf3a', 1);
+}
+function falarMissao(o) {
+  const m = J.missao;
+  if (J.modo) { falarComo(o.nome, 'Neste modo não há missões. Volta numa partida normal!'); return; }
+  if (m && m.feito) {
+    const it = premioMissao(m), almas = Math.round(25 + m.cidade * 1.5);
+    J.missao = null;
+    meta.almas += almas; salvarMeta();
+    const txt = trocarEquipamento(it);
+    falarComo(o.nome, `Conseguiste! Prémio: ${it.nome} · +${almas} almas`);
+    if (txt) texto(J.x, J.y - 44, txt, '#cfc6e0', 13);
+    fanfarra([523, 659, 784, 1046, 1318], 0.05);
+    contar('missoesCidade');
+    return;
+  }
+  if (m) { falarComo(o.nome, `Ainda à espera do monstro raro: ${m.nome} · andares ${m.de}-${m.ate}`); return; }
+  const n = novaMissaoCidade();
+  if (!n) { falarComo(o.nome, 'Hoje não há nada para caçar.'); return; }
+  J.missao = n;
+  const P = PREMIOS_MISSAO[zonaDoAndar(andar) % PREMIOS_MISSAO.length];
+  falarComo(o.nome, `Missão da cidade: caça ${n.nome} · andares ${n.de}-${n.ate} · prémio: ${P.nome} + almas`);
+}
+
 // A cidade a que se chega depois do boss do andar a
 const temaCidade = (a = andar) => CIDADES[zonaDoAndar(a) % CIDADES.length];
 const nomeCidade = a => temaCidade(a).nome;
@@ -186,7 +265,7 @@ function gerarCidade() {
   m.luzes = m.candeeiros.map(c => ({ x: c.x, y: c.y - 30, cor: m.tema.luz }));
   // habitantes que passeiam pela praça
   m.aldeoes = HABITANTES.map((h, i) => ({ tipo: 'aldeao', nome: h.nome, papel: h.papel, raca: h.raca, skin: h.skin,
-    x: h.papel === 'anciao' ? 23 * TILE : (6 + i * 7) * TILE, y: h.papel === 'anciao' ? 15.6 * TILE : (11 + (i % 3) * 3) * TILE,
+    x: h.papel === 'anciao' ? 23 * TILE : h.papel === 'missao' ? 19.5 * TILE : (6 + i * 7) * TILE, y: h.papel === 'anciao' ? 15.6 * TILE : h.papel === 'missao' ? 10.5 * TILE : (11 + (i % 3) * 3) * TILE,
     r: 10, alvo: null, espera: rand(0, 2), dir: 1, andando: false, t: 0 }));
   return m;
 }
@@ -226,6 +305,7 @@ const HABITANTES = [
   { nome: 'Brás', papel: 'conversa', raca: 'orc', skin: 'sombra' },
   { nome: 'Inês', papel: 'conversa', raca: 'gnomo', skin: 'real' },
   { nome: 'Duarte', papel: 'conversa', raca: 'vampiro', skin: 'infinito' },
+  { nome: 'Capitã Vera', papel: 'missao', raca: 'elfo', skin: 'real' },
 ];
 const CONVERSAS = ['Bom dia, caçador! Hoje o céu está calmo.', 'Os preços do ferreiro estão pela hora da morte.', 'Vi um portal maldito ontem... fugi a correr.',
   'A fonte da praça tem água benta. Ou assim dizem.', 'Cuidado com os baús que mordem!', 'O meu avô dizia que a masmorra não tem fundo.',
@@ -274,6 +354,7 @@ const pedidoDe = nome => (J.pedidos || []).find(p => p.quem === nome);
 
 function falarAldeao(o) {
   if (o.papel === 'anciao') { falar('anciao', LORE_ANCIAO.find(([a]) => andar <= a)[1]); return; }
+  if (o.papel === 'missao') { falarMissao(o); return; }
   if (o.papel === 'conversa') { falarComo(o.nome, escolher(CONVERSAS.concat((mapa.tema || CIDADES[0]).conversas, (mapa.tema || CIDADES[0]).conversas))); return; }
   if (!J.pedidos) J.pedidos = [];
   const p = pedidoDe(o.nome);
@@ -345,7 +426,7 @@ function atualizarCidadeMundo(dt) {
   if (!naCidade()) return;
   for (const o of objetos) if (o.t != null) o.t += dt;
   for (const a of mapa.aldeoes) {
-    if (a.papel === 'anciao') { a.t += dt; continue; } // o Ancião fica junto à fonte
+    if (a.papel === 'anciao' || a.papel === 'missao') { a.t += dt; continue; } // o Ancião fica junto à fonte e a Capitã à porta da Guilda
     if (Math.hypot(a.x - J.x, a.y - J.y) < 50) { a.alvo = null; a.andando = false; a.dir = J.x > a.x ? 1 : -1; continue; } // pára para falar contigo
     a.t += dt;
     if (!a.alvo) {
@@ -739,8 +820,8 @@ function desenharNomesCidade() {
   if (!naCidade()) return;
   for (const a of mapa.aldeoes) {
     const p = a.papel === 'pedido' ? pedidoDe(a.nome) : null;
-    const marca = a.papel === 'anciao' ? '…' : a.papel === 'pedido' ? (p ? (p.prog >= p.n ? '?' : '') : '!') : '';
-    if (marca) textoCentro(marca, ecraX(a.x), ecraY(a.y) - 40 * ZOOM, 18, marca === '?' ? '#5dff7a' : '#ffe14d');
+    const marca = a.papel === 'anciao' ? '…' : a.papel === 'pedido' ? (p ? (p.prog >= p.n ? '?' : '') : '!') : a.papel === 'missao' && !J.modo ? (J.missao ? (J.missao.feito ? '?' : '') : '★') : '';
+    if (marca) textoCentro(marca, ecraX(a.x), ecraY(a.y) - 40 * ZOOM, 18, marca === '?' ? '#5dff7a' : marca === '★' ? '#ffcf3a' : '#ffe14d');
   }
   for (const E of EDIFICIOS) textoCentro(E.nome, ecraX((E.tx + ED_W / 2) * TILE), ecraY(ED_Y * TILE + 118), 11 * Math.min(1.2, ZOOM), E.cor, false);
 }
@@ -800,7 +881,7 @@ function desenharInfoCidade(o, sx, sy) {
   if (o.tipo === 'aldeao') {
     const p = o.papel === 'pedido' ? pedidoDe(o.nome) : null;
     textoCentro(o.nome, sx, sy + 12, 13, '#ffe680');
-    textoCentro(`${usar}: ${p && p.prog >= p.n ? 'Receber recompensa' : 'Falar'}`, sx, sy + 30, 14, '#ffe680');
+    textoCentro(`${usar}: ${(p && p.prog >= p.n) || (o.papel === 'missao' && J.missao && J.missao.feito) ? 'Receber recompensa' : o.papel === 'missao' && !J.missao ? 'Missão da cidade' : 'Falar'}`, sx, sy + 30, 14, '#ffe680');
     return true;
   }
   if (o.tipo === 'edificio') {
