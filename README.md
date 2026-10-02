@@ -226,6 +226,8 @@ A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJ
   - **Ferreiro**: afia a arma e reforça a armadura (+1, sem falhar, até +5), pago com ouro.
   - **Alquimista**: poções e elixires de vida (+8%) e de mana (+20), até 3 de cada por partida.
   - A **escada da praça** desce para o andar seguinte. Se guardares na cidade, continuas nesse andar.
+  - **Cada zona tem a sua cidade**, com nome, cores, fonte, árvores (ou rochas, cristais, colunas...) e conversas próprias: Vila da Pedra, Vila dos Coveiros, Forja das Brasas, Porto Gelado, Aldeia das Palafitas, Oásis das Areias, Cidade de Cristal, Bastião do Vazio, Cidadela das Nuvens e Último Acampamento.
+  - **Pedra de Teletransporte** (na praça): viaja para qualquer cidade onde já estiveste nesta partida. Ao desceres, continuas a partir dessa cidade, por isso podes voltar a andares mais fáceis para treinar ou fazer pedidos. No Desafio Diário a pedra não funciona; a jogar a 2, só quem criou a sala a pode usar (o parceiro vai junto).
 - **História e chefe final**: o [Destino] e o vilão, o **Soberano do Vazio**, falam contigo ao longo da descida numa caixa de diálogo, sem parar o jogo. As últimas zonas são a **Cidadela Celeste** (andares 41-50) e o **Trono do Soberano** (51-60), com monstros próprios (Anjo Guerreiro, Arqueiro Celeste, Querubim, Cavaleiro do Vazio, Mago do Vazio e Devorador) e 4 bosses novos, cada um com desenho, animação e ataques próprios:
   - **Arcanjo Caído** (45): leque de penas, pilares de luz e investidas pelo ar.
   - **General do Soberano** (50): ondas de espada, saltos esmagadores e cortes giratórios.

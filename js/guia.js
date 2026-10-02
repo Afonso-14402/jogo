@@ -103,6 +103,7 @@ const DICAS = {
   estatua:      ['Estátuas do Anjo e do Diabo: presentes com um preço.', 'Do Anjo só podes levar um. O Diabo pede vida máxima.'],
   pedestal:     ['Pedestais: escolhe só um prémio.', 'Quando levas um, os outros desaparecem.'],
   escadaCidade: ['Escadas para cima: a Cidade dos Caçadores.', 'Lá há lojas, a Guilda e pedidos com prémios.'],
+  teleporte:    ['Pedra de Teletransporte: viaja entre as cidades.', 'Podes voltar a uma cidade antiga e descer de novo a partir dela.'],
   boss:         ['BOSS! Tem muita vida e ataques fortes.', 'Usa a esquiva (»») para passar pelos ataques: ficas invencível.'],
   elite:        ['Monstro de elite: mais forte do que os outros.', 'Dá mais XP e mais ouro quando o derrotas.'],
   vidaBaixa:    ['Vida baixa! Bebe uma poção.', 'No telemóvel é o botão da poção; no PC é a tecla Q.'],

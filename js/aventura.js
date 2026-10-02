@@ -153,7 +153,7 @@ function desenharMapaGrande() {
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   const esc = Math.floor(Math.min(880 / mapa.W, 540 / mapa.H)), w = mapa.W * esc, h = mapa.H * esc;
   const x0 = Math.round(LARGURA / 2 - w / 2), y0 = Math.round(66 + (540 - h) / 2);
-  textoCentro(naCidade() ? 'CIDADE DOS CAÇADORES' : `ANDAR ${andar} · ${NOMES_ZONAS[zonaAtual()]}`, LARGURA / 2, 34, 24, '#ffe14d');
+  textoCentro(naCidade() ? traduzir(mapa.tema.nome) : `ANDAR ${andar} · ${NOMES_ZONAS[zonaAtual()]}`, LARGURA / 2, 34, 24, '#ffe14d');
   for (let y = 0; y < mapa.H; y++) for (let x = 0; x < mapa.W; x++) {
     const i = y * mapa.W + x;
     if (!mapa.explorado[i]) continue;

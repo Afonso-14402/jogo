@@ -31,7 +31,7 @@ try { recorde = parseInt(localStorage.getItem('masmorra_recorde') || '0', 10) ||
 // ---------------------------------------------------------------------
 const CHAVE_SAVE = 'masmorra_save';
 const CAMPOS_SAVE = ['hpBase', 'hp', 'nivel', 'xp', 'atkBase', 'defBase', 'velBase', 'arma', 'armadura', 'amuleto',
-  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'sombrasCaidas', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
+  'pocoes', 'kills', 'bausAbertos', 'melhorItem', 'perks', 'escolhasPendentes', 'ouro', 'raca', 'skin', 'mana', 'feiticos', 'dificuldade', 'mochila', 'pet', 'vidasExtra', 'bossesMortos', 'reliquias', 'pacto', 'vidaVendida', 'atributos', 'pontos', 'sombras', 'sombrasCaidas', 'cidadesVisitadas', 'classe', 'evoluido', 'provacao', 'modo', 'generais', 'cidadeRun', 'pedidos', 'historiaVista'];
 
 function lerSave() {
   try {
@@ -1218,6 +1218,7 @@ function usarObjeto(o) {
   if (o.tipo === 'escadaCidade') { entrarCidade(); return; }
   if (o.tipo === 'escadaMasmorra') { sairCidade(); return; }
   if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
+  if (o.tipo === 'teleporte') { abrirTeletransporte(); return; }
   if (o.tipo === 'aldeao') { falarAldeao(o); return; }
   if (o.tipo === 'estatua') return;
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
