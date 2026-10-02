@@ -211,7 +211,7 @@ function desenharTituloHeroi() {
 const ABAS_ALMAS = ['melhorias', 'loja', 'titulos'];
 const NOMES_ABAS_ALMAS = { melhorias: 'Melhorias', loja: 'Loja', titulos: 'Títulos' };
 const retAbaAlmas = i => ({ x: 640 + i * 102, y: 14, w: 96, h: 36 });
-const retLoja = i => ({ x: 40 + (i % 3) * 300, y: 118 + Math.floor(i / 3) * 122, w: 280, h: 112 });
+const retLoja = i => ({ x: 26 + (i % 4) * 228, y: 108 + Math.floor(i / 4) * 112, w: 220, h: 104 });
 const retTitulo = i => ({ x: 40 + (i % 2) * 450, y: 112 + Math.floor(i / 2) * 58, w: 430, h: 50 });
 
 // Devolve true se tratou do menu (o separador não é o das melhorias)
@@ -262,12 +262,13 @@ function desenharLojaAlmas(t) {
     lojaAlmasVisivel().forEach((o, i) => {
       const r = retLoja(i), I = infoLoja(o), tem = comprado(o.id), sel = menuMeta.sel === i;
       painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? I.cor : tem ? '#3a5a3a' : '#3a3150');
-      const c = o.tipo === 'raca' ? framesHeroi(o.ref, escolhaSkin)[Math.floor(t * 3) % 2] : o.tipo === 'pet' ? SPR.pet[o.ref][0] : o.icone && o.icone();
+      const c = o.tipo === 'raca' ? framesHeroi(o.ref, escolhaSkin)[Math.floor(t * 3) % 2] : o.tipo === 'pet' ? SPR.pet[o.ref][0] : null;
       if (c) sprEcra(c, r.x + 38, r.y + r.h / 2, 3);
-      textoEsqAjustado(`${i + 1}. ${traduzir(I.nome)}`, r.x + 74, r.y + 24, 15, I.cor, r.w - 84);
-      textoEsqAjustado(I.desc, r.x + 74, r.y + 50, 11, '#ddd', r.w - 84, 'normal');
-      if (tem) textoEsq('COMPRADO', r.x + 74, r.y + r.h - 22, 13, '#5dff7a');
-      else textoEsq(`${I.preco} almas`, r.x + 74, r.y + r.h - 22, 14, (meta.almas || 0) >= I.preco ? '#b48cff' : '#ff6060');
+      else if (o.movel) desenharMovel(o.movel, r.x + 38, r.y + r.h / 2 + 4, 1.4);
+      textoEsqAjustado(`${i < 9 ? i + 1 + '. ' : ''}${traduzir(I.nome)}`, r.x + 70, r.y + 22, 14, I.cor, r.w - 78);
+      textoEsqAjustado(I.desc, r.x + 70, r.y + 48, 11, '#ddd', r.w - 78, 'normal');
+      if (tem) textoEsq('COMPRADO', r.x + 70, r.y + r.h - 20, 13, '#5dff7a');
+      else textoEsq(`${I.preco} almas`, r.x + 70, r.y + r.h - 20, 14, (meta.almas || 0) >= I.preco ? '#b48cff' : '#ff6060');
     });
   } else {
     const T0 = tituloAtual();

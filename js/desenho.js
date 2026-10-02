@@ -357,7 +357,7 @@ function desenhar(t) {
   desenharTituloHeroi();
   desenharEtiquetasCoop(t);
   desenharSetasInimigos(t);
-  if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
+  if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim', 'minijogo'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
   desenharDica();
   desenharFalas();
@@ -371,6 +371,7 @@ function desenhar(t) {
   else if (estado === 'pausa') desenharPausa();
   else if (estado === 'opcoes') desenharOpcoes(t);
   else if (estado === 'cidade') desenharPainelCidade(t);
+  else if (estado === 'minijogo') desenharMinijogo(t);
   else if (estado === 'mapa') desenharMapaGrande();
   else if (estado === 'fim') desenharFim(t);
   else if (estado === 'morto') desenharMorte();
@@ -625,6 +626,7 @@ function desenharObjeto(o, t) {
   if (o.tipo === 'edificio') return; // a porta já está desenhada no edifício
   if (o.tipo === 'teleporte') { desenharPedraTeletransporte(o, t); return; }
   if (o.tipo === 'banca') { desenharBanca(o, t); return; }
+  if (desenharObjetoCidadeExtra(o, t)) return;
   if (desenharPecaEnigma(o, t)) return;
   if (desenharObjetoExtra(o, t)) return;
   if (o.tipo === 'mercador') {
@@ -1171,7 +1173,7 @@ function desenharMinimapa() {
   const ponto = (px, py, cor, tam) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x0 + px / TILE * esc - tam / 2), Math.round(y0 + py / TILE * esc - tam / 2), tam, tam); };
   if (vis(mapa.escada.x, mapa.escada.y)) ponto(mapa.escada.x, mapa.escada.y, mapa.escada.ativa ? '#ffe680' : '#ff5050', 6);
   for (const b of baus) if (vis(b.x, b.y)) ponto(b.x, b.y, b.tipo === 'ouro' ? '#ffd23f' : '#c98a4a', 4);
-  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', escadaCidade: '#4dc3ff', escadaMasmorra: '#ffae00', edificio: '#ffe14d', teleporte: '#b48cff', banca: '#ffcf3a', jaulaEnigma: '#4dc3ff', placa: '#4dc3ff', alavanca: '#4dc3ff', estatuaRodar: '#4dc3ff', pedestal: '#fff0a0', estatua: '#ff8080' };
+  const corObj = { portal: '#ff4dff', saidaPortal: '#4dc3ff', mercador: '#3ddc84', altar: '#ff3b3b', cristal: '#b44dff', mesa: '#9b5cff', gaiola: '#ff9ff3', portaDupla: '#e8e2cf', escadaCidade: '#4dc3ff', escadaMasmorra: '#ffae00', edificio: '#ffe14d', teleporte: '#b48cff', banca: '#ffcf3a', arena: '#ff8080', saidaArena: '#4dc3ff', pesca: '#9fdcff', sapos: '#5dff7a', jaulaEnigma: '#4dc3ff', placa: '#4dc3ff', alavanca: '#4dc3ff', estatuaRodar: '#4dc3ff', pedestal: '#fff0a0', estatua: '#ff8080' };
   for (const o of objetos) {
     if (o.tipo === 'portal') { // os portais sentem-se de longe: aparecem sempre e a piscar
       ponto(o.x, o.y, Math.floor(performance.now() / 300) % 2 ? (o.vermelho ? '#ff2a2a' : RANKS_PORTAL[o.gi].cor) : '#ffffff', 8);
@@ -1232,6 +1234,7 @@ function desenharInfoObjeto(o) {
   if (desenharInfoCidade(o, sx, sy)) return;
   if (desenharInfoExtra(o, sx, sy)) return;
   if (desenharInfoEnigma(o, sx, sy)) return;
+  if (desenharInfoCidadeExtra(o, sx, sy)) return;
   const E = modoToque ? 'Usar:' : '[E]';
   if (o.tipo === 'mercador') {
     textoCentro('Mercador', sx, sy - 18, 14, '#3ddc84');

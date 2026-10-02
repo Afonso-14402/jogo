@@ -127,10 +127,10 @@ const CIDADES = [
   { nome: 'Forja das Brasas', banca: { arma: 'fogo', armadura: 'vida', amuleto: 'crueldade', rel: 'brasa' }, calc: ['#5a4a44', '#4e3f3a', '#2e2420'], relva: ['#3a2a24', '#42302a', '#ff7b25'], flores: ['#ff9b45', '#ffd23f', '#ff5a1a'], muralha: ['#3a2a26', '#4e3a34', '#1a100c'],
     arvore: 'rocha', folhas: ['#5a4a44', '#6e5c54'], tronco: '#2a1a14', fonte: '#ff6a1a', gota: '#ffd27a', luz: '#ff9b45',
     conversas: ['As melhores espadas são forjadas no calor da lava.', 'Não toques na fonte. A sério.'] },
-  { nome: 'Porto Gelado', banca: { arma: 'gelo', armadura: 'muralha', amuleto: 'arcano', rel: 'floco' }, calc: ['#9aa8b8', '#8a98aa', '#6a788a'], relva: ['#dfeaf5', '#cfdcea', '#ffffff'], flores: ['#bfe6ff', '#ffffff', '#9fd0ff'], muralha: ['#5a6a80', '#7486a0', '#34405a'],
+  { nome: 'Porto Gelado', minijogo: 'pesca', banca: { arma: 'gelo', armadura: 'muralha', amuleto: 'arcano', rel: 'floco' }, calc: ['#9aa8b8', '#8a98aa', '#6a788a'], relva: ['#dfeaf5', '#cfdcea', '#ffffff'], flores: ['#bfe6ff', '#ffffff', '#9fd0ff'], muralha: ['#5a6a80', '#7486a0', '#34405a'],
     arvore: 'pinheiro', folhas: ['#2a5a4a', '#e8f4ff'], tronco: '#4a3a2a', fonte: '#9fdcff', gota: '#ffffff', luz: '#cfe8ff',
     conversas: ['Os barcos estão presos no gelo há três invernos.', 'Bebe qualquer coisa quente antes de desceres.'] },
-  { nome: 'Aldeia das Palafitas', banca: { arma: 'vampiro', armadura: 'regen', amuleto: 'sorte', rel: 'antidoto' }, calc: ['#6a5a3a', '#5e4e32', '#3e3220'], relva: ['#2e4a2a', '#344f2c', '#7dff5a'], flores: ['#7dff5a', '#d0ff7a', '#5dff9a'], muralha: ['#3a4430', '#4a5640', '#1e2618'],
+  { nome: 'Aldeia das Palafitas', minijogo: 'sapos', banca: { arma: 'vampiro', armadura: 'regen', amuleto: 'sorte', rel: 'antidoto' }, calc: ['#6a5a3a', '#5e4e32', '#3e3220'], relva: ['#2e4a2a', '#344f2c', '#7dff5a'], flores: ['#7dff5a', '#d0ff7a', '#5dff9a'], muralha: ['#3a4430', '#4a5640', '#1e2618'],
     arvore: 'salgueiro', folhas: ['#2a4a24', '#3a6a30'], tronco: '#3a2a1a', fonte: '#6ab04a', gota: '#bfffa0', luz: '#d0ff7a',
     conversas: ['As casas estão em cima de estacas por causa dos sapos gigantes.', 'Se te picar um escorpião, vai ao alquimista.'] },
   { nome: 'Oásis das Areias', banca: { arma: 'rapidez', armadura: 'vento', amuleto: 'sabio', rel: 'bolsa' }, calc: ['#c8a870', '#b89860', '#8a6e40'], relva: ['#e0c890', '#d8bc80', '#f0dca0'], flores: ['#ff9b45', '#ffe14d', '#5dff7a'], muralha: ['#a08050', '#b89868', '#6a5030'],
@@ -400,7 +400,7 @@ function entrarCidade() {
   mapa = gerarCidade();
   mapaImg = renderizarCidade(mapa);
   inimigos = []; projeteis = []; baus = []; drops = []; perigos = []; armadilhas = []; ondas = []; raios = [];
-  objetos = objetosCidade().concat(mapa.aldeoes);
+  objetos = objetosCidade().concat(objetosCidadeExtra(mapa), mapa.aldeoes);
   reiniciarBioma(); reiniciarCampo();
   boss = null;
   J.x = mapa.inicio.x; J.y = mapa.inicio.y; J.invuln = 1;
@@ -510,6 +510,7 @@ function linhasCidade() {
   const id = EDIFICIOS[cidade.ed].id;
   if (id === 'casa') return [
     { tipo: 'descansar', txt: J.visitaCidade && J.visitaCidade.descansou ? 'Já descansaste nesta visita' : 'Descansar (vida e mana cheias)' },
+    { tipo: 'verCasa', txt: 'Ver a tua casa por dentro (móveis e troféus)' },
     { tipo: 'guardar', txt: 'Guardar o jogo e sair para o menu' },
   ].filter(l => !(J.remoto && l.tipo === 'guardar')); // o parceiro não guarda o teu jogo
   if (id === 'assoc') {
@@ -546,6 +547,7 @@ function atualizarCidade(dt) {
   if (C.msg) { C.msg.t -= dt; if (C.msg.t <= 0) C.msg = null; }
   if (C.anim) { C.anim.t += dt; if (C.anim.t > 3) C.anim = null; }
   if (C.t < 0.15) return;
+  if (C.verCasa) { if (premiu('escape', 'e', 'enter', ' ', 'rato')) { C.verCasa = false; rato.baixo = false; } return; } // a ver o interior da casa
   if (premiu('escape') || clicou(BOTAO_FECHAR)) { estado = 'jogo'; cidade = null; rato.baixo = false; return; }
   const L = linhasCidade();
   if (!L.length) return;
@@ -576,6 +578,7 @@ function atualizarCidade(dt) {
     viajarParaCidade(acao.a);
     return;
   }
+  if (acao.tipo === 'verCasa') { C.verCasa = true; C.t = 0; return; }
   if (acao.tipo === 'descansar') {
     if (J.visitaCidade.descansou) return msg('Já descansaste nesta visita', '#aaa');
     J.visitaCidade.descansou = true;
@@ -635,6 +638,7 @@ function desenharPainelCidade(t) {
     banca: `Coisas especiais desta cidade, pagas com ALMAS. Tens ${meta.almas || 0} almas.`,
   }[E.id];
   textoCentroAjustado(info, LARGURA / 2, 206, 13, '#ccc', 700, false);
+  if (cidade.verCasa) { desenharInteriorCasa(t); textoCentro(modoToque ? 'Toca para voltar' : 'E / Esc: voltar', LARGURA / 2, 568, 12, '#777', false); return; }
   linhasCidade().forEach((l, i) => {
     const r = retLinhaCidade(i), s = cidade.sel === i;
     const direita = l.preco != null || l.premio;

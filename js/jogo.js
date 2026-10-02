@@ -44,7 +44,8 @@ let saveInfo = lerSave();
 
 function guardarJogo() {
   if (!J || J.hp <= 0 || J.remoto) return; // o herói do parceiro não é guardado
-  const dados = { v: 1, andar: naCidade() ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade, continuas no andar seguinte
+  const naArena = guardaAndar && guardaAndar.arena;
+  const dados = { v: 1, andar: naCidade() || naArena ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade (e na arena), continuas no andar seguinte
   for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
   const chao = fotoAndar();
   if (chao) dados.chao = chao;
@@ -296,7 +297,7 @@ function stats() {
     danoPct: am.danoPct || 0,
     cdAtaque: 0.42 / (a.vel * (1 + 0.15 * nPerk('furia')) * (1 + (R.velAtaque || 0) + C.velAtaque + K.velAtaque + Q.velAtaque)),
     alcance: Math.round(a.alcance * (1 + (K.alcance || 0))),
-    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp') + X.xp + K.xp) * dif().xp,
+    xpMult: (1 + somaAfixos('xp') + 0.2 * nPerk('iman') + (R.xp || 0) + 0.1 * nMeta('xp') + X.xp + K.xp + bonusMoveis()) * dif().xp,
     sorte: somaAfixos('sorte') + nPerk('sorte') + (R.sorte || 0) + nMeta('sorte') + X.sorte,
     espinhos: somaAfixos('espinhos') + X.espinhos,
     cdDash: 0.9 * (1 - 0.25 * nPerk('esquiva')) * X.dash,
@@ -995,6 +996,7 @@ function danoJogador(d, fx, fy, fonte = null) {
     J.kbx = dx / l * 260; J.kby = dy / l * 260;
   }
   if (J.hp <= 0) {
+    if (perdeuNaArena()) return; // na arena da cidade não se morre
     if (J.vidasExtra > 0) {
       J.vidasExtra--;
       J.hp = Math.round(S.maxHp * 0.3);
@@ -1127,6 +1129,7 @@ function atualizar(dt) {
   for (const b of baus) b.t += dt;
   atualizarArmadilhas(dt);
   atualizarEnigmas(dt);
+  atualizarArena(dt);
   atualizarBioma(dt);
   atualizarPet(dt);
   if (J.ouro >= 1000) desbloquear('rico');
@@ -1226,6 +1229,7 @@ function usarObjeto(o) {
   if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
   if (o.tipo === 'teleporte') { abrirTeletransporte(); return; }
   if (o.tipo === 'banca') { abrirBanca(); return; }
+  if (usarObjetoCidadeExtra(o)) return;
   if (o.tipo === 'alavanca' || o.tipo === 'estatuaRodar') { usarPecaEnigma(o); return; }
   if (o.tipo === 'placa' || o.tipo === 'jaulaEnigma') return;
   if (o.tipo === 'aldeao') { falarAldeao(o); return; }
@@ -2531,6 +2535,8 @@ function loop(agora) {
     atualizarRegisto(dt);
   } else if (estado === 'cidade') {
     atualizarCidade(dt);
+  } else if (estado === 'minijogo') {
+    atualizarMinijogo(dt);
   } else if (estado === 'mapa') {
     atualizarMapaGrande();
   } else if (estado === 'fim') {
