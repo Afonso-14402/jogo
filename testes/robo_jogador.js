@@ -41,12 +41,14 @@ const JOGOS = Number(process.env.JOGOS || 1);
       let campoAlvo = null, chaveAlvo = '', campoT = 0;
       function fazerCampo(gx, gy) {
         const W = mapa.W, H = mapa.H, d = new Int32Array(W * H).fill(-1), fila = [gy * W + gx];
+        const buraco = new Uint8Array(W * H); // como uma pessoa, o robô não pisa buracos nem chão a desfazer-se
+        for (const a of armadilhas) if (a.tipo === 'chao' && a.estado > 0) buraco[a.ty * W + a.tx] = 1;
         d[gy * W + gx] = 0;
         for (let i = 0; i < fila.length; i++) {
           const k = fila[i], x = k % W, y = (k - x) / W;
           for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
             const nx = x + ox, ny = y + oy;
-            if (nx < 0 || ny < 0 || nx >= W || ny >= H || solido(mapa, nx, ny)) continue;
+            if (nx < 0 || ny < 0 || nx >= W || ny >= H || solido(mapa, nx, ny) || buraco[ny * W + nx]) continue;
             const nk = ny * W + nx;
             if (d[nk] < 0) { d[nk] = d[k] + 1; fila.push(nk); }
           }
@@ -55,7 +57,7 @@ const JOGOS = Number(process.env.JOGOS || 1);
       }
       function dirPara(x, y) {
         const tx = Math.floor(x / TILE), ty = Math.floor(y / TILE), chave = `${tx},${ty}`;
-        if (chave !== chaveAlvo || t - campoT > 1) { campoAlvo = fazerCampo(tx, ty); chaveAlvo = chave; campoT = t; }
+        if (chave !== chaveAlvo || t - campoT > 0.5) { campoAlvo = fazerCampo(tx, ty); chaveAlvo = chave; campoT = t; }
         if (linhaDeVista(mapa, J.x, J.y, x, y, J.r)) { const dx = x - J.x, dy = y - J.y, l = Math.hypot(dx, dy) || 1; return [dx / l, dy / l]; }
         const W = mapa.W, cx = Math.floor(J.x / TILE), cy = Math.floor(J.y / TILE);
         let melhor = null, mv = campoAlvo[cy * W + cx];

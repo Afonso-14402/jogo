@@ -357,6 +357,7 @@ function desenhar(t) {
   desenharTituloHeroi();
   desenharEtiquetasCoop(t);
   desenharSetasInimigos(t);
+  desenharPlacarVersus();
   if (!['pausa', 'opcoes', 'cidade', 'mapa', 'fim', 'minijogo'].includes(estado) && !(estado === 'convidado' && ['cidade', 'mapa'].includes(coop.menu))) desenharHUD(t);
   desenharTutorial(t);
   desenharDica();
@@ -405,7 +406,7 @@ function desenharMundo(t) {
   if (pet && estado !== 'morto') lista.push({ y: pet.y, f: () => desenharPet(t) });
   for (const s of sombras) lista.push({ y: s.y, f: () => desenharSombra(s, t) });
   for (const s of sombrasParceiro()) lista.push({ y: s.y, f: () => desenharSombra(s, t) }); // a jogar a 2
-  for (const e of inimigos) if (!e.morto) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
+  for (const e of inimigos) if (!e.morto && !e.ehRival) lista.push({ y: e.y, f: () => desenharInimigo(e, t) });
   if (estado !== 'morto') lista.push({ y: J.y, f: () => desenharJogador(t) });
   if (estado !== 'morto' && parceiroAtivo()) lista.push({ y: coop.p2.y, f: () => desenharParceiro(t) });
   lista.sort((a, b) => a.y - b.y);
@@ -1149,7 +1150,7 @@ function desenharMinimapa() {
   const w = mapa.W * esc, h = mapa.H * esc;
   const x0 = LARGURA + MARGEM_X - w - 16, y0 = 40; // no canto direito do ecrã
   painel(x0 - 6, 10, w + 12, h + 40);
-  textoCentro(naCidade() ? 'CIDADE' : J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
+  textoCentro(naCidade() ? 'CIDADE' : emDuelo() ? 'DUELO' : J.modo === 'torre' ? `TORRE ${andar}/100` : `ANDAR ${andar}`, x0 + w / 2, 25, 15, '#ffe14d');
   // o chão explorado muda devagar: desenha-se numa imagem que só se refaz 4 vezes por segundo
   const agoraMs = performance.now();
   if (!cacheMinimapa.c || cacheMinimapa.mapa !== mapa || agoraMs - cacheMinimapa.t > 250) {

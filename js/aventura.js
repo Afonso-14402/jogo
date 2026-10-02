@@ -181,7 +181,7 @@ function desenharMapaGrande() {
     if (vis(o.x, o.y)) ponto(o.x, o.y, '#9fdcff', 10);
   }
   if (objetos.some(o => o.tipo === 'portal')) legenda.push(['#ff4dff', 'Portais']);
-  for (const e of inimigos) if (!e.morto && vis(e.x, e.y) && Math.hypot(e.x - J.x, e.y - J.y) < 500) ponto(e.x, e.y, e.boss ? '#ff4040' : '#ff8080', e.boss ? 12 : 5);
+  for (const e of inimigos) if (!e.morto && !e.ehRival && vis(e.x, e.y) && Math.hypot(e.x - J.x, e.y - J.y) < 500) ponto(e.x, e.y, e.boss ? '#ff4040' : '#ff8080', e.boss ? 12 : 5);
   ponto(J.x, J.y, '#5da8ff', 12);
   legenda.push(['#5da8ff', 'Tu'], ['#ff8080', 'Monstros perto']);
   legenda.forEach(([c, n], i) => { ctx.fillStyle = c; ctx.fillRect(40 + i * 150, ALTURA - 30, 12, 12); textoEsq(n, 58 + i * 150, ALTURA - 24, 13, '#ccc', 'normal'); });

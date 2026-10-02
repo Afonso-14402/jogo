@@ -85,7 +85,27 @@ Como funciona:
 - Os dois podem ser **Caçador das Sombras**: cada um tem o seu exército.
 - O botão de pausa do convidado pergunta se quer sair da sala (o jogo continua para o outro).
 
+- **Duelo (1 contra 1)**: com o parceiro ligado, quem criou a sala pode escolher **Duelo**. Os dois heróis (nível 20, equipamento à altura) lutam numa arena sem monstros, à melhor de 3 rondas. Todos os ataques, magias e habilidades acertam no outro (com o dano reduzido, para os duelos não acabarem num segundo). No fim voltam os dois ao menu do Jogar a 2 e o jogo guardado não muda.
+
 A ligação é direta entre os dois telemóveis (WebRTC, com a biblioteca [PeerJS](https://peerjs.com), licença MIT, em `js/lib/`). Precisa de internet nos dois e só funciona no site do jogo (não dentro do Claude).
+
+## Novidades: almas, cidades, armadilhas e enigmas
+
+- **Letra nova** (Nunito): redonda e grossa, muito mais fácil de ler no telemóvel.
+- **Almas como moeda**: além das melhorias, o **Altar das Almas** tem uma **Loja** (raças, companheiros e móveis) e **Títulos**. Na cidade há também a **Banca**, paga com almas.
+  - **Raças novas**: Anjo (auréola e asas; cura e regeneração), Demónio (chifres e cauda; muito dano, pouca vida) e Homem-Lagarto (escamas; defesa, regeneração e imune a veneno).
+  - **Companheiros novos**: Corvo (voa até ao ouro mais longe e bica os monstros) e Golem Pequeno (dá-te um escudo de pedra de vez em quando).
+  - **Móveis** para a tua casa na cidade (cama, lareira, estante, aquário...): cada um dá +1% XP para sempre. Na Casa, "Ver a tua casa por dentro" mostra os móveis e os troféus dos bosses.
+  - **Títulos**: 16, ganhos com conquistas (Matador de Dragões, Sem Medo, Mestre dos Enigmas...). O escolhido aparece por baixo do herói.
+- **Cada cidade tem coisas próprias**:
+  - **Banca**: equipamento com o poder da cidade (fogo na Forja das Brasas, gelo no Porto Gelado...) e uma relíquia, pagos com almas.
+  - **Missão da Capitã Vera**: caçar um monstro raro (marcado a dourado no minimapa) num dos 4 andares seguintes. O prémio é um amuleto único de cada cidade e almas.
+  - **Arena**: 3 ondas de monstros que dão almas (uma vez por visita; quem perde volta à cidade sem morrer).
+  - **Minijogos**: pesca no Porto Gelado e corrida de sapos na Aldeia das Palafitas.
+- **Armadilhas novas**: chão que cai (andar 4+), paredes com lanças (andar 6+) e salas de gás venenoso (andar 8+).
+- **Andares especiais**: Andar do Tesouro (muitos baús, alguns mímicos), Andar Gelado (o chão escorrega) e o Andar Escuro.
+- **Duende Dourado**: às vezes aparece, não ataca e foge de ti. Se o apanhares antes de fugir, larga ouro, um Baú Dourado e almas.
+- **Sala do Enigma** (andar 3+): um Baú Dourado numa jaula. Abre-se pisando todas as placas a tempo, acendendo todas as alavancas (cada uma muda as do lado) ou rodando as estátuas até olharem para a jaula.
 
 ## O que há no jogo
 
@@ -343,6 +363,12 @@ js/portais.js       portais E a SSS dentro das masmorras (ondas, boss e prémios
 js/modos.js         Desafio Diário (semente do dia) e Torre dos 100 Andares
 js/cidade.js        Cidade dos Caçadores (mapa, casas, habitantes): casa, reavaliação de rank, contratos, ferreiro e alquimista
 js/templo.js        Santuário do Vigia: o templo da estátua e as suas regras
+js/armadilhas.js    armadilhas novas: chão que cai, paredes com lanças e salas de gás
+js/andares.js       Andar do Tesouro, Andar Gelado e o Duende Dourado
+js/enigmas.js       Sala do Enigma: placas, alavancas e estátuas
+js/almas.js         Loja e Títulos do Altar das Almas, raças e companheiros novos
+js/cidade_extra.js  casa decorável, arena da cidade, pesca e corrida de sapos
+js/versus.js        Duelo (1 contra 1) a jogar a 2
 js/historia.js      falas do [Destino] e do Soberano, bosses das zonas finais e o final do jogo
 js/bossesFinais.js  bosses e monstros das zonas finais, estátua do templo, luz e sombra dos sprites
 js/aventura.js      conjuntos, pets que evoluem, eventos, mapa grande, efeitos, Boss Rush e código de transferência
@@ -403,6 +429,7 @@ node testes/caca_bugs.js
 npm install playwright peer
 node testes/jogar_a_2.js           # inclui uma volta pelos 60 andares com o convidado ligado
 node testes/jogar_a_2.js rapido    # sem essa volta
+node testes/duelo_a_2.js           # duelo: golpes e tiros entre os dois, rondas e o fim
 ```
 
 ## App Android (Play Store)

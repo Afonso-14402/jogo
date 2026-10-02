@@ -66,7 +66,9 @@ function comHeroi(h, fn) {
   if (par) { h.ouro = J0.ouro; J0.sombrasMundo = sombras; sombras = h.sombrasMundo || (h.sombrasMundo = []); }
   J = h;
   S = h.remoto ? (h._S || stats()) : stats();
+  const n0 = projeteis.length;
   try { return fn(); } finally {
+    for (let i = n0; i < projeteis.length; i++) if (projeteis[i].dono === 'jogador' && !projeteis[i].heroi) projeteis[i].heroi = h; // de quem é (para o duelo)
     h._S = S;
     if (par) { J0.ouro = h.ouro; h.sombrasMundo = sombras; sombras = J0.sombrasMundo; }
     J = J0; S = S0;
@@ -882,7 +884,7 @@ function atualizarRedeCoop(dt) {
   const m = {
     t: 's', n: ++coop.seq, mv: E.mv, tj: arred(tempoJogo), andar, tr: Math.round(tremor), vw: Math.round(vw), vh: Math.round(vh), c: completa ? 1 : 0,
     eu: camposDiff(E, 'eu', heroiLeve(p2), completa || p2.tp !== E.tpEnv), tp: p2.tp, ou: camposDiff(E, 'ou', heroiLeve(P1), completa),
-    ini: L('ini', inimigos, e => !e.morto && (perto(e) || e === boss)), pr: L('pr', projeteis), ob: L('ob', objetos), ba: L('ba', baus), dr: L('dr', drops),
+    ini: L('ini', inimigos, e => !e.morto && !e.ehRival && (perto(e) || e === boss)), pr: L('pr', projeteis), ob: L('ob', objetos), ba: L('ba', baus), dr: L('dr', drops),
     pe: L('pe', perigos, perto, true), po: L('po', pocas, perto, true), ca: L('ca', cadaveres, perto, true), ar: L('ar', armadilhas, perto, true),
     s1: L('s1', sombras), s2: L('s2', p2.sombrasMundo || []), pet: pet ? L('pet', [pet], () => true) : [],
     on: novos(ondas, perto).map(o => copiar(o)), ra: raios.length ? raios.map(r => copiar(r)) : undefined,
@@ -1303,6 +1305,7 @@ const BOTOES_COOP = {
   apagar: { x: 250, y: 560, w: 200, h: 44 },
   seguinte: { x: 510, y: 560, w: 200, h: 44 },
   entrarJogo: { x: 360, y: 560, w: 240, h: 44 },
+  duelo: { x: 730, y: 470, w: 200, h: 44 },
 };
 const retLetraSala = i => ({ x: 176 + (i % 8) * 78, y: 290 + Math.floor(i / 8) * 64, w: 70, h: 56 });
 const retClasseCoop = i => ({ x: 30 + (i % 4) * 228, y: 170 + Math.floor(i / 4) * 124, w: 220, h: 110 });
@@ -1328,6 +1331,7 @@ function atualizarLobby(dt) {
     else if (clicou(BOTOES_COOP.entrar)) { coop.ecra = 'entrar'; coop.codigo = ''; coop.msg = null; }
   } else if (E === 'criar') {
     if (clicou(BOTOES_COOP.novo) && coop.codigo) { modoProximo = null; abrirCriacao(); }
+    else if (coop.conn && coop.escolhaP2 && clicou(BOTOES_COOP.duelo)) { modoProximo = 'versus'; abrirCriacao(); } // duelo (versus.js)
     else if (saveInfo && coop.codigo && clicou(BOTOES_COOP.continuar)) continuarJogo();
     else if (clicou(BOTOES_COOP.fechar)) { fecharSala(); coop.ecra = 'menu'; coop.msg = null; }
   } else if (E === 'entrar') {
@@ -1378,6 +1382,7 @@ function desenharLobby(t) {
       textoCentro('Podes começar já: ele entra quando quiser.', LARGURA / 2, 390, 13, '#999', false);
       botao(BOTOES_COOP.novo, 'Novo jogo', '#ffe14d', undefined, 'novo');
       if (saveInfo) botao(BOTOES_COOP.continuar, 'Continuar', '#5dff7a', undefined, 'jogar');
+      if (coop.conn && coop.escolhaP2) botao(BOTOES_COOP.duelo, 'Duelo (1 contra 1)', '#ff8080', undefined, 'jogar');
     }
     if (coop.msg) textoCentro(coop.msg.txt, LARGURA / 2, coop.codigo ? 430 : 260, 16, coop.msg.cor, false);
     botao(BOTOES_COOP.fechar, 'Fechar sala', '#ff8080', undefined, 'fechar');

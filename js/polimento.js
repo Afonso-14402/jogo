@@ -84,7 +84,7 @@ function poseHeroi(t) {
 function alvoMelhor(raio) {
   let alvo = null, melhor = Infinity;
   for (const e of inimigos) {
-    if (e.morto || e.z > 20) continue;
+    if (e.morto || e.z > 20 || e.rival === J) continue; // (no duelo, o alvo invisível de ti próprio)
     const dx = e.x - J.x, dy = e.y - J.y, d = Math.hypot(dx, dy);
     if (d > raio) continue;
     const frente = (dx * J.dirX + dy * J.dirY) / (d || 1);

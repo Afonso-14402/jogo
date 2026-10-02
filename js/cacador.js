@@ -463,7 +463,7 @@ function atualizarSombras(dt) {
     s.t += dt; s.cd -= dt;
     let alvo = null, md = 280;
     for (const e of inimigos) {
-      if (e.morto || e.z > 20) continue;
+      if (e.morto || e.z > 20 || e.rival === J) continue;
       const d = Math.hypot(e.x - s.x, e.y - s.y);
       if (d < md && Math.hypot(e.x - J.x, e.y - J.y) < 420) { md = d; alvo = e; }
     }
@@ -479,7 +479,7 @@ function atualizarSombras(dt) {
     if (s.andando) moverEntidade(mapa, s, dx / d * vel * dt, dy / d * vel * dt);
     if (Math.abs(dx) > 2) s.dir = dx > 0 ? 1 : -1;
     if (s.flash > 0) s.flash -= dt;
-    for (const e of inimigos) if (!e.morto && Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r + 2) sombraLevaDano(s, e);
+    for (const e of inimigos) if (!e.morto && !e.ehRival && Math.hypot(e.x - s.x, e.y - s.y) < e.r + s.r + 2) sombraLevaDano(s, e);
     if (alvo && d < alvo.r + s.r + 8 && s.cd <= 0) {
       s.cd = s.boss ? 1.2 : 0.9;
       danoInimigo(alvo, danoSombra(s), false, dx / d, dy / d);

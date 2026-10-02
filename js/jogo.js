@@ -43,7 +43,7 @@ function lerSave() {
 let saveInfo = lerSave();
 
 function guardarJogo() {
-  if (!J || J.hp <= 0 || J.remoto) return; // o herói do parceiro não é guardado
+  if (!J || J.hp <= 0 || J.remoto || J.modo === 'versus') return; // o herói do parceiro (e o duelo) não se guardam
   const naArena = guardaAndar && guardaAndar.arena;
   const dados = { v: 1, andar: naCidade() || naArena ? andar + 1 : andar, tempoJogo, J: {} }; // na cidade (e na arena), continuas no andar seguinte
   for (const k of CAMPOS_SAVE) dados.J[k] = J[k];
@@ -407,7 +407,7 @@ function criarJogador() {
 }
 
 function novoJogo() {
-  apagarSave();
+  if (modoProximo !== 'versus') apagarSave(); // o duelo não apaga o jogo guardado
   J = criarJogador();
   J.modo = modoProximo; modoProximo = null;
   if (J.modo === 'diario') J.pacto = Object.assign({}, desafioDeHoje().pacto);
@@ -428,6 +428,7 @@ function novoJogo() {
   registar('partidas');
   conquistasCalor();
   if (!J.modo && andarInicial > 1 && atalhosLivres().includes(andarInicial)) prepararAtalho(andarInicial); // atalho para uma zona mais funda
+  if (J.modo === 'versus') { prepararVersus(); estado = 'jogo'; tutorial = null; return; }
   proximoAndar();
   estado = 'jogo';
   tutorial = null;
@@ -823,6 +824,7 @@ function curarRoubo(v) {
 }
 
 function danoInimigo(e, dano, crit, dx, dy, efeitos = false) {
+  if (e.ehRival) { danoNoRival(e, dano, crit, dx, dy); return; } // duelo: o dano vai para o outro herói
   if (e.morto || e.enterrado > 0) return;
   if (e.medo > 0) dano = Math.round(dano * 1.3);
   if (e.parado > 0) dano = Math.round(dano * 1.5); // com o tempo parado leva mais dano
@@ -996,6 +998,7 @@ function danoJogador(d, fx, fy, fonte = null) {
     J.kbx = dx / l * 260; J.kby = dy / l * 260;
   }
   if (J.hp <= 0) {
+    if (perdeuRondaVersus()) return; // no duelo perde-se a ronda
     if (perdeuNaArena()) return; // na arena da cidade não se morre
     if (J.vidasExtra > 0) {
       J.vidasExtra--;
@@ -1094,7 +1097,7 @@ function atualizar(dt) {
   atualizarCampo(mapa, J.x, J.y);
   for (const r of raios) r.t -= dt;
   raios = raios.filter(r => r.t > 0);
-  for (const e of inimigos) if (!e.morto) comHeroi(alvoDe(e), () => atualizarInimigo(e, dt)); // cada monstro vai ao herói mais perto
+  for (const e of inimigos) if (!e.morto && !e.ehRival) comHeroi(alvoDe(e), () => atualizarInimigo(e, dt)); // cada monstro vai ao herói mais perto
   separarInimigos();
   atualizarProjeteis(dt);
   atualizarPerigos(dt);
@@ -1130,6 +1133,7 @@ function atualizar(dt) {
   atualizarArmadilhas(dt);
   atualizarEnigmas(dt);
   atualizarArena(dt);
+  atualizarVersus(dt);
   atualizarBioma(dt);
   atualizarPet(dt);
   if (J.ouro >= 1000) desbloquear('rico');
@@ -1841,8 +1845,10 @@ function atualizarProjeteis(dt) {
     }
     if (p.dono === 'jogador') {
       if (p.caindo) continue; // ainda está a cair do céu
+      atacanteProj = p.heroi || null; // no duelo: quem disparou
       for (const e of inimigos) {
         if (e.morto || e.z > 20 || Math.hypot(p.x - e.x, p.y - e.y) > p.r + e.r) continue;
+        if (e.ehRival && e.rival === (p.heroi || heroiPrincipal())) continue; // no duelo não acertas em ti próprio
         if (p.atingidos && p.atingidos.includes(e)) continue;
         const l = Math.hypot(p.vx, p.vy) || 1;
         if (p.explode) explodirFogo(p);
@@ -1851,6 +1857,7 @@ function atualizarProjeteis(dt) {
         p.morto = true;
         break;
       }
+      atacanteProj = null;
       continue;
     }
     for (const H of heroisVivos()) if (!p.morto) comHeroi(H, () => acertarHeroi(p));
@@ -1900,7 +1907,7 @@ function atualizarPerigos(dt) {
 function alvoProximo(raio) {
   let alvo = null, md = raio;
   for (const e of inimigos) {
-    if (e.morto || e.z > 20) continue;
+    if (e.morto || e.z > 20 || e.rival === J) continue;
     const d = Math.hypot(e.x - J.x, e.y - J.y);
     if (d < md) { md = d; alvo = e; }
   }
@@ -2147,7 +2154,7 @@ function atualizarPet(dt) {
   const alvo = (() => {
     let a = null, md = 240;
     for (const e of inimigos) {
-      if (e.morto || e.z > 20) continue;
+      if (e.morto || e.z > 20 || e.rival === J) continue;
       const d = Math.hypot(e.x - J.x, e.y - J.y);
       if (d < md) { md = d; a = e; }
     }

@@ -2080,5 +2080,15 @@ const ES = {
   ": Pescar": ": Pescar",
   "Corrida de sapos": "Carrera de sapos",
   ": Apostar ouro": ": Apostar oro",
+  "DUELO!": "¡DUELO!",
+  "À melhor de 3 rondas · espera pelo parceiro": "Al mejor de 3 rondas · espera a tu compañero",
+  "RONDA ": "RONDA ",
+  "LUTEM!": "¡LUCHAD!",
+  "CRÍTICO!": "¡CRÍTICO!",
+  " GANHA O DUELO!": " ¡GANA EL DUELO!",
+  " ganha a ronda!": " ¡gana la ronda!",
+  "À espera do parceiro...": "Esperando a tu compañero...",
+  "Duelo (1 contra 1)": "Duelo (1 contra 1)",
+  "DUELO": "DUELO",
 };
 const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

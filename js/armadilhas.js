@@ -2,7 +2,8 @@
 // =====================================================================
 //  ARMADILHAS NOVAS
 //  - Chão que cai (andar 4+): o chão rachado desfaz-se pouco depois de lhe
-//    tocares; quem estiver em cima cai, leva dano e volta ao último sítio seguro.
+//    tocares; quem estiver em cima cai, perde 10% da vida (nunca morre) e volta
+//    ao último sítio seguro.
 //  - Paredes com lanças (andar 6+): de vez em quando saem lanças da parede
 //    (antes brilham as pontas, para dar tempo de fugir).
 //  - Sala de gás (andar 8+): uma sala enche-se de gás venenoso aos ciclos.
@@ -17,7 +18,7 @@ function criarArmadilhasNovas(salasArm, livres) {
   const ocupado = (tx, ty) => armadilhas.some(a => a.tx === tx && a.ty === ty);
   // chão que cai: grupos de 2x2 a 3x2 nas salas
   if (andar >= 4) {
-    const n = Math.min(5, 1 + Math.floor((andar - 4) / 6));
+    const n = Math.min(3, 1 + Math.floor((andar - 4) / 10));
     for (let i = 0; i < n; i++) {
       const s = escolher(salasArm);
       const tx0 = randInt(s.x + 1, s.x + s.w - 3), ty0 = randInt(s.y + 1, s.y + s.h - 3), gw = randInt(2, 3);
@@ -66,14 +67,16 @@ function lembrarSitioSeguro() {
 function cairNoBuraco(H, a) {
   comHeroi(H, () => {
     if (J.dashT > 0) return; // a esquiva passa por cima do buraco
-    const hp0 = J.hp;
-    J.invuln = 0;
-    danoJogador(Math.round(danoArmadilha() * 1.5 + S.maxHp * 0.08), null, null);
-    if (J.hp < hp0 || J.hp <= 0) texto(J.x, J.y - 30, 'Caíste!', '#ff8080', 16);
+    // cair tira 10% da vida mas nunca mata (como o veneno)
+    const q = Math.round(S.maxHp * 0.1);
+    J.hp = Math.max(1, J.hp - q);
+    texto(J.x, J.y - 30, `Caíste! -${q}`, '#ff8080', 16);
+    som(160, 0.3, 'sawtooth', 0.05, -80);
+    vibrar(60);
     const s = J.seguro || mapa.inicio;
     J.x = s.x; J.y = s.y; J.kbx = J.kby = 0;
     desencravar(mapa, J);
-    J.invuln = Math.max(J.invuln, 1);
+    J.invuln = Math.max(J.invuln, 1.2);
   });
 }
 
@@ -100,7 +103,7 @@ function atualizarArmadilhaNova(a, dt) {
       if (a.atingidos.includes(H)) continue;
       for (let k = 1; k <= 2; k++) if (Math.floor(H.x / TILE) === a.tx + a.dx * k && Math.floor(H.y / TILE) === a.ty + a.dy * k) {
         a.atingidos.push(H);
-        comHeroi(H, () => danoJogador(Math.round(danoArmadilha() * 1.3), a.x, a.y));
+        comHeroi(H, () => { J.causaProxima = 'lanças da parede'; danoJogador(Math.round(danoArmadilha() * 1.3), a.x, a.y); });
       }
     }
     return;

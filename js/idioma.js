@@ -1151,6 +1151,16 @@ const EN = {
   ": Pescar": ": Fish",
   "Corrida de sapos": "Frog race",
   ": Apostar ouro": ": Bet gold",
+  "DUELO!": "DUEL!",
+  "À melhor de 3 rondas · espera pelo parceiro": "Best of 3 rounds · waiting for your partner",
+  "RONDA ": "ROUND ",
+  "LUTEM!": "FIGHT!",
+  "CRÍTICO!": "CRITICAL!",
+  " GANHA O DUELO!": " WINS THE DUEL!",
+  " ganha a ronda!": " wins the round!",
+  "À espera do parceiro...": "Waiting for your partner...",
+  "Duelo (1 contra 1)": "Duel (1 vs 1)",
+  "DUELO": "DUEL",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.
