@@ -801,7 +801,7 @@ function desenharInimigo(e, t) {
 
   // animação: respirar, inclinar ao andar, amassar ao levar um golpe, crescer ao atacar e ao aparecer
   const pe = y + h / 2 - 2;
-  let PA = null;
+  let PA;
   ctx.save();
   {
     const resp = Math.sin(t * 3 + e.x * 0.05);

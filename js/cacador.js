@@ -120,11 +120,9 @@ function habErgue() {
 }
 
 function habSede() {
-  let n = 0;
   for (const e of inimigos) {
     if (e.morto || Math.hypot(e.x - J.x, e.y - J.y) > 230) continue;
     e.medo = e.boss ? 1 : 2.5;
-    n++;
   }
   ondas.push({ x: J.x, y: J.y, r: 230, t: 0.6, dur: 0.6, cor: '#ff3b3b' });
   texto(J.x, J.y - 40, 'SEDE DE SANGUE', '#ff3b3b', 18);

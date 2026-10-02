@@ -100,13 +100,6 @@ function virarH(c) {
   return n;
 }
 
-// Espelha grelhas simétricas: desenha-se só a metade esquerda
-function espelhar(g) {
-  const w = g[0].length;
-  for (const linha of g) for (let x = 0; x < w / 2; x++) if (linha[x] && !linha[w - 1 - x]) linha[w - 1 - x] = linha[x];
-  return g;
-}
-
 // Contorno de 1 pixel à volta de tudo o que está pintado
 function contornar(g, cor = CONTORNO) {
   const h = g.length, w = g[0].length, marcar = [];

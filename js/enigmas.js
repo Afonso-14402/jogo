@@ -9,7 +9,6 @@
 
 SALAS_ESPECIAIS.enigma = { nome: 'Sala do Enigma', desc: 'Resolve o enigma para abrir a jaula do tesouro', cor: '#4dc3ff' };
 const TEMPO_PLACAS = 9;
-const DIRS4 = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // cima, direita, baixo, esquerda
 
 function criarSalaEnigma(marcar) {
   if (andar < 3 || Math.random() > 0.3) return;

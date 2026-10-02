@@ -34,7 +34,7 @@ function poseAtaque(e) {
   const p = { sx: 1, sy: 1, rot: 0, ox: 0, oy: 0, k: 0, a: 0, est };
   if (!est || e.boss || !e.acordado || e.morto) return p;
   const dx = J.x - e.x, dy = J.y - e.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, lado = dx < 0 ? -1 : 1;
-  let k = 0;
+  let k;
   if (est === 'carregar') k = e.cd > 0 && e.cd < JANELA_CARREGAR && d < 420 ? 1 - e.cd / JANELA_CARREGAR : 0;
   else k = clamp(1 - (d - e.r - J.r) / 48, 0, 1);
   const a = e.atacouT > 0 ? e.atacouT / 0.22 : 0;

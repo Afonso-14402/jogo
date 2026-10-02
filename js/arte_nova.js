@@ -102,6 +102,12 @@ ART.cais = spriteC([
   '.w...w...w...w...w...',
 ], { p: '#b08050', P: '#7a5230', c: '#8a6a3a', w: '#4d9fff' });
 
+// lago gelado debaixo do cais
+ART.lago = spriteC(Array.from({ length: 12 }, (_, y) => Array.from({ length: 30 }, (_, x) => {
+  const d = ((x - 14.5) / 15) ** 2 + ((y - 5.5) / 6) ** 2;
+  return d > 1 ? '.' : d > 0.7 ? 'i' : (y === 4 && x % 7 < 3) || (y === 8 && (x + 3) % 9 < 3) ? 'b' : y < 5 ? 'a' : 'A';
+}).join('')), { i: '#e8f4ff', a: '#4d9fdf', A: '#2a6aa8', b: '#bfe6ff' });
+
 ART.pistaSapos = spriteC([
   '.....pppppppppp.....',
   '....pyyyyyyyyyyp....',
@@ -244,24 +250,24 @@ ART.chao = [
     '.....d..........',
     '................',
   ], { k: '#140a0a', d: '#ffc896' }),
-  sprite([
-    '.eeeeeeeeeeeeee.',
-    'eEEEEEEEEEEEEEEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eEnnnnnnnnnnnnEe',
-    'eeeeeeeeeeeeeeee',
-    '.eeeeeeeeeeeeee.',
-  ], { e: '#3a3040', E: '#1a141e', n: '#050307' }),
+  sprite([ // o buraco: borda partida, parede de dentro e o fundo escuro
+    '..ee.eeeeee.ee..',
+    '.eEEeEEEEEEeEEe.',
+    'eEwwwwwwwwwwwwEe',
+    'eEWWWWWWWWWWWWEe',
+    'eWnnnnnnnnnnnnWe',
+    'eWnnnnnnnnnnnnWe',
+    '.Wnnnnnnnnnnnnne',
+    'eWnnnnnnnnnnnnWe',
+    'eWnnnnnnnnnnnnW.',
+    'eWnnnnnnnnnnnnWe',
+    'eWnnnnnnnnnnnnWe',
+    '.Wnnnnnnnnnnnnne',
+    'eWnnnnnnnnnnnnWe',
+    'eEWnnnnnnnnnnWEe',
+    '.eEEEEEEEEEEEEe.',
+    '..ee.eeeee.eee..',
+  ], { e: '#4a4054', E: '#2a2230', w: '#3a3046', W: '#1c1622', n: '#050307' }),
 ];
 // grelha da parede e a lança (a apontar para baixo; roda-se para os outros lados)
 ART.grelhaLanca = spriteC([
@@ -697,9 +703,6 @@ ART.espadas = spriteC([
   '..hh...hh..',
   '.h.......h.',
 ], { w: '#d8dce8', h: '#ffd23f' });
-
-// Desenha um sprite da arte nova no mundo (como os outros sprites do jogo)
-function sprMundo(c, x, y, flip = false) { spr(c, x, y, flip); }
 
 // "123 [alma]" alinhado à direita ou à esquerda (ecrã)
 function precoAlmas(n, x, y, tam, cor, alinhamento = 'esq') {

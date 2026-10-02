@@ -21,22 +21,6 @@ const MOVEIS = [
   { id: 'quadro', nome: 'Quadro do Herói', preco: 50, cor: '#ffd23f' },
   { id: 'aquario', nome: 'Aquário', preco: 80, cor: '#4dc3ff' },
 ];
-// desenho pequeno de cada móvel (ícone da loja e dentro da casa)
-function desenharMovel(id, x, y, k = 1) {
-  const c = ART.moveis[id];
-  if (c) { sprEcra(Array.isArray(c) ? c[Math.floor(tempoJogo * 6) % 2] : c, x, y, Math.max(2, Math.round(k * 1.6))); return; }
-  const R = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a * k, y + b * k, w * k, h * k); };
-  switch (id) {
-    case 'cama': R(-18, -6, 36, 14, '#7a4a2a'); R(-16, -10, 32, 8, '#c84a4a'); R(-16, -12, 10, 6, '#f0e8d0'); R(-18, 8, 4, 4, '#5a3a1a'); R(14, 8, 4, 4, '#5a3a1a'); break;
-    case 'tapete': R(-22, -6, 44, 14, '#b44dff'); R(-18, -3, 36, 8, '#ffcf3a'); R(-14, -1, 28, 4, '#b44dff'); break;
-    case 'planta': R(-6, 0, 12, 10, '#a0603a'); R(-8, -10, 6, 10, '#3f8a34'); R(-1, -16, 6, 16, '#5dbb4a'); R(4, -8, 6, 8, '#3f8a34'); break;
-    case 'estante': R(-14, -22, 28, 34, '#7a5230'); for (let i = 0; i < 3; i++) { R(-12, -20 + i * 11, 24, 2, '#5a3a1a'); for (let j = 0; j < 5; j++) R(-11 + j * 5, -18 + i * 11, 3, 7, ['#c84a4a', '#4dc3ff', '#5dff7a', '#ffd23f', '#b44dff'][(i + j) % 5]); } break;
-    case 'lareira': R(-16, -18, 32, 30, '#6a6478'); R(-10, -6, 20, 18, '#1a1014'); R(-6, 0, 12, 10, Math.sin(tempoJogo * 9) > 0 ? '#ff7b25' : '#ffd23f'); R(-18, -20, 36, 4, '#8a8498'); break;
-    case 'armas': R(-16, -18, 32, 4, '#5a3a1a'); R(-12, -16, 3, 28, '#c0c8d8'); R(-2, -16, 3, 28, '#c0c8d8'); R(8, -16, 3, 28, '#c0c8d8'); R(-14, -2, 7, 3, '#8a6a4a'); R(-4, -2, 7, 3, '#8a6a4a'); R(6, -2, 7, 3, '#8a6a4a'); break;
-    case 'quadro': R(-14, -14, 28, 24, '#c99a2e'); R(-11, -11, 22, 18, '#2a3a5a'); R(-3, -7, 6, 8, '#f1c8a0'); R(-5, 1, 10, 6, '#3d7bd8'); break;
-    case 'aquario': R(-16, -12, 32, 22, '#9fdcff'); R(-16, -12, 32, 3, '#e0f4ff'); R(-8, -4, 6, 4, '#ff9b45'); R(4, 2, 6, 4, '#ffd23f'); R(-16, 10, 32, 3, '#5a5468'); break;
-  }
-}
 for (const M of MOVEIS) LOJA_ALMAS.push({ id: 'movel_' + M.id, tipo: 'movel', nome: `Móvel: ${M.nome}`, desc: '+1% XP para sempre (fica na tua casa)', preco: M.preco, cor: M.cor, movel: M.id });
 const moveisComprados = () => MOVEIS.filter(M => comprado('movel_' + M.id));
 const bonusMoveis = () => 0.01 * moveisComprados().length;
@@ -270,7 +254,7 @@ function atualizarMinijogo(dt) {
 const px = (x, y, w, h, cor) => { ctx.fillStyle = cor; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 
 function cenarioPesca(t, M) {
-  const X = 130, Y = 200, W = 700, H = 170;
+  const X = 130, Y = 200, W = 700;
   // céu e montanhas de gelo
   px(X, Y, W, 60, '#2a3a6a'); px(X, Y + 20, W, 40, '#34487a');
   for (let k = 0; k < 7; k++) { const mx = X + 40 + k * 100, mh = 26 + (k * 17) % 22; for (let r = 0; r < mh; r += 3) px(mx - r, Y + 60 - mh + r, r * 2 + 6, 3, r < 6 ? '#e8f4ff' : '#9ab0d8'); }
@@ -332,7 +316,7 @@ function desenharMinijogo(t) {
       textoCentro(`${k + 1}`, X + 14, y + 24, 16, '#e8e2cf');
       const fx = X + 50 + M.pos[k] * (W - 110), pulo = M.fase === 'corrida' ? Math.abs(Math.sin(M.t * 9 + k * 2)) * 10 : 0;
       sprEcra(ART.sapos[k][M.fase === 'corrida' && pulo > 5 ? 1 : 0], fx, y + 26 - pulo, 3);
-      if (M.escolha === k) { textoCentro('o teu', fx, y + 4 - pulo, 11, '#ffe680'); }
+      if (M.escolha === k) { textoCentro('A tua aposta', fx, y + 4 - pulo, 11, '#ffe680'); }
     }
     sprEcra(ART.bandeira, X + W - 20, Y - 6, 3);
     SAPOS.forEach((sp, k) => {
@@ -358,9 +342,11 @@ function desenharObjetoCidadeExtra(o, t) {
   if (o.tipo === 'arena') { desenharArena(o, t); return true; }
   if (o.tipo === 'saidaArena') { desenharSaidaArena(o, t); return true; }
   if (o.tipo === 'pesca') { // cais com cana de pesca e a bóia a balançar
-    sombra(o.x, o.y + 14, 26);
+    spr(ART.lago, o.x + 8, o.y + 12);
     spr(ART.cais, o.x, o.y - 4);
     const bx = o.x + 22, by = o.y + 14 + Math.sin(t * 3) * 2;
+    ctx.fillStyle = '#e8f4ff'; // a linha da cana até à bóia
+    for (let k = 0; k <= 1; k += 1 / 14) ctx.fillRect(alinhar(o.x + 17 + (bx - o.x - 17) * k), alinhar(o.y - 18 + (by - 4 - o.y + 18) * k), 2, 2);
     ctx.fillStyle = '#ff5050'; ctx.fillRect(alinhar(bx - 2), alinhar(by - 2), 4, 4);
     ctx.fillStyle = '#ffffff'; ctx.fillRect(alinhar(bx - 2), alinhar(by - 4), 4, 2);
     return true;

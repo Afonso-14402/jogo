@@ -2090,5 +2090,10 @@ const ES = {
   "À espera do parceiro...": "Esperando a tu compañero...",
   "Duelo (1 contra 1)": "Duelo (1 contra 1)",
   "DUELO": "DUELO",
+  "Apanhados:": "Atrapados:",
+  "Iscos:": "Cebos:",
+  "Carrega quando o peixe estiver na zona verde": "Pulsa cuando el pez esté en la zona verde",
+  "o teu": "el tuyo",
+  "Toca para voltar": "Toca para volver",
+  "A tua aposta": "Tu apuesta",
 };
-const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

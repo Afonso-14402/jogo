@@ -260,11 +260,9 @@ const fatorRecarga = () => (J.classe === 'cronos' ? 0.85 : 1);
 // Parar o Tempo: os monstros (e os tiros deles) ficam parados e levam +50% dano
 function habParar() {
   const dur = J.evoluido ? 5 : 3, raio = J.evoluido ? 2000 : 520;
-  let n = 0;
   for (const e of inimigos) {
     if (e.morto || Math.hypot(e.x - J.x, e.y - J.y) > raio) continue;
     e.parado = e.boss ? dur * 0.4 : dur; // os bosses resistem mais
-    n++;
   }
   for (const p of projeteis) if (p.dono !== 'jogador' && Math.hypot(p.x - J.x, p.y - J.y) < raio) p.parado = dur;
   tempoParado = dur;
