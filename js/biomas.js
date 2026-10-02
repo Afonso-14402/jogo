@@ -839,6 +839,7 @@ function aoMorrerInimigo(e) {
     criarPoca(e.x, e.y, 'veneno', 58, 5, e.dano);
     anunciar(e, 'nuvem');
   }
+  if (e.dourado) premioDourado(e);
   if (e.tipo === 'goblin' && e.roubou) {
     soltarOuro(e.x, e.y, Math.round(e.roubou * 1.5), 5);
     texto(e.x, e.y - 30, 'Recuperaste o ouro!', '#ffd23f', 15);
@@ -863,6 +864,7 @@ function movimentoBioma(e, dt, d, ux, uy, ru) {
       return { vx: Math.cos(a) * e.vel, vy: Math.sin(a) * e.vel };
     }
     case 'goblin': {
+      if (e.dourado) return movimentoDourado(e, dt, d, ux, uy);
       if (e.roubou) { // foge com o ouro
         e.fugir -= dt;
         if (e.fugir <= 0 && d > 380) {

@@ -1014,6 +1014,16 @@ const EN = {
   "As lanças chegam a 2 quadrados da parede.": "The spears reach 2 squares from the wall.",
   "Sala de gás venenoso!": "Poison gas room!",
   "O gás vem aos bocados: atravessa a sala quando o ar estiver limpo.": "The gas comes in bursts: cross the room when the air is clear.",
+  "Andar do Tesouro! Há baús por todo o lado... mas cuidado, alguns mordem.": "Treasure Floor! There are chests everywhere... but careful, some of them bite.",
+  "Andar Gelado: o chão escorrega. Cuidado com as curvas!": "Frozen Floor: the ground is slippery. Watch the corners!",
+  "Duende Dourado": "Golden Goblin",
+  "Um Duende Dourado anda por aqui!": "A Golden Goblin is around here!",
+  "Apanha-o antes que fuja: larga um tesouro": "Catch it before it runs away: it drops a treasure",
+  "Hihi!": "Hehe!",
+  "O Duende Dourado fugiu!": "The Golden Goblin got away!",
+  "Para a próxima sê mais rápido": "Be faster next time",
+  "Apanhaste o Duende Dourado!": "You caught the Golden Goblin!",
+  "Tesouro, um Baú Dourado e ": "Treasure, a Golden Chest and ",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.

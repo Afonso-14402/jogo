@@ -494,6 +494,7 @@ function proximoAndar() {
   sortearEvento();
   historiaDoAndar();
   missaoNoAndar(); // missão da cidade: o monstro raro
+  talvezDuendeDourado();
   if (andar >= 10) desbloquear('andar10');
   if (andar >= 20) desbloquear('andar20');
   if (andar >= 70) desbloquear('fundo70');
@@ -1395,7 +1396,8 @@ function atualizarJogador(dt, R = null) {
     ventaniaNaEsquiva();
     particulas.push({ x: J.x, y: J.y, vx: 0, vy: 0, t: 0.25, cor: 'rgba(120,170,255,0.6)', tam: 10 });
   } else {
-    moverEntidade(mapa, J, (mx * S.vel * fLento + J.kbx) * dt, (my * S.vel * fLento + J.kby) * dt);
+    const [gvx, gvy] = deslizarNoGelo(mx * S.vel * fLento, my * S.vel * fLento, dt); // no Andar Gelado desliza
+    moverEntidade(mapa, J, (gvx + J.kbx) * dt, (gvy + J.kby) * dt);
   }
   J.kbx *= Math.max(0, 1 - dt * 10);
   J.kby *= Math.max(0, 1 - dt * 10);
@@ -1540,7 +1542,7 @@ function atualizarInimigo(e, dt) {
   e.kbx *= Math.max(0, 1 - dt * 10);
   e.kby *= Math.max(0, 1 - dt * 10);
 
-  if (d < e.r + J.r - 2 && !(e.enterrado > 0) && !(e.tipo === 'goblin' && e.roubou)) {
+  if (d < e.r + J.r - 2 && !(e.enterrado > 0) && !(e.tipo === 'goblin' && e.roubou) && !e.dourado) {
     const hp0 = J.hp;
     danoJogador(e.dano * (e.carga > 0 ? 1.5 : e.inv > 0 ? 1.3 : 1), e.x, e.y, e);
     if (J.hp < hp0) { aoAcertarJogador(e, hp0 - J.hp); e.atacouT = 0.22; }
@@ -2386,7 +2388,7 @@ function atualizarCriacao(dt) {
 function abrirBau(b) {
   baus.splice(baus.indexOf(b), 1);
   const tipo = TIPOS_BAU[b.tipo];
-  if (!b.semMimico && andar >= 3 && Math.random() < tipo.mimico) { // nos 2 primeiros andares não há mímicos
+  if (!b.semMimico && andar >= 3 && Math.random() < Math.max(tipo.mimico, b.mimicoExtra || 0)) { // nos 2 primeiros andares não há mímicos
     const m = criarInimigo('mimico', b.x, b.y);
     m.acordado = true;
     inimigos.push(m);

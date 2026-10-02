@@ -1940,5 +1940,15 @@ const ES = {
   "As lanças chegam a 2 quadrados da parede.": "Las lanzas llegan a 2 casillas de la pared.",
   "Sala de gás venenoso!": "¡Sala de gas venenoso!",
   "O gás vem aos bocados: atravessa a sala quando o ar estiver limpo.": "El gas viene a ratos: cruza la sala cuando el aire esté limpio.",
+  "Andar do Tesouro! Há baús por todo o lado... mas cuidado, alguns mordem.": "¡Piso del Tesoro! Hay cofres por todas partes... pero cuidado, algunos muerden.",
+  "Andar Gelado: o chão escorrega. Cuidado com as curvas!": "Piso Helado: el suelo resbala. ¡Cuidado con las curvas!",
+  "Duende Dourado": "Duende Dorado",
+  "Um Duende Dourado anda por aqui!": "¡Un Duende Dorado anda por aquí!",
+  "Apanha-o antes que fuja: larga um tesouro": "Atrápalo antes de que huya: suelta un tesoro",
+  "Hihi!": "¡Jiji!",
+  "O Duende Dourado fugiu!": "¡El Duende Dorado huyó!",
+  "Para a próxima sê mais rápido": "La próxima vez sé más rápido",
+  "Apanhaste o Duende Dourado!": "¡Atrapaste al Duende Dorado!",
+  "Tesouro, um Baú Dourado e ": "Tesoro, un Cofre Dorado y ",
 };
 const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

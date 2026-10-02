@@ -61,6 +61,8 @@ const EVENTOS = {
   escuro: 'Andar escuro: quase não se vê nada, mas os monstros dão +50% XP.',
   luaSangue: 'Lua de sangue: os monstros fazem +30% dano, mas dão +50% XP e ouro.',
   bencao: 'Bênção da deusa: neste andar recuperas vida aos poucos.',
+  tesouro: 'Andar do Tesouro! Há baús por todo o lado... mas cuidado, alguns mordem.',
+  gelado: 'Andar Gelado: o chão escorrega. Cuidado com as curvas!',
 };
 function sortearEvento() {
   if (!J || J.modo === 'torre' || J.modo === 'bossrush' || andar < 3 || mapa.eBoss || Math.random() > 0.25) return;
@@ -76,6 +78,8 @@ function sortearEvento() {
     }
   } else if (ev === 'escuro') {
     for (const e of inimigos) e.xp = Math.round(e.xp * 1.5);
+  } else if (ev === 'tesouro') {
+    andarDoTesouro();
   } else if (ev === 'luaSangue') {
     for (const e of inimigos) { e.dano = Math.round(e.dano * 1.3); e.xp = Math.round(e.xp * 1.5); e.ouroExtra = 1.5; }
   }
@@ -84,6 +88,7 @@ function sortearEvento() {
 }
 function atualizarEvento(dt) {
   if (mapa.evento === 'bencao' && J.hp > 0) J.hp = Math.min(S.maxHp, J.hp + S.maxHp * 0.01 * dt);
+  efeitosGelo();
 }
 const escuridaoEvento = () => (mapa.evento === 'escuro' ? 0.975 : null);
 
