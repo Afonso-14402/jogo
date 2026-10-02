@@ -2398,7 +2398,12 @@ function atualizarCriacao(dt) {
   if (ir !== ORDEM_RACAS.indexOf(escolhaRaca) || is !== ORDEM_SKINS.indexOf(escolhaSkin)) som(700, 0.05, 'square', 0.02);
   escolhaRaca = ORDEM_RACAS[ir];
   escolhaSkin = ORDEM_SKINS[is];
-  if (comecar && !racaLivre(escolhaRaca)) { comecar = false; criacao.msg = { txt: `Raça bloqueada: compra-a no Altar das Almas (${RACAS[escolhaRaca].almas} almas)`, cor: '#ff8080', t: 3 }; }
+  if (comecar && !racaLivre(escolhaRaca)) { // raça paga: o botão Começar passa a Comprar
+    comecar = false;
+    const R = RACAS[escolhaRaca];
+    if ((meta.almas || 0) < R.almas) { som(140, 0.2, 'square', 0.04); criacao.msg = { txt: `Faltam ${R.almas - (meta.almas || 0)} almas para o ${R.nome}. Joga mais partidas!`, cor: '#ff8080', t: 3 }; }
+    else { comprarLoja(LOJA_ALMAS.find(o => o.id === 'raca_' + escolhaRaca)); criacao.msg = { txt: `Compraste: ${R.nome}! Já o podes escolher.`, cor: '#5dff7a', t: 3 }; }
+  }
   if (comecar) { guardarEscolha(); rato.baixo = false; novoJogo(); }
   else if (premiu('escape') || clicou(BOTAO_VOLTAR)) estado = 'titulo';
 }

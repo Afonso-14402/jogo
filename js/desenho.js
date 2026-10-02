@@ -1673,7 +1673,7 @@ function desenharCriacao(t) {
     const livre = racaLivre(id), k = r.h / 110; // os cartões encolhem quando há muitas raças
     sprEcra(livre ? framesHeroi(id, escolhaSkin)[0] : silhueta(framesHeroi(id, escolhaSkin)[0], '#3a3150'), r.x + 36, r.y + r.h / 2, k < 0.8 ? 2 : 3);
     textoEsqAjustado(R.nome, r.x + 70, r.y + 22 * k, 16, livre ? R.cor : '#777', r.w - 76);
-    if (!livre) textoEsq(`${R.almas} almas (Altar das Almas)`, r.x + 70, r.y + 48 * k, 11, '#b48cff', 'normal');
+    if (!livre) { precoAlmas(R.almas, r.x + 70, r.y + 48 * k, 13, (meta.almas || 0) >= R.almas ? '#b48cff' : '#ff8080'); textoEsq('Escolhe e compra aqui', r.x + 70, r.y + 70 * k, 10, '#8a7fa8', 'normal'); }
     else {
       textoEsqAjustado(R.bonus[0], r.x + 70, r.y + 48 * k, 11, '#7dff9a', r.w - 76, 'normal');
       if (R.bonus[1] && k > 0.75) textoEsqAjustado(R.bonus[1], r.x + 70, r.y + 66 * k, 11, '#7dff9a', r.w - 76, 'normal');
@@ -1730,8 +1730,16 @@ function desenharCriacao(t) {
     textoCentroAjustado(andarInicial > 1 ? NOMES_ZONAS[zonaDoAndar(andarInicial)] : 'Toca para mudar', a.x + a.w / 2, a.y + 30, 10, '#8fb8d8', a.w - 12, false);
   }
   const b = BOTAO_COMECAR;
-  painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
-  textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
+  if (racaLivre(escolhaRaca)) {
+    painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(60,50,20,0.97)' : 'rgba(40,34,20,0.95)', '#ffae00');
+    textoCentro(modoToque ? 'Começar' : 'ENTER: Começar', b.x + b.w / 2, b.y + b.h / 2, 18, '#ffe14d');
+  } else { // raça paga: compra-se aqui mesmo com almas
+    const preco = RACAS[escolhaRaca].almas, chega = (meta.almas || 0) >= preco;
+    painel(b.x, b.y, b.w, b.h, dentro(b) ? 'rgba(44,30,66,0.97)' : 'rgba(30,20,46,0.95)', chega ? '#b48cff' : '#ff8080');
+    textoEsq(modoToque ? 'Comprar' : 'ENTER: Comprar', b.x + 16, b.y + b.h / 2, 17, chega ? '#d9c2ff' : '#ff8080');
+    precoAlmas(preco, b.x + b.w - 12, b.y + b.h / 2, 17, chega ? '#b48cff' : '#ff8080', 'dir');
+    textoDir(`Tens ${meta.almas || 0} almas`, b.x + b.w, b.y - 10, 11, '#b48cff', 'normal');
+  }
   textoEsq(modoToque ? 'Escolhe um caçador, uma raça, uma skin e a dificuldade' : 'Tab: caçador/raça   W/S: escolher   A/D: skin   1-5: dificuldade   Esc: voltar', 30, 630, 11, '#777', 'normal');
 }
 

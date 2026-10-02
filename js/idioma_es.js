@@ -2096,4 +2096,12 @@ const ES = {
   "o teu": "el tuyo",
   "Toca para voltar": "Toca para volver",
   "A tua aposta": "Tu apuesta",
+  "Escolhe e compra aqui": "Elígela y cómprala aquí",
+  "ENTER: Comprar": "ENTER: Comprar",
+  "Comprar": "Comprar",
+  "Compraste: ": "Compraste: ",
+  "! Já o podes escolher.": "! Ya puedes elegirlo.",
+  "Faltam ": "Te faltan ",
+  " almas para o ": " almas para el ",
+  ". Joga mais partidas!": ". ¡Juega más partidas!",
 };

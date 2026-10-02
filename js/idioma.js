@@ -1162,6 +1162,14 @@ const EN = {
   "o teu": "yours",
   "Toca para voltar": "Tap to go back",
   "A tua aposta": "Your bet",
+  "Escolhe e compra aqui": "Pick it and buy it here",
+  "ENTER: Comprar": "ENTER: Buy",
+  "Comprar": "Buy",
+  "Compraste: ": "You bought: ",
+  "! Já o podes escolher.": "! You can pick it now.",
+  "Faltam ": "You need ",
+  " almas para o ": " more souls for the ",
+  ". Joga mais partidas!": ". Play more runs!",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.
