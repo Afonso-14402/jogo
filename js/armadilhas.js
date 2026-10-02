@@ -130,66 +130,48 @@ function dicasArmadilhas() {
 function desenharArmadilhaNova(a, t) {
   if (a.tipo === 'chao') {
     if (!explorado(a.x, a.y)) return;
-    const x = a.tx * TILE, y = a.ty * TILE;
-    if (a.estado === 2) { // buraco
-      ctx.fillStyle = '#050307'; ctx.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
-      ctx.fillStyle = 'rgba(80,70,100,0.6)'; ctx.fillRect(x + 2, y + 2, TILE - 4, 3);
-      return;
-    }
-    const tremer = a.estado === 1 ? Math.sin(t * 60) * 2 : 0;
-    ctx.strokeStyle = a.estado === 1 ? 'rgba(255,200,150,0.8)' : 'rgba(10,8,14,0.7)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x + 6 + tremer, y + 8); ctx.lineTo(x + 14 + tremer, y + 16); ctx.lineTo(x + 10 + tremer, y + 26);
-    ctx.moveTo(x + 14 + tremer, y + 16); ctx.lineTo(x + 26 + tremer, y + 12);
-    ctx.moveTo(x + 20 + tremer, y + 22); ctx.lineTo(x + 28 + tremer, y + 28);
-    ctx.stroke();
+    const x = a.tx * TILE, y = a.ty * TILE, tremer = a.estado === 1 ? Math.round(Math.sin(t * 60)) : 0;
+    ctx.globalAlpha = a.estado === 0 ? 0.7 : 1;
+    ctx.drawImage(ART.chao[a.estado], x + tremer * 2, y, TILE, TILE);
+    ctx.globalAlpha = 1;
     return;
   }
   if (a.tipo === 'lancas') {
     if (!mapa.explorado[(a.ty + a.dy) * mapa.W + a.tx + a.dx]) return;
-    const cx = a.x + a.dx * TILE * 0.5, cy = a.y + a.dy * TILE * 0.5; // na face da parede
-    ctx.fillStyle = '#3a3448';
-    for (const k of [-8, 0, 8]) ctx.fillRect(alinhar(cx + a.dy * k - 3), alinhar(cy + a.dx * k - 3), 6, 6);
-    if (a.estado === 1) { // as pontas brilham
-      ctx.fillStyle = Math.sin(t * 30) > 0 ? '#ffffff' : '#c0c8d8';
-      for (const k of [-8, 0, 8]) ctx.fillRect(alinhar(cx + a.dy * k + a.dx * 3 - 2), alinhar(cy + a.dx * k + a.dy * 3 - 2), 4, 4);
-    } else if (a.estado === 2) { // lanças de fora (2 tiles)
-      const L = TILE * 2;
-      for (const k of [-8, 0, 8]) {
-        const x0 = cx + a.dy * k, y0 = cy + a.dx * k;
-        ctx.strokeStyle = '#8a6a4a'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + a.dx * L, y0 + a.dy * L); ctx.stroke();
-        ctx.fillStyle = '#d8dce8';
-        ctx.beginPath();
-        ctx.moveTo(x0 + a.dx * (L + 8), y0 + a.dy * (L + 8));
-        ctx.lineTo(x0 + a.dx * L - a.dy * 4, y0 + a.dy * L - a.dx * 4);
-        ctx.lineTo(x0 + a.dx * L + a.dy * 4, y0 + a.dy * L + a.dx * 4);
-        ctx.closePath(); ctx.fill();
-      }
-    }
+    // na face da parede, virado para o corredor
+    const cx = a.x + a.dx * TILE * 0.5, cy = a.y + a.dy * TILE * 0.5;
+    const ang = a.dy === 1 ? 0 : a.dy === -1 ? Math.PI : a.dx === 1 ? -Math.PI / 2 : Math.PI / 2;
+    ctx.save();
+    ctx.translate(alinhar(cx), alinhar(cy));
+    ctx.rotate(ang);
+    const G = ART.grelhaLanca, L = ART.lancas, P = ART.pontas;
+    if (a.estado === 2) ctx.drawImage(L, -L.width, 0, L.width * ESCALA, L.height * ESCALA);
+    ctx.drawImage(G, -G.width, -G.height, G.width * ESCALA, G.height * ESCALA);
+    if (a.estado === 1 && Math.sin(t * 30) > 0) ctx.drawImage(P, -P.width, 2, P.width * ESCALA, P.height * ESCALA); // as pontas a brilhar
+    ctx.restore();
     return;
   }
   if (a.tipo === 'gas') {
     if (!explorado(a.x, a.y)) return;
-    // grelhas nos cantos
     const cantos = [[a.sx + 1, a.sy + 1], [a.sx + a.sw - 2, a.sy + 1], [a.sx + 1, a.sy + a.sh - 2], [a.sx + a.sw - 2, a.sy + a.sh - 2]];
     for (const [gx, gy] of cantos) {
-      const x = gx * TILE + 6, y = gy * TILE + 6;
-      ctx.fillStyle = '#2a3a24'; ctx.fillRect(x, y, TILE - 12, TILE - 12);
-      ctx.fillStyle = '#4a6a3a'; for (let k = 0; k < 3; k++) ctx.fillRect(x + 2, y + 3 + k * 6, TILE - 16, 2);
-      if (a.estado === 1 && Math.random() < 0.3) particulas.push({ x: x + 10, y: y + 10, vx: rand(-20, 20), vy: rand(-40, -10), t: 0.8, cor: 'rgba(125,255,90,0.6)', tam: 6 });
+      const x = (gx + 0.5) * TILE, y = (gy + 0.5) * TILE;
+      spr(ART.grelhaGas, x, y);
+      if (a.estado === 1 && Math.random() < 0.3) particulas.push({ x: x + rand(-6, 6), y, vx: rand(-20, 20), vy: rand(-40, -10), t: 0.8, cor: '#8dff6a', tam: 5 });
     }
-    if (a.estado === 2) { // nuvem verde por cima da sala
-      const x0 = a.sx * TILE, y0 = a.sy * TILE, w = a.sw * TILE, h = a.sh * TILE;
-      ctx.globalAlpha = 0.18 + 0.06 * Math.sin(t * 2);
-      ctx.fillStyle = '#5dff5a'; ctx.fillRect(x0, y0, w, h);
-      ctx.globalAlpha = 0.22;
-      for (let k = 0; k < 10; k++) {
-        const px = x0 + ((k * 97 + t * 20 * (k % 2 ? 1 : -1)) % w + w) % w, py = y0 + ((k * 53) % h);
-        circulo(px, py, 26 + (k % 3) * 8, '#8dff6a');
+    if (a.estado === 2) { // nuvens verdes a passar pela sala
+      const x0 = a.sx * TILE, y0 = a.sy * TILE, w = a.sw * TILE, h = a.sh * TILE, N = ART.nuvemGas;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
+      ctx.globalAlpha = 0.14; ctx.fillStyle = '#5dff5a'; ctx.fillRect(x0, y0, w, h);
+      ctx.globalAlpha = 0.42;
+      const n = Math.max(4, Math.round(a.sw * a.sh / 6));
+      for (let k = 0; k < n; k++) {
+        const px = x0 + (((k * 131) + t * (14 + (k % 3) * 6) * (k % 2 ? 1 : -1)) % (w + 80) + w + 80) % (w + 80) - 40;
+        const py = y0 + ((k * 71) % Math.max(1, h - 20)) + Math.sin(t + k) * 4;
+        ctx.drawImage(N, alinhar(px), alinhar(py), N.width * ESCALA, N.height * ESCALA);
       }
-      ctx.globalAlpha = 1;
+      ctx.restore();
     }
   }
 }

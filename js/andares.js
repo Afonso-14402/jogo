@@ -49,7 +49,6 @@ function talvezDuendeDourado() {
   e.vel = 150;
   e.dano = 0;
   e.xp *= 6;
-  e.tinta = '#ffcf3a';
   e.aura = '#ffd23f';
   e.roubou = 0;
   inimigos.push(e);

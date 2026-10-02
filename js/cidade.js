@@ -627,7 +627,7 @@ function desenharPainelCidade(t) {
   ctx.fillRect(-MARGEM_X, 0, TELA_W, ALTURA);
   painel(100, 130, 760, 420, 'rgba(14,11,22,0.97)', E.cor);
   textoCentro(E.nome, LARGURA / 2 - 80, 164, 28, E.cor);
-  if (cidade.banca) textoDir(`Almas: ${meta.almas || 0}`, 840, 164, 18, '#b48cff');
+  if (cidade.banca) { textoDir(`Almas: ${meta.almas || 0}`, 816, 164, 18, '#b48cff'); sprEcra(ART.alma, 832, 164, 2); }
   else textoDir(`Ouro: ${J.ouro}`, 840, 164, 18, '#ffd23f');
   const info = {
     casa: 'A tua casa na cidade. Aqui descansas e guardas o jogo.',
@@ -644,9 +644,19 @@ function desenharPainelCidade(t) {
     const direita = l.preco != null || l.premio;
     painel(r.x, r.y, r.w, r.h, s ? 'rgba(50,42,72,0.97)' : 'rgba(18,14,28,0.95)', s ? '#ffffff' : l.pronto ? '#ffe14d' : '#3a3150');
     textoEsq(teclaLinha(i) || '', r.x + 10, r.y + r.h / 2 + 1, 13, '#777');
-    textoCentroAjustado(l.aqui ? `${l.txt} (aqui)` : l.txt, r.x + r.w / 2 - (direita ? 40 : 0), r.y + r.h / 2 + 1, 14, l.aqui ? '#777' : l.cor ? l.cor : l.tipo === 'nada' ? '#777' : l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor, r.w - (direita ? 150 : 40));
-    if (l.preco != null && l.almas) textoDir(`${l.preco} almas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, (meta.almas || 0) >= l.preco ? '#b48cff' : '#ff8080');
-    else if (l.preco != null) textoDir(`${l.preco} ouro`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, J.ouro >= l.preco ? '#ffd23f' : '#ff8080');
+    const corTxt = l.aqui ? '#777' : l.cor ? l.cor : l.tipo === 'nada' ? '#777' : l.pronto ? '#ffe14d' : l.tipo === 'contrato' ? '#ddd' : E.cor;
+    const txt = l.aqui ? `${l.txt} (aqui)` : l.txt;
+    if (cidade.tele || (cidade.banca && l.o)) { // com ícone à esquerda: o texto vem logo a seguir
+      const x0 = cidade.tele ? r.x + 26 + r.h - 4 : r.x + 70;
+      textoEsqAjustado(txt, x0, r.y + r.h / 2 + 1, 14, corTxt, r.x + r.w - x0 - (direita ? 90 : 10));
+    } else textoCentroAjustado(txt, r.x + r.w / 2 - (direita ? 40 : 0), r.y + r.h / 2 + 1, 14, corTxt, r.w - (direita ? 150 : 40));
+    if (l.preco != null && l.almas) precoAlmas(l.preco, r.x + r.w - 12, r.y + r.h / 2 + 1, 14, (meta.almas || 0) >= l.preco ? '#b48cff' : '#ff8080', 'dir');
+    if (cidade.banca && l.o) { // ícone do item ou da relíquia
+      if (l.o.item) desenharIcone(l.o.item, r.x + 44, r.y + r.h / 2, 30);
+      else sprEcra(iconeReliquia(l.o.rel), r.x + 44, r.y + r.h / 2, 2);
+    }
+    if (cidade.tele) { const C = temaCidade(l.a); px(r.x + 26, r.y + 6, r.h - 12, r.h - 12, C.relva[0]); sprEcra(ART.arvores[C.arvore], r.x + 26 + (r.h - 12) / 2, r.y + r.h / 2, 1); }
+    else if (l.preco != null && !l.almas) textoDir(`${l.preco} ouro`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, J.ouro >= l.preco ? '#ffd23f' : '#ff8080');
     if (l.premio) textoDir(l.pronto ? `Receber ${l.premio} almas` : `${l.premio} almas`, r.x + r.w - 12, r.y + r.h / 2 + 1, 13, l.pronto ? '#ffe14d' : '#887');
   });
   // quem te atende
@@ -734,83 +744,32 @@ function desenharCidadeMundo(t) {
 }
 
 function desenharArvoreCidade(C, x, y, t) {
-  const [f1, f2] = C.folhas;
-  sombra(x, y + 14, 16);
-  const tri = (ax, ay, bx, by, cx, cy, cor) => { ctx.fillStyle = cor; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx, cy); ctx.closePath(); ctx.fill(); };
-  switch (C.arvore) {
-    case 'morta': // árvore seca, sem folhas
-      ctx.fillStyle = C.tronco; ctx.fillRect(x - 3, y - 26, 6, 40);
-      ctx.fillRect(x - 14, y - 22, 12, 3); ctx.fillRect(x - 14, y - 30, 3, 10); ctx.fillRect(x + 2, y - 16, 12, 3); ctx.fillRect(x + 11, y - 26, 3, 12);
-      break;
-    case 'rocha': // rocha com fendas de lava
-      circulo(x, y - 4, 18, f1); circulo(x - 6, y - 10, 12, f2);
-      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 3 + x); ctx.fillStyle = '#ff7b25'; ctx.fillRect(x - 8, y - 6, 12, 2); ctx.fillRect(x + 2, y - 12, 2, 8); ctx.globalAlpha = 1;
-      break;
-    case 'pinheiro': // pinheiro com neve
-      ctx.fillStyle = C.tronco; ctx.fillRect(x - 3, y, 6, 14);
-      tri(x, y - 40, x - 18, y + 2, x + 18, y + 2, f1); tri(x, y - 40, x - 9, y - 20, x + 9, y - 20, f2);
-      break;
-    case 'salgueiro': // copa caída
-      ctx.fillStyle = C.tronco; ctx.fillRect(x - 4, y - 4, 8, 18);
-      circulo(x, y - 16, 20, f1);
-      ctx.fillStyle = f2; for (let k = -16; k <= 16; k += 6) ctx.fillRect(x + k, y - 12, 2, 18 + (k % 4));
-      break;
-    case 'palmeira':
-      ctx.fillStyle = C.tronco; for (let k = 0; k < 6; k++) ctx.fillRect(x - 3 + k, y - k * 6, 6, 7);
-      for (const [dx, dy] of [[-18, -30], [20, -28], [-14, -40], [14, -42], [0, -46]]) { ctx.strokeStyle = f1; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + 5, y - 34); ctx.lineTo(x + dx, y + dy + 8); ctx.stroke(); }
-      circulo(x + 5, y - 34, 5, f2);
-      break;
-    case 'cristal': // cristais a brilhar
-      ctx.globalAlpha = 0.85 + 0.15 * Math.sin(t * 2 + x);
-      tri(x - 8, y - 34, x - 16, y + 8, x, y + 8, f1); tri(x + 6, y - 24, x - 2, y + 8, x + 14, y + 8, f2); tri(x - 1, y - 44, x - 7, y + 8, x + 5, y + 8, '#ffffff');
-      ctx.globalAlpha = 1;
-      break;
-    case 'obelisco': // obelisco negro com runas
-      ctx.fillStyle = f1; ctx.fillRect(x - 7, y - 34, 14, 48); tri(x, y - 46, x - 7, y - 34, x + 7, y - 34, f1);
-      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 2 + x); ctx.fillStyle = f2; ctx.fillRect(x - 2, y - 26, 4, 4); ctx.fillRect(x - 2, y - 14, 4, 4); ctx.fillRect(x - 2, y - 2, 4, 4); ctx.globalAlpha = 1;
-      break;
-    case 'coluna': // coluna branca com topo dourado
-      ctx.fillStyle = f1; ctx.fillRect(x - 7, y - 34, 14, 48);
-      ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(x - 3, y - 34, 2, 48); ctx.fillRect(x + 2, y - 34, 2, 48);
-      ctx.fillStyle = f2; ctx.fillRect(x - 10, y - 40, 20, 6); ctx.fillRect(x - 10, y + 10, 20, 5);
-      break;
-    case 'ruina': // pedaço de muro partido
-      ctx.fillStyle = f1; ctx.fillRect(x - 14, y - 14, 28, 28); ctx.fillRect(x - 14, y - 24, 10, 12); ctx.fillRect(x + 4, y - 20, 10, 8);
-      ctx.fillStyle = f2; ctx.fillRect(x - 12, y - 4, 10, 6); ctx.fillRect(x + 2, y + 4, 10, 6);
-      break;
-    default: // árvore normal
-      ctx.fillStyle = C.tronco; ctx.fillRect(x - 4, y - 4, 8, 18);
-      circulo(x, y - 14, 20, f1); circulo(x - 6, y - 20, 12, f2);
-  }
+  const c = ART.arvores[C.arvore] || ART.arvores.arvore;
+  sombra(x, y + 12, 16);
+  // as copas mexem-se um bocadinho com o vento (as rochas e colunas não)
+  const balanco = ['arvore', 'pinheiro', 'salgueiro', 'palmeira'].includes(C.arvore) ? Math.round(Math.sin(t * 1.3 + x * 0.05) * 0.6) : 0;
+  spr(c, x + balanco, y + 14 - c.height * ESCALA / 2);
+  if (C.arvore === 'cristal' && Math.random() < 0.02) particulas.push({ x: x + rand(-14, 14), y: y - rand(0, 30), vx: 0, vy: -20, t: 0.8, cor: '#ffffff', tam: 2 });
+  if (C.arvore === 'rocha' && Math.random() < 0.03) particulas.push({ x: x + rand(-8, 8), y: y - 6, vx: 0, vy: -30, t: 0.6, cor: '#ff9b45', tam: 2 });
 }
 
 // Banca do mercado (toldo às riscas com as cores da cidade)
 function desenharBanca(o, t) {
-  const C = mapa.tema || CIDADES[0], x = o.x, y = o.y;
-  sombra(x, y + 18, 30);
-  ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x - 28, y - 30, 4, 46); ctx.fillRect(x + 24, y - 30, 4, 46);
-  ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 30, y - 2, 60, 16);
-  ctx.fillStyle = '#a07040'; ctx.fillRect(x - 30, y - 4, 60, 4);
-  for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#f0e8d0' : C.luz; ctx.fillRect(x - 34 + k * 11.3, y - 40, 11.3, 14); }
-  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(x - 34, y - 28, 68, 2);
-  // mercadorias
-  ctx.fillStyle = C.fonte; ctx.fillRect(x - 20, y - 12, 8, 8);
-  ctx.fillStyle = '#ffcf3a'; ctx.fillRect(x - 6, y - 10, 6, 6);
-  ctx.fillStyle = C.flores[0]; ctx.fillRect(x + 8, y - 12, 7, 8);
-  ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 3); ctx.fillStyle = '#b48cff'; ctx.fillRect(x + 22, y - 22, 3, 3); ctx.globalAlpha = 1;
+  const C = mapa.tema || CIDADES[0];
+  sombra(o.x, o.y + 16, 30);
+  spr(spriteBanca(C.luz), o.x, o.y - 4);
+  if (Math.random() < 0.03) particulas.push({ x: o.x + rand(-18, 18), y: o.y - 6, vx: 0, vy: -25, t: 0.6, cor: '#ffe680', tam: 2 }); // brilho das mercadorias
 }
 
 // Pedra de Teletransporte na praça
 function desenharPedraTeletransporte(o, t) {
   const x = o.x, y = o.y;
-  sombra(x, y + 16, 18);
-  ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 3);
-  circulo(x, y + 10, 26, '#b48cff');
+  sombra(x, y + 18, 18);
+  ctx.globalAlpha = 0.18 + 0.1 * Math.sin(t * 3);
+  circulo(x, y + 12, 28, '#b48cff');
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#4a4058'; ctx.beginPath(); ctx.moveTo(x - 14, y + 14); ctx.lineTo(x - 10, y - 26); ctx.lineTo(x, y - 34); ctx.lineTo(x + 10, y - 26); ctx.lineTo(x + 14, y + 14); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = `rgba(200,150,255,${0.6 + 0.4 * Math.sin(t * 4)})`;
-  ctx.fillRect(x - 2, y - 22, 4, 10); ctx.fillRect(x - 6, y - 8, 12, 3); ctx.fillRect(x - 2, y, 4, 8);
-  if (Math.random() < 0.25) { const a = Math.random() * Math.PI * 2; particulas.push({ x: x + Math.cos(a) * 20, y: y + Math.sin(a) * 8, vx: 0, vy: -40, t: 0.8, cor: '#d0a8ff', tam: 3 }); }
+  spr(ART.pedra[Math.floor(t * 2) % 2], x, y - 4 + Math.round(Math.sin(t * 2)));
+  if (Math.random() < 0.25) { const a = Math.random() * Math.PI * 2; particulas.push({ x: x + Math.cos(a) * 20, y: y + 10 + Math.sin(a) * 8, vx: 0, vy: -40, t: 0.8, cor: '#d0a8ff', tam: 3 }); }
 }
 
 // Os habitantes (entram na lista ordenada pela altura)

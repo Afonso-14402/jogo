@@ -258,17 +258,22 @@ function desenharLojaAlmas(t) {
   if ((menuMeta.aba || 'melhorias') === 'melhorias') return false;
   textoCentro('ALTAR DAS ALMAS', LARGURA / 2 - 40, 34, 30, '#b48cff');
   if (menuMeta.aba === 'loja') {
-    textoCentro(`Tens ${meta.almas} almas  ·  O que comprares fica teu para sempre`, LARGURA / 2, 80, 13, '#aaa', false);
+    sprEcra(ART.alma, LARGURA / 2 - 190, 80, 2);
+    textoCentro(`Tens ${meta.almas} almas  ·  O que comprares fica teu para sempre`, LARGURA / 2, 80, 13, '#ddd', false);
     lojaAlmasVisivel().forEach((o, i) => {
-      const r = retLoja(i), I = infoLoja(o), tem = comprado(o.id), sel = menuMeta.sel === i;
-      painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? I.cor : tem ? '#3a5a3a' : '#3a3150');
+      const r = retLoja(i), I = infoLoja(o), tem = comprado(o.id), sel = menuMeta.sel === i || dentro(r);
+      painel(r.x, r.y, r.w, r.h, sel ? 'rgba(40,34,60,0.97)' : 'rgba(18,14,28,0.95)', sel ? I.cor : tem ? '#3a6a3a' : '#3a3150');
+      // ícone num quadrado escuro
+      px(r.x + 8, r.y + 10, 60, 60, 'rgba(0,0,0,0.35)'); px(r.x + 8, r.y + 10, 60, 3, I.cor);
       const c = o.tipo === 'raca' ? framesHeroi(o.ref, escolhaSkin)[Math.floor(t * 3) % 2] : o.tipo === 'pet' ? SPR.pet[o.ref][0] : null;
-      if (c) sprEcra(c, r.x + 38, r.y + r.h / 2, 3);
-      else if (o.movel) desenharMovel(o.movel, r.x + 38, r.y + r.h / 2 + 4, 1.4);
-      textoEsqAjustado(`${i < 9 ? i + 1 + '. ' : ''}${traduzir(I.nome)}`, r.x + 70, r.y + 22, 14, I.cor, r.w - 78);
-      textoEsqAjustado(I.desc, r.x + 70, r.y + 48, 11, '#ddd', r.w - 78, 'normal');
-      if (tem) textoEsq('COMPRADO', r.x + 70, r.y + r.h - 20, 13, '#5dff7a');
-      else textoEsq(`${I.preco} almas`, r.x + 70, r.y + r.h - 20, 14, (meta.almas || 0) >= I.preco ? '#b48cff' : '#ff6060');
+      if (c) sprEcra(c, r.x + 38, r.y + 42, 3);
+      else if (o.movel) { const m = ART.moveis[o.movel]; const mc = Array.isArray(m) ? m[Math.floor(t * 6) % 2] : m; sprEcra(mc, r.x + 38, r.y + 42, mc.width > 16 ? 2 : 3); }
+      const tipo = { raca: 'Raça', pet: 'Companheiro', movel: 'Móvel' }[o.tipo];
+      textoEsq(tipo, r.x + 76, r.y + 16, 10, '#999', 'normal');
+      textoEsqAjustado(traduzir(I.nome).replace(/^[^:]*:\s*/, ''), r.x + 76, r.y + 34, 14, I.cor, r.w - 84);
+      textoEsqAjustado(I.desc, r.x + 76, r.y + 56, 10, '#ccc', r.w - 84, 'normal');
+      if (tem) textoEsq('✔ COMPRADO', r.x + 76, r.y + r.h - 16, 12, '#5dff7a');
+      else precoAlmas(I.preco, r.x + 76, r.y + r.h - 16, 14, (meta.almas || 0) >= I.preco ? '#b48cff' : '#ff6060');
     });
   } else {
     const T0 = tituloAtual();
@@ -276,8 +281,10 @@ function desenharLojaAlmas(t) {
     TITULOS_HEROI.forEach((T, i) => {
       const r = retTitulo(i), ok = T.ok(), usa = meta.titulo === T.id && ok, sel = menuMeta.sel === i;
       painel(r.x, r.y, r.w, r.h, usa ? 'rgba(50,42,72,0.97)' : sel ? 'rgba(36,30,54,0.97)' : 'rgba(18,14,28,0.95)', usa ? T.cor : ok ? '#4a4060' : '#2a2438');
-      textoEsqAjustado(ok ? T.nome : '???', r.x + 14, r.y + 17, 15, ok ? T.cor : '#555', 240);
-      textoEsqAjustado(T.como, r.x + 14, r.y + 36, 11, ok ? '#ccc' : '#777', 300, 'normal');
+      sprEcra(ok ? ART.medalha : ART.cadeado, r.x + 24, r.y + r.h / 2, 3);
+      if (ok) { ctx.globalAlpha = 0.25; px(r.x + 2, r.y + 2, 4, r.h - 4, T.cor); ctx.globalAlpha = 1; }
+      textoEsqAjustado(ok ? T.nome : '???', r.x + 46, r.y + 17, 15, ok ? T.cor : '#555', 240);
+      textoEsqAjustado(T.como, r.x + 46, r.y + 36, 11, ok ? '#ccc' : '#777', 300, 'normal');
       if (usa) textoDir('EM USO', r.x + r.w - 12, r.y + r.h / 2, 13, T.cor);
       else if (ok) textoDir('Usar', r.x + r.w - 12, r.y + r.h / 2, 13, '#aaa');
     });

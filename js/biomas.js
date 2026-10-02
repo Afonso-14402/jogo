@@ -1025,7 +1025,7 @@ function comprimentoRaio(x, y, ang) {
 // ---------------------------------------------------------------------
 function spriteBioma(e, t) {
   switch (e.tipo) {
-    case 'goblin': return { c: SPR.goblin[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 14)) * 3 : 0, flip: e.roubou ? J.x > e.x : J.x < e.x };
+    case 'goblin': return { c: e.dourado ? ART.duende : SPR.goblin[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 14)) * 3 : 0, flip: e.roubou ? J.x > e.x : J.x < e.x };
     case 'necromante': return { c: SPR.necromante[0], y: -4 + Math.sin(e.t * 2) * 3, flip: J.x < e.x, voa: true };
     case 'salamandra': return { c: SPR.salamandra[0], y: 0, flip: J.x < e.x };
     case 'yeti': return { c: SPR.yeti[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 6)) * 3 : 0 };

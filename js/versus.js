@@ -135,8 +135,15 @@ function acabarVersus() {
 function desenharPlacarVersus() {
   if (!emDuelo() || !['jogo', 'convidado'].includes(estado)) return;
   const V = mapa.versus;
-  painel(LARGURA / 2 - 150, 8, 300, 40, 'rgba(14,11,22,0.92)', '#ff8080');
-  textoCentroAjustado(placarVersus(), LARGURA / 2, 28, 17, '#ffe14d', 280);
+  painel(LARGURA / 2 - 180, 8, 360, 44, 'rgba(14,11,22,0.94)', '#ff8080');
+  const P1 = heroiPrincipal(), p2 = parceiroAtivo();
+  if (P1) sprEcra(framesHeroi(P1.raca, P1.skin)[0], LARGURA / 2 - 160, 30, 2);
+  if (p2) sprEcra(framesHeroi(p2.raca, p2.skin)[0], LARGURA / 2 + 160, 30, 2);
+  textoCentroAjustado(nomeHeroiVersus(0), LARGURA / 2 - 98, 30, 13, P1 ? CLASSES[P1.classe].cor : '#fff', 92);
+  textoCentroAjustado(nomeHeroiVersus(1), LARGURA / 2 + 98, 30, 13, p2 ? CLASSES[p2.classe].cor : '#fff', 92);
+  sprEcra(ART.espadas, LARGURA / 2, 30, 2);
+  textoCentro(`${V.pontos[0]}`, LARGURA / 2 - 36, 30, 22, '#ffe14d');
+  textoCentro(`${V.pontos[1]}`, LARGURA / 2 + 36, 30, 22, '#ffe14d');
   if (V.contagem > 0 && V.contagem < 10 && !V.esperar) textoCentro(`${Math.ceil(V.contagem)}`, LARGURA / 2, ALTURA / 2 - 80, 64, '#ffe14d');
   if (V.esperar) textoCentro('À espera do parceiro...', LARGURA / 2, ALTURA / 2 - 80, 22, '#ffae00');
 }

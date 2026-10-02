@@ -101,43 +101,29 @@ function atualizarEnigmas(dt) {
 function desenharPecaEnigma(o, t) {
   if (o.tipo === 'jaulaEnigma') {
     if (o.resolvido) return true;
-    // baú lá dentro
-    sombra(o.x, o.y + 12, 16);
-    ctx.fillStyle = '#c99a2e'; ctx.fillRect(o.x - 14, o.y - 8, 28, 18);
-    ctx.fillStyle = '#ffd23f'; ctx.fillRect(o.x - 14, o.y - 10, 28, 5); ctx.fillRect(o.x - 2, o.y - 4, 4, 6);
-    // grades
-    ctx.fillStyle = '#5a6478';
-    for (let k = -20; k <= 20; k += 8) ctx.fillRect(o.x + k - 1, o.y - 30, 3, 44);
-    ctx.fillRect(o.x - 22, o.y - 32, 45, 4); ctx.fillRect(o.x - 22, o.y + 12, 45, 4);
-    if (o.variante === 'placas' && o.tempo > 0) { ctx.globalAlpha = 0.8; aro(o.x, o.y - 6, 30, '#4dc3ff', 3); ctx.globalAlpha = 1; }
+    sombra(o.x, o.y + 14, 20);
+    spr(ART.jaula, o.x, o.y - 4);
+    if (Math.random() < 0.04) particulas.push({ x: o.x + rand(-8, 8), y: o.y - 2, vx: 0, vy: -20, t: 0.6, cor: '#ffe680', tam: 2 });
+    if (o.variante === 'placas' && o.tempo > 0) { // o tempo a acabar: um anel que encolhe
+      ctx.globalAlpha = 0.8; aro(o.x, o.y - 4, 18 + 22 * (o.tempo / TEMPO_PLACAS), '#4dc3ff', 3); ctx.globalAlpha = 1;
+    }
     return true;
   }
   if (o.tipo === 'placa') {
-    ctx.fillStyle = '#3a3448'; ctx.fillRect(o.x - 13, o.y - 13, 26, 26);
-    ctx.fillStyle = o.acesa ? '#4dc3ff' : '#5a5468'; ctx.fillRect(o.x - 10, o.y - 10, 20, 20);
-    if (o.acesa) { ctx.globalAlpha = 0.35 + 0.2 * Math.sin(t * 6); circulo(o.x, o.y, 18, '#9fdcff'); ctx.globalAlpha = 1; }
+    spr(ART.placa[o.acesa ? 1 : 0], o.x, o.y);
+    if (o.acesa) { ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 6); circulo(o.x, o.y, 16, '#9fdcff'); ctx.globalAlpha = 1; }
     return true;
   }
   if (o.tipo === 'alavanca') {
     sombra(o.x, o.y + 10, 10);
-    ctx.fillStyle = '#4a4458'; ctx.fillRect(o.x - 10, o.y + 2, 20, 8);
-    const a = o.ligada ? -0.6 : 0.6;
-    ctx.strokeStyle = '#8a7a5a'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(o.x, o.y + 4); ctx.lineTo(o.x + Math.sin(a) * 18, o.y + 4 - Math.cos(a) * 18); ctx.stroke();
-    circulo(o.x + Math.sin(a) * 18, o.y + 4 - Math.cos(a) * 18, 5, o.ligada ? '#5dff7a' : '#ff5050');
+    spr(ART.alavanca[o.ligada ? 1 : 0], o.x, o.y - 2);
     return true;
   }
   if (o.tipo === 'estatuaRodar') {
-    sombra(o.x, o.y + 14, 14);
-    ctx.fillStyle = '#6a6478'; ctx.fillRect(o.x - 12, o.y - 4, 24, 18);
-    ctx.fillStyle = '#8a8498'; ctx.fillRect(o.x - 9, o.y - 22, 18, 20);
-    const [dx, dy] = DIRS4[o.dir];
-    ctx.fillStyle = o.dir === o.certa ? '#5dff7a' : '#ffe14d'; // os olhos/seta mostram para onde olha
-    ctx.beginPath();
-    ctx.moveTo(o.x + dx * 18, o.y - 12 + dy * 18);
-    ctx.lineTo(o.x - dy * 7, o.y - 12 + dx * 7);
-    ctx.lineTo(o.x + dy * 7, o.y - 12 - dx * 7);
-    ctx.closePath(); ctx.fill();
+    sombra(o.x, o.y + 12, 12);
+    const E = ART.estatua[o.dir === o.certa ? 1 : 0];
+    const c = o.dir === 0 ? E.costas : o.dir === 2 ? E.frente : E.lado;
+    spr(c, o.x, o.y - 6, o.dir === 3);
     return true;
   }
   return false;
