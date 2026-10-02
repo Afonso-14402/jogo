@@ -1950,5 +1950,17 @@ const ES = {
   "Para a próxima sê mais rápido": "La próxima vez sé más rápido",
   "Apanhaste o Duende Dourado!": "¡Atrapaste al Duende Dorado!",
   "Tesouro, um Baú Dourado e ": "Tesoro, un Cofre Dorado y ",
+  "Sala do Enigma": "Sala del Enigma",
+  "Resolve o enigma para abrir a jaula do tesouro": "Resuelve el enigma para abrir la jaula del tesoro",
+  "ENIGMA RESOLVIDO!": "¡ENIGMA RESUELTO!",
+  "A jaula abriu-se: o Baú Dourado é teu": "La jaula se abrió: el Cofre Dorado es tuyo",
+  "Demasiado lento!": "¡Demasiado lento!",
+  "Jaula do tesouro": "Jaula del tesoro",
+  "Pisa todas as placas em ": "Pisa todas las placas en ",
+  " segundos": " segundos",
+  "Acende todas as alavancas (cada uma muda as do lado)": "Enciende todas las palancas (cada una cambia las de al lado)",
+  "Roda as estátuas até olharem todas para a jaula": "Gira las estatuas hasta que todas miren a la jaula",
+  ": Puxar a alavanca": ": Tirar de la palanca",
+  ": Rodar a estátua": ": Girar la estatua",
 };
 const LISTA_ES = Object.entries(ES).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length);

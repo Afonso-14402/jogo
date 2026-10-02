@@ -1024,6 +1024,18 @@ const EN = {
   "Para a próxima sê mais rápido": "Be faster next time",
   "Apanhaste o Duende Dourado!": "You caught the Golden Goblin!",
   "Tesouro, um Baú Dourado e ": "Treasure, a Golden Chest and ",
+  "Sala do Enigma": "Puzzle Room",
+  "Resolve o enigma para abrir a jaula do tesouro": "Solve the puzzle to open the treasure cage",
+  "ENIGMA RESOLVIDO!": "PUZZLE SOLVED!",
+  "A jaula abriu-se: o Baú Dourado é teu": "The cage opened: the Golden Chest is yours",
+  "Demasiado lento!": "Too slow!",
+  "Jaula do tesouro": "Treasure cage",
+  "Pisa todas as placas em ": "Step on all the plates in ",
+  " segundos": " seconds",
+  "Acende todas as alavancas (cada uma muda as do lado)": "Turn on all the levers (each one flips its neighbours)",
+  "Roda as estátuas até olharem todas para a jaula": "Turn the statues until they all face the cage",
+  ": Puxar a alavanca": ": Pull the lever",
+  ": Rodar a estátua": ": Turn the statue",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.

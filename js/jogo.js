@@ -537,6 +537,7 @@ function popularAndar() {
   const salaDesafio = andar >= 2 && Math.random() < 0.3 ? marcar('desafio') : null;
   const salaEnc = (andar % 5 === 2 || (andar >= 2 && Math.random() < 0.2)) ? marcar('encantamento') : null;
   criarSalaPacto(marcar);
+  criarSalaEnigma(marcar); // enigmas.js
   const salaPet = (!J.pet && (andar === 2 || (andar > 2 && Math.random() < 0.3))) ? marcar('companheiro') : null;
   if (salaPet) {
     const c = centroPx(salaPet);
@@ -568,7 +569,7 @@ function popularAndar() {
   }
 
   // Inimigos (a loja e o tesouro não recebem inimigos normais)
-  let salas = mapa.salas.filter(s => s !== mapa.salaInicio && !['loja', 'tesouro', 'diabo', 'anjo'].includes(s.tipo));
+  let salas = mapa.salas.filter(s => s !== mapa.salaInicio && !['loja', 'tesouro', 'diabo', 'anjo', 'enigma'].includes(s.tipo));
   encherSalaSecreta();
   criarPortalNoAndar(salas);
   criarPortaDupla(salas);
@@ -1123,6 +1124,7 @@ function atualizar(dt) {
   drops = drops.filter(d => !d.morto);
   for (const b of baus) b.t += dt;
   atualizarArmadilhas(dt);
+  atualizarEnigmas(dt);
   atualizarBioma(dt);
   atualizarPet(dt);
   if (J.ouro >= 1000) desbloquear('rico');
@@ -1222,6 +1224,8 @@ function usarObjeto(o) {
   if (o.tipo === 'edificio') { abrirEdificio(o.id); return; }
   if (o.tipo === 'teleporte') { abrirTeletransporte(); return; }
   if (o.tipo === 'banca') { abrirBanca(); return; }
+  if (o.tipo === 'alavanca' || o.tipo === 'estatuaRodar') { usarPecaEnigma(o); return; }
+  if (o.tipo === 'placa' || o.tipo === 'jaulaEnigma') return;
   if (o.tipo === 'aldeao') { falarAldeao(o); return; }
   if (o.tipo === 'estatua') return;
   if (o.tipo === 'mercador') { abrirLoja(o); return; }
