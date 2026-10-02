@@ -28,7 +28,8 @@ const path = require('path');
       const dtm = desenharTextosMundo;
       desenharTextosMundo = function (...a) { window._ign = true; try { return dtm.apply(this, a); } finally { window._ign = false; } };
       CanvasRenderingContext2D.prototype.fillText = function (txt, x, y, ...r) {
-        if (this.canvas === canvas && !window._ign && txt && String(txt).trim().length > 1 && !(estado === 'bau' && y > 90 && y < 300)) {
+        const m0 = this.getTransform(), yEcra = m0.d * y + m0.f; // (a faixa da roleta pode sair do ecrã)
+        if (this.canvas === canvas && !window._ign && txt && String(txt).trim().length > 1 && !(estado === 'bau' && yEcra > 90 && yEcra < 300)) {
           const w = this.measureText(txt).width, m = this.getTransform();
           const esq = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x;
           const x0 = m.a * esq + m.e, x1 = m.a * (esq + w) + m.e, yy = m.d * y + m.f;
