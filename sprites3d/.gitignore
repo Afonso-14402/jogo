@@ -1,0 +1,7 @@
+render/
+saida/
+s16/
+s32/
+__pycache__/
+*.pyc
+hd/

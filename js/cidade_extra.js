@@ -44,7 +44,7 @@ function desenharInteriorCasa(t) {
   px(X + 430, Y + 92, 260, 8, '#3a2618'); px(X + 440, Y + 100, 8, 14, '#3a2618'); px(X + 672, Y + 100, 8, 14, '#3a2618');
   BOSSES.slice(0, 8).forEach((b, i) => {
     const c = SPR[b.id] && SPR[b.id][0];
-    if (c && meta.trofeus && meta.trofeus[b.id]) sprEcra(c, X + 456 + i * 31, Y + 76, Math.max(1, Math.floor(26 / Math.max(c.width, c.height))));
+    if (c && meta.trofeus && meta.trofeus[b.id]) sprEcra(c, X + 456 + i * 31, Y + 76, Math.max(1, Math.floor(26 / ladoSpr(c))));
   });
   const M = ART.moveis, tem = id => comprado('movel_' + id);
   if (tem('quadro')) sprEcra(M.quadro, X + 150, Y + 60, 4);

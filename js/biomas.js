@@ -460,7 +460,7 @@ function decorarMapa(m, g, T, nAndar) {
         if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 > 1 || solido(m, x, y)) continue;
         if (perto(x, y, m.escada, 60) || perto(x, y, m.inicio, 60)) continue;
         m.lama.add(y * m.W + x);
-        g.drawImage(SPR.lama, x * T, y * T);
+        desenharEm(g, SPR.lama, x * T, y * T);
       }
     }
   }
@@ -470,7 +470,7 @@ function decorarMapa(m, g, T, nAndar) {
     if (h % 100 >= 6) continue;
     if (perto(x, y, m.escada, 50) || perto(x, y, m.inicio, 50)) continue;
     const d = decos[(h >> 7) % decos.length];
-    g.drawImage(d.c, x * T, y * T);
+    desenharEm(g, d.c, x * T, y * T);
     if (d.luz) m.luzes.push({ x: (x + 0.5) * TILE, y: (y + 0.6) * TILE, cor: d.luz });
   }
 }
@@ -1025,18 +1025,18 @@ function comprimentoRaio(x, y, ang) {
 // ---------------------------------------------------------------------
 function spriteBioma(e, t) {
   switch (e.tipo) {
-    case 'goblin': return { c: e.dourado ? ART.duende : SPR.goblin[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 14)) * 3 : 0, flip: e.roubou ? J.x > e.x : J.x < e.x };
-    case 'necromante': return { c: SPR.necromante[0], y: -4 + Math.sin(e.t * 2) * 3, flip: J.x < e.x, voa: true };
-    case 'salamandra': return { c: SPR.salamandra[0], y: 0, flip: J.x < e.x };
-    case 'yeti': return { c: SPR.yeti[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 6)) * 3 : 0 };
-    case 'sapo': return { c: SPR.sapo[0], y: -(e.z || 0) };
+    case 'goblin': return { c: e.dourado ? ART.duende : (e.acordado ? frameAnim(SPR.goblin, e.t, 10) : SPR.goblin[0]), y: e.acordado ? -Math.abs(Math.sin(e.t * 14)) * 3 : 0, flip: e.roubou ? J.x > e.x : J.x < e.x };
+    case 'necromante': return { c: frameAnim(SPR.necromante, e.t, 5), y: -4 + Math.sin(e.t * 2) * 3, flip: J.x < e.x, voa: true };
+    case 'salamandra': return { c: e.acordado ? frameAnim(SPR.salamandra, e.t, 12) : SPR.salamandra[0], y: 0, flip: J.x < e.x };
+    case 'yeti': return { c: e.acordado ? frameAnim(SPR.yeti, e.t, 6) : SPR.yeti[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 6)) * 3 : 0 };
+    case 'sapo': return { c: frameAnim(SPR.sapo, e.t, 2), y: -(e.z || 0) };
     case 'planta': return { c: SPR.planta[e.boca > 0 ? 0 : 1], y: 0 };
-    case 'mumia': return { c: SPR.mumia[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 4)) * 2 : 0 };
-    case 'escorpiao': return { c: SPR.escorpiao[0], y: 0 };
-    case 'golemCristal': return { c: SPR.golemCristal[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 5)) * 2 : 0 };
-    case 'espiritoCristal': return { c: SPR.espiritoCristal[0], y: -10 + Math.sin(e.t * 3) * 4, voa: true };
-    case 'olhoVazio': return { c: SPR.olhoVazio[0], y: -10 + Math.sin(e.t * 2) * 5, voa: true };
-    case 'sombra': return { c: SPR.sombra[0], y: -4 + Math.sin(e.t * 3) * 2, voa: true };
+    case 'mumia': return { c: e.acordado ? frameAnim(SPR.mumia, e.t, 4) : SPR.mumia[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 4)) * 2 : 0 };
+    case 'escorpiao': return { c: e.acordado ? frameAnim(SPR.escorpiao, e.t, 8) : SPR.escorpiao[0], y: 0 };
+    case 'golemCristal': return { c: e.acordado ? frameAnim(SPR.golemCristal, e.t, 5) : SPR.golemCristal[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 5)) * 2 : 0 };
+    case 'espiritoCristal': return { c: frameAnim(SPR.espiritoCristal, e.t, 6), y: -10 + Math.sin(e.t * 3) * 4, voa: true };
+    case 'olhoVazio': return { c: frameAnim(SPR.olhoVazio, e.t, 5), y: -10 + Math.sin(e.t * 2) * 5, voa: true };
+    case 'sombra': return { c: frameAnim(SPR.sombra, e.t, 6), y: -4 + Math.sin(e.t * 3) * 2, voa: true };
   }
   return null;
 }

@@ -201,8 +201,10 @@ function renderizarMapa(m, andar) {
   const L = ladrilhosZona(andar);
   const T = TILE / ESCALA;
   const c = document.createElement('canvas');
-  c.width = m.W * T; c.height = m.H * T;
+  c.width = m.W * T * HD_PX; c.height = m.H * T * HD_PX; // com o dobro dos pixels (decoração HD)
   const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.scale(HD_PX, HD_PX); // continua a desenhar-se em pixels antigos
   g.fillStyle = '#07060a';
   g.fillRect(0, 0, c.width, c.height);
   m.tochas = [];
@@ -212,7 +214,7 @@ function renderizarMapa(m, andar) {
       const h = (x * 73856093) ^ (y * 19349663);
       if (!solido(m, x, y)) {
         const v = Math.abs(h) % 17;
-        g.drawImage(L.chaos[v === 0 ? 1 : v === 1 ? 2 : v === 2 ? 3 : 0], px, py);
+        desenharEm(g, L.chaos[v === 0 ? 1 : v === 1 ? 2 : v === 2 ? 3 : 0], px, py);
         if (solido(m, x, y - 1)) { // sombra da parede de cima
           g.fillStyle = 'rgba(0,0,0,0.35)';
           g.fillRect(px, py, T, 3);
@@ -229,10 +231,10 @@ function renderizarMapa(m, andar) {
           if (!solido(m, x + dx, y + dy)) vizinhoChao = true;
       if (!vizinhoChao) continue;
       if (!solido(m, x, y + 1)) {
-        g.drawImage(Math.abs(h) % 7 === 3 ? L.faceAlt : L.face, px, py);
+        desenharEm(g, Math.abs(h) % 7 === 3 ? L.faceAlt : L.face, px, py);
         detalheParedeExtra(g, px, py, T, zonaDoAndar(andar), Math.abs(h)); // rachaduras, correntes, estandartes...
         if (!m.eBoss && Math.abs(h) % 19 === 0) m.tochas.push({ x: (x + 0.5) * TILE, y: y * TILE + 12 });
-      } else g.drawImage(L.topo, px, py);
+      } else desenharEm(g, L.topo, px, py);
     }
   }
   if (m.eBoss) for (const tx of [6, 12, 23, 29]) m.tochas.push({ x: (tx + 0.5) * TILE, y: TILE + 12 });

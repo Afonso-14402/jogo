@@ -451,6 +451,7 @@ const EN = {
   'Pequeno': 'Small', 'Grande': 'Large', 'Visibilidade dos botões': 'Button visibility', 'Transparente': 'Transparent',
   'Forte': 'Strong', 'À direita (canhoto)': 'Right (left-handed)', 'À esquerda': 'Left', 'Joystick (direita)': 'Joystick (right)',
   'Vibração': 'Vibration', 'Não suportada': 'Not supported', 'Desligada': 'Off', 'Ligada': 'On', 'Desligado': 'Off', 'Ligado': 'On',
+  'Gráficos': 'Graphics', 'Alto detalhe': 'High detail', 'Normal (mais leve)': 'Normal (lighter)',
   'Poupança de bateria': 'Battery saver', 'Som do jogo': 'Sound', 'Ecrã inteiro': 'Fullscreen', 'Já está (app)': 'Already (app)',
   'Ver outra vez': 'Show again', 'Toca numa opção para a mudar': 'Tap an option to change it', 'Como fica': 'Preview',
   'O tutorial começa quando voltares ao jogo': 'The tutorial starts when you go back to the game',

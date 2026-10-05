@@ -1116,6 +1116,7 @@ const ES = {
   "Desligada": "Desactivada",
   "Ligada": "Activada",
   "Ligado": "Activado",
+  "Gráficos": "Gráficos", "Alto detalhe": "Alto detalle", "Normal (mais leve)": "Normal (más ligero)",
   "Poupança de bateria": "Ahorro de batería",
   "Som do jogo": "Sonido del juego",
   "Ecrã inteiro": "Pantalla completa",

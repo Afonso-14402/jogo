@@ -97,6 +97,7 @@ function virarH(c) {
   x.translate(c.width, 0);
   x.scale(-1, 1);
   x.drawImage(c, 0, 0);
+  n.hd = c.hd;
   return n;
 }
 
@@ -349,6 +350,8 @@ function gerarHeroi(raca, skinId) {
 
 const cacheHerois = {};
 function framesHeroi(raca = 'humano', skin = 'azul') {
+  const hd = typeof heroiHD === 'function' && heroiHD(raca, skin);
+  if (hd) return hd.antigo;
   const k = raca + '|' + skin;
   if (!cacheHerois[k]) cacheHerois[k] = gerarHeroi(raca, skin);
   return cacheHerois[k];
@@ -1357,12 +1360,14 @@ function iconeItem(it) {
   const nome = iconeDoItem(it);
   const cor = RARIDADES[it.r].cor;
   const k = nome + cor;
-  if (!cacheIcones[k]) cacheIcones[k] = gerarIcone(nome, cor);
+  if (!cacheIcones[k]) cacheIcones[k] = (typeof iconeHD === 'function' && iconeHD(nome, cor)) || gerarIcone(nome, cor);
   return cacheIcones[k];
 }
 
 function ladrilhosZona(andar) {
   const i = zonaDoAndar(andar);
+  const hd = typeof ladrilhosHD === 'function' && ladrilhosHD(i);
+  if (hd) return hd;
   if (!cacheLadrilhos[i]) cacheLadrilhos[i] = gerarLadrilhos(ZONAS[i]);
   return cacheLadrilhos[i];
 }
@@ -1385,6 +1390,7 @@ function silhueta(c, cor) {
     x.globalCompositeOperation = 'source-in';
     x.fillStyle = cor;
     x.fillRect(0, 0, n.width, n.height);
+    n.hd = c.hd;
     porCor[cor] = n;
   }
   return porCor[cor];

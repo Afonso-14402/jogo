@@ -296,7 +296,7 @@ function tocarRachada(x, y, raio) {
   mapa.oculto = null;
   mapa.rachada = null;
   const T = TILE / ESCALA, g = mapaImg.getContext('2d');
-  g.drawImage(ladrilhosZona(andar).chaos[0], r.x * T, r.y * T);
+  desenharEm(g, ladrilhosZona(andar).chaos[0], r.x * T, r.y * T);
   reiniciarCampo();
   revelar(mapa, cx, cy, 4);
   explosao(cx, cy, '#8a8176', 30, 220, 6);
@@ -500,7 +500,7 @@ function desenharColecaoExtra() {
     LISTA_MONSTROS.forEach((id, i) => {
       const r = retMonstro(i), viu = (meta.vistos || {})[id], sel = menuMeta.sel === i;
       painel(r.x, r.y, r.w, r.h, sel ? 'rgba(44,38,66,0.97)' : 'rgba(18,14,28,0.95)', sel ? '#ffffff' : viu ? corMonstro(id) : '#2e2640');
-      const c = SPR[id][0], esc = Math.max(1, Math.floor(56 / Math.max(c.width, c.height)));
+      const c = SPR[id][0], esc = Math.max(1, Math.floor(56 / ladoSpr(c)));
       sprEcra(viu ? c : silhueta(c, '#2a2238'), r.x + r.w / 2, r.y + r.h / 2, Math.min(3, esc));
       if (!viu) textoCentro('?', r.x + r.w / 2, r.y + r.h / 2, 16, '#555', false);
     });
@@ -508,7 +508,7 @@ function desenharColecaoExtra() {
     if (id) {
       painel(160, 400, 640, 200, 'rgba(14,11,22,0.96)', viu ? corMonstro(id) : '#3a3150');
       if (viu) {
-        const c = SPR[id][0], esc = Math.max(1, Math.floor(100 / Math.max(c.width, c.height)));
+        const c = SPR[id][0], esc = Math.max(1, Math.floor(100 / ladoSpr(c)));
         sprEcra(c, 240, 490, Math.min(5, esc));
         const d = INIMIGOS[id];
         textoEsq(nomeMonstro(id), 330, 432, 20, corMonstro(id));

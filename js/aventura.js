@@ -130,7 +130,7 @@ function atualizarRestos(dt) {
   restos = restos.filter(r => r.t > 0);
 }
 function desenharResto(r) {
-  const k = r.t / r.dur, h = r.c.height * ESCALA, pe = r.y + h / 2;
+  const k = r.t / r.dur, h = r.c.height * escSpr(r.c), pe = r.y + h / 2;
   ctx.save();
   ctx.translate(r.x, pe);
   ctx.scale(1 + (1 - k) * 0.5, k);

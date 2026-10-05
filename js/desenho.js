@@ -25,8 +25,10 @@ function escreverApertado(txt, x, y, tam, f) {
 try { if (document.fonts) { document.fonts.load(fonte(16)); document.fonts.load(fonte(16, 'normal')); } } catch (e) { /* ignora */ }
 
 let LB = LARGURA / ESCALA, AB = ALTURA / ESCALA;
+// O buffer do mundo tem DETALHE (js/sprites_hd.js) vezes mais pixels: os sprites antigos
+// ocupam 2x2 pixels cada e ficam iguais; os sprites HD usam cada pixel e têm o dobro do detalhe.
 const bufMundo = document.createElement('canvas');
-bufMundo.width = LB; bufMundo.height = AB;
+bufMundo.width = LB * DETALHE; bufMundo.height = AB * DETALHE;
 const ctxMundo = bufMundo.getContext('2d');
 // a luz é suave: calcula-se a metade da resolução (muito mais rápido)
 const RES_LUZ = 2;
@@ -37,8 +39,8 @@ const ctxLuz = bufLuz.getContext('2d');
 // Tamanho dos buffers do mundo (muda quando o ecrã do telemóvel muda)
 function ajustarBuffers() {
   LB = Math.ceil(vistaW() / ESCALA); AB = Math.ceil(vistaH() / ESCALA);
-  if (bufMundo.width !== LB || bufMundo.height !== AB) {
-    bufMundo.width = LB; bufMundo.height = AB;
+  if (bufMundo.width !== LB * DETALHE || bufMundo.height !== AB * DETALHE) {
+    bufMundo.width = LB * DETALHE; bufMundo.height = AB * DETALHE;
     bufLuz.width = Math.ceil(LB / RES_LUZ); bufLuz.height = Math.ceil(AB / RES_LUZ);
   }
 }
@@ -199,6 +201,7 @@ function botao(r, txt, cor, fundo = 'rgba(18,14,28,0.95)', icone = null) {
 
 // Desenha um sprite ampliado num número inteiro de vezes (ecrã)
 function sprEcra(c, x, y, escala, centro = true) {
+  if (c.hd) escala /= HD_PX; // sprite HD: mesmo tamanho, mais detalhe
   const w = c.width * escala, h = c.height * escala;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(c, Math.round(centro ? x - w / 2 : x), Math.round(centro ? y - h / 2 : y), w, h);
@@ -259,8 +262,8 @@ const alinhar = v => Math.round(v / ESCALA) * ESCALA;
 
 // sprite centrado em (x, y), em coordenadas do mundo
 function spr(c, x, y, flip = false) {
-  const w = c.width * ESCALA, h = c.height * ESCALA;
-  const dx = alinhar(x - w / 2), dy = alinhar(y - h / 2);
+  const e = escSpr(c), w = c.width * e, h = c.height * e, al = c.hd ? alinharHD : alinhar;
+  const dx = al(x - w / 2), dy = al(y - h / 2);
   if (flip) {
     ctx.save();
     ctx.translate(dx + w, dy);
@@ -269,6 +272,9 @@ function spr(c, x, y, flip = false) {
     ctx.restore();
   } else ctx.drawImage(c, dx, dy, w, h);
 }
+
+// sprites HD: cada pixel do sprite vale meio pixel antigo
+const alinharHD = v => Math.round(v * DETALHE / ESCALA) * ESCALA / DETALHE;
 
 function sprCor(c, x, y, flip, cor, alpha) {
   ctx.globalAlpha = alpha;
@@ -342,11 +348,13 @@ function desenhar(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = '#07060a';
-  ctx.fillRect(0, 0, LB, AB);
-  ctx.setTransform(1 / ESCALA, 0, 0, 1 / ESCALA, -vista.x / ESCALA, -vista.y / ESCALA);
+  ctx.fillRect(0, 0, bufMundo.width, bufMundo.height);
+  const kd = DETALHE / ESCALA;
+  ctx.setTransform(kd, 0, 0, kd, -vista.x * kd, -vista.y * kd);
   desenharMundo(t);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.setTransform(DETALHE, 0, 0, DETALHE, 0, 0); // a luz continua a ser calculada em pixels antigos
   desenharLuz(t);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   ctx = ctxTela;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -699,16 +707,27 @@ function desenharJogador(t) {
   if (armaAtras) desenharArma(ang);
   if (piscar) ctx.globalAlpha = 0.4;
   if (J.furtivo > 0) ctx.globalAlpha = 0.3 + 0.1 * Math.sin(t * 8);
-  const c = framesHeroi(J.raca, J.skin)[frame];
+  // Sprite HD (32x32, 4 direções) quando existe para esta raça/skin; senão o antigo
+  const HD = heroiHD(J.raca, J.skin);
+  let c, flip = olhaEsq, desenha = spr;
+  if (HD) {
+    const dx = J.golpe ? Math.cos(ang) : J.dirX, dy = J.golpe ? Math.sin(ang) : J.dirY;
+    const dir = Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'baixo' : 'cima') : (dx < 0 ? 'esquerda' : 'direita');
+    if (J.golpe && !J.golpe.giro) c = HD.ataque[dir][Math.min(5, Math.floor((1 - J.golpe.t / J.golpe.dur) * 6))];
+    else if (J.andando) c = HD.anda[dir][Math.floor(tempoJogo * 12) % 8];
+    else c = HD.parado[dir][0];
+    flip = false;
+  } else c = framesHeroi(J.raca, J.skin)[frame];
+  const cor = (k, a) => { ctx.globalAlpha = a; desenha(silhueta(c, k), J.x, J.y - 4, flip); ctx.globalAlpha = 1; };
   const P = poseHeroi(t); // estocada, dor e respiração
   ctx.save();
   ctx.translate(J.x + P.ox, J.y + 12 + P.oy); ctx.scale(P.sx, P.sy); ctx.translate(-J.x, -J.y - 12);
-  spr(c, J.x, J.y - 4, olhaEsq);
-  if (J.armadura) sprCor(c, J.x, J.y - 4, olhaEsq, RARIDADES[J.armadura.r].cor, 0.18);
-  if (J.lentoT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.4);
-  if (J.veneno > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#5dff3a', 0.3 + Math.sin(t * 8) * 0.1);
-  if (J.formaBestial > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ffffff', 0.45 + Math.sin(t * 10) * 0.15);
-  if (J.dorT > 0) sprCor(c, J.x, J.y - 4, olhaEsq, '#ff3030', 0.55);
+  desenha(c, J.x, J.y - 4, flip);
+  if (J.armadura) cor(RARIDADES[J.armadura.r].cor, 0.18);
+  if (J.lentoT > 0) cor('#ffffff', 0.4);
+  if (J.veneno > 0) cor('#5dff3a', 0.3 + Math.sin(t * 8) * 0.1);
+  if (J.formaBestial > 0) cor('#ffffff', 0.45 + Math.sin(t * 10) * 0.15);
+  if (J.dorT > 0) cor('#ff3030', 0.55);
   ctx.restore();
   if (J.bebeuT > 0) { ctx.globalAlpha = J.bebeuT; aro(J.x, J.y - 2, 26 - J.bebeuT * 10, '#5dff7a', 3); ctx.globalAlpha = 1; }
   if (J.escudoTitan > 0) { ctx.globalAlpha = 0.5; aro(J.x, J.y - 2, 24, '#c0a060', 3); ctx.globalAlpha = 1; }
@@ -742,20 +761,20 @@ function spriteInimigo(e, t) {
       const pulo = e.acordado && e.t % 1.1 < 0.45;
       return { c: SPR.slime[pulo ? 0 : 1], y: pulo ? -Math.sin((e.t % 1.1) / 0.45 * Math.PI) * 10 : 0 };
     }
-    case 'morcego': return { c: SPR.morcego[Math.floor(e.t * 10) % 2], y: -10 + Math.sin(e.t * 6) * 3, voa: true };
-    case 'esqueleto': return { c: SPR.esqueleto[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 9)) * 3 : 0, flip: J.x < e.x };
-    case 'orc': return { c: SPR.orc[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 8)) * 3 : 0 };
-    case 'fantasma': return { c: SPR.fantasma[Math.floor(e.t * 2.5) % 2], y: -6 + Math.sin(e.t * 2) * 4, alpha: 0.75, voa: true };
-    case 'aranha': return { c: SPR.aranha[Math.floor(e.t * 10) % 2], y: 0 };
-    case 'mimico': return { c: SPR.mimico[Math.floor(e.t * 8) % 2], y: 0 };
-    case 'zumbi': return { c: SPR.zumbi[0], y: e.caido > 0 ? 8 : e.acordado ? -Math.abs(Math.sin(e.t * 5)) * 2 : 0, alpha: e.caido > 0 ? 0.5 : 0, flip: Math.sin(e.t * 2.5) > 0 };
-    case 'diabrete': return { c: SPR.diabrete[0], y: -8 + Math.sin(e.t * 7) * 3, voa: true, flip: J.x < e.x };
+    case 'morcego': return { c: frameAnim(SPR.morcego, e.t, 14), y: -10 + Math.sin(e.t * 6) * 3, voa: true };
+    case 'esqueleto': return { c: e.acordado ? frameAnim(SPR.esqueleto, e.t, 8) : SPR.esqueleto[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 9)) * 3 : 0, flip: J.x < e.x };
+    case 'orc': return { c: e.acordado ? frameAnim(SPR.orc, e.t, 8) : SPR.orc[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 8)) * 3 : 0 };
+    case 'fantasma': return { c: frameAnim(SPR.fantasma, e.t, SPR.fantasma.length > 2 ? 6 : 2.5), y: -6 + Math.sin(e.t * 2) * 4, alpha: 0.75, voa: true };
+    case 'aranha': return { c: frameAnim(SPR.aranha, e.t, 12), y: 0 };
+    case 'mimico': return { c: frameAnim(SPR.mimico, e.t, 10), y: 0 };
+    case 'zumbi': return { c: e.acordado && !(e.caido > 0) ? frameAnim(SPR.zumbi, e.t, 5) : SPR.zumbi[0], y: e.caido > 0 ? 8 : e.acordado ? -Math.abs(Math.sin(e.t * 5)) * 2 : 0, alpha: e.caido > 0 ? 0.5 : 0, flip: Math.sin(e.t * 2.5) > 0 };
+    case 'diabrete': return { c: frameAnim(SPR.diabrete, e.t, 12), y: -8 + Math.sin(e.t * 7) * 3, voa: true, flip: J.x < e.x };
     case 'slimeLava': {
       const pulo = e.acordado && e.t % 1.0 < 0.45;
       return { c: SPR.slimeLava[pulo ? 0 : 1], y: pulo ? -Math.sin((e.t % 1.0) / 0.45 * Math.PI) * 10 : 0 };
     }
-    case 'loboGelo': return { c: SPR.loboGelo[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 12)) * 3 : 0, flip: J.x < e.x };
-    case 'elementalGelo': return { c: SPR.elementalGelo[0], y: -10 + Math.sin(e.t * 3) * 4, voa: true };
+    case 'loboGelo': return { c: e.acordado ? frameAnim(SPR.loboGelo, e.t, 12) : SPR.loboGelo[0], y: e.acordado ? -Math.abs(Math.sin(e.t * 12)) * 3 : 0, flip: J.x < e.x };
+    case 'elementalGelo': return { c: frameAnim(SPR.elementalGelo, e.t, 6), y: -10 + Math.sin(e.t * 3) * 4, voa: true };
     case 'reiSlime': return { c: SPR.reiSlime[e.salto > 0 ? 0 : Math.floor(t * 1.5) % 2], y: -e.z };
     case 'lich': return { c: SPR.lich[0], y: Math.sin(t * 2) * 4 };
     case 'dragao': return { c: SPR.dragao[0], y: 0 };
@@ -780,7 +799,7 @@ function desenharInimigo(e, t) {
   }
   desenharAvisosInimigo(e, t);
   const s = spriteInimigo(e, t);
-  const h = s.c.height * ESCALA;
+  const h = s.c.height * escSpr(s.c);
   sombra(e.x, e.y + (e.boss ? h * 0.4 : e.r * 0.8), e.boss ? e.r * 0.9 : e.r * (s.voa ? 0.6 : 0.9));
   const x = e.x, y = e.y + s.y;
   const flip = !!s.flip;

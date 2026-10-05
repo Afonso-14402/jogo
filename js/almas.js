@@ -267,7 +267,7 @@ function desenharLojaAlmas(t) {
       px(r.x + 8, r.y + 10, 60, 60, 'rgba(0,0,0,0.35)'); px(r.x + 8, r.y + 10, 60, 3, I.cor);
       const c = o.tipo === 'raca' ? framesHeroi(o.ref, escolhaSkin)[Math.floor(t * 3) % 2] : o.tipo === 'pet' ? SPR.pet[o.ref][0] : null;
       if (c) sprEcra(c, r.x + 38, r.y + 42, 3);
-      else if (o.movel) { const m = ART.moveis[o.movel]; const mc = Array.isArray(m) ? m[Math.floor(t * 6) % 2] : m; sprEcra(mc, r.x + 38, r.y + 42, mc.width > 16 ? 2 : 3); }
+      else if (o.movel) { const m = ART.moveis[o.movel]; const mc = Array.isArray(m) ? m[Math.floor(t * 6) % 2] : m; sprEcra(mc, r.x + 38, r.y + 42, ladoSpr(mc) > 16 ? 2 : 3); }
       const tipo = { raca: 'Raça', pet: 'Companheiro', movel: 'Móvel' }[o.tipo];
       textoEsq(tipo, r.x + 76, r.y + 16, 10, '#999', 'normal');
       textoEsqAjustado(traduzir(I.nome).replace(/^[^:]*:\s*/, ''), r.x + 76, r.y + 34, 14, I.cor, r.w - 84);

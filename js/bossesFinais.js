@@ -164,8 +164,8 @@ function criarSpritesFinais() {
 function spriteFinais(e, t) {
   const M = MONSTROS_FINAIS[e.tipo];
   if (M) {
-    const anda = e.acordado && Math.floor(e.t * (M.voa ? 8 : 6)) % 2;
-    return { c: SPR[e.tipo][anda ? 1 : 0], y: M.voa ? -6 + Math.sin(e.t * 5) * 3 : 0, voa: M.voa, flip: J.x < e.x };
+    const L = SPR[e.tipo], anda = e.acordado || M.voa;
+    return { c: anda ? frameAnim(L, e.t, (M.voa ? 8 : 6) * L.length / 2) : L[0], y: M.voa ? -6 + Math.sin(e.t * 5) * 3 : 0, voa: M.voa, flip: J.x < e.x };
   }
   if (e.tipo === 'arcanjo') return { c: SPR.arcanjo[[0, 1, 2, 1][Math.floor(t * 6) % 4]], y: -10 + Math.sin(t * 3) * 5, voa: true, flip: J.x < e.x };
   if (e.tipo === 'generalMonarca') return { c: SPR.generalMonarca[e.golpeT > 0 ? 1 : 0], y: 0, flip: J.x < e.x };

@@ -273,12 +273,19 @@ function gerarCidade() {
 function renderizarCidade(m) {
   const T = TILE / ESCALA, C = m.tema || CIDADES[0];
   const c = document.createElement('canvas');
-  c.width = m.W * T; c.height = m.H * T;
+  c.width = m.W * T * HD_PX; c.height = m.H * T * HD_PX;
   const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false; g.scale(HD_PX, HD_PX);
+  const HD = SPR.cidade && SPR.cidade[CIDADES.indexOf(C)];
   for (let y = 0; y < m.H; y++) for (let x = 0; x < m.W; x++) {
     const h = Math.abs((x * 73856093) ^ (y * 19349663));
     const px = x * T, py = y * T;
     const praca = y >= 8 && y <= 20 && x >= 4 && x <= 41, rua = x >= 21 && x <= 24;
+    if (HD && HD.relva0) { // chão feito no Blender
+      const mur = x === 0 || y === 0 || x === m.W - 1 || y === m.H - 1;
+      desenharEm(g, mur ? HD.muralha : (praca || rua) ? (h % 3 ? HD.calc0 : HD.calc1) : h % 23 === 0 ? HD.relva2 : h % 5 ? HD.relva0 : HD.relva1, px, py);
+      continue;
+    }
     if (x === 0 || y === 0 || x === m.W - 1 || y === m.H - 1) { // muralha
       g.fillStyle = C.muralha[0]; g.fillRect(px, py, T, T);
       g.fillStyle = C.muralha[1]; g.fillRect(px + 1, py + 1, T - 2, T / 2 - 2);
@@ -698,6 +705,12 @@ function desenharPainelCidade(t) {
 // ---------------------------------------------------------------------
 function desenharEdificioMundo(E, t) {
   const x = E.tx * TILE, y = ED_Y * TILE, w = ED_W * TILE, h = ED_H * TILE, base = y + h;
+  const HD = SPR.edificio && SPR.edificio[E.id];
+  if (HD) { // edifício feito no Blender (ocupa de x-8 a x+w+8 e do telhado à base)
+    spr(HD, x + w / 2, base - HD.height * escSpr(HD) / 2);
+    detalhesEdificio(E, t, x, y, w, base, true);
+    return;
+  }
   // telhado (sobe acima do edifício)
   ctx.fillStyle = E.telhado;
   ctx.beginPath(); ctx.moveTo(x - 8, y + 52); ctx.lineTo(x + w / 2, y - 40); ctx.lineTo(x + w + 8, y + 52); ctx.closePath(); ctx.fill();
@@ -717,11 +730,14 @@ function desenharEdificioMundo(E, t) {
   // letreiro
   ctx.fillStyle = 'rgba(20,14,8,0.95)'; ctx.fillRect(x + 12, y + 108, w - 24, 20);
   ctx.fillStyle = E.cor; ctx.fillRect(x + 12, y + 108, w - 24, 2); ctx.fillRect(x + 12, y + 126, w - 24, 2);
-  // pormenores
+  detalhesEdificio(E, t, x, y, w, base, false);
+}
+
+function detalhesEdificio(E, t, x, y, w, base, hd) {
   if (E.id === 'ferreiro') { ctx.fillStyle = '#555a66'; ctx.fillRect(x + w + 4, base - 20, 30, 10); ctx.fillRect(x + w + 12, base - 10, 14, 10); if (Math.sin(t * 6) > 0.5) { ctx.fillStyle = '#ffe14d'; ctx.fillRect(x + w + 12 + Math.random() * 10, base - 30 - Math.random() * 8, 3, 3); } }
   if (E.id === 'alquimista') for (let k = 0; k < 3; k++) { ctx.fillStyle = ['#ff5a5a', '#5dff7a', '#4dc3ff'][k]; ctx.fillRect(x + w + 4 + k * 10, base - 14, 7, 12); }
   if (E.id === 'assoc') { ctx.globalAlpha = 0.6 + Math.sin(t * 3) * 0.3; circulo(x + w + 18, base - 16, 9, '#4dc3ff'); ctx.globalAlpha = 1; }
-  if (E.id === 'casa') { ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x + w - 40, y - 10, 14, 30); if (Math.random() < 0.1) particulas.push({ x: x + w - 33, y: y - 14, vx: rand(-5, 5), vy: -25, t: 1.4, cor: '#bbbbbb', tam: 5 }); }
+  if (E.id === 'casa') { if (!hd) { ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x + w - 40, y - 10, 14, 30); } if (Math.random() < 0.1) particulas.push({ x: x + w - 33, y: y - 14, vx: rand(-5, 5), vy: -25, t: 1.4, cor: '#bbbbbb', tam: 5 }); }
 }
 
 function desenharCidadeMundo(t) {
@@ -731,13 +747,18 @@ function desenharCidadeMundo(t) {
   const f = mapa.fonte;
   sombra(f.x, f.y + 30, 40);
   const C = mapa.tema || CIDADES[0];
-  ctx.fillStyle = C.muralha[1]; ctx.beginPath(); ctx.ellipse(f.x, f.y + 10, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = C.fonte; ctx.beginPath(); ctx.ellipse(f.x, f.y + 8, 36, 18, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = C.muralha[0]; ctx.fillRect(f.x - 6, f.y - 30, 12, 38);
+  const HD = SPR.cidade && SPR.cidade[CIDADES.indexOf(C)];
+  if (HD && HD.fonte) spr(HD.fonte, f.x, f.y + 1);
+  else {
+    ctx.fillStyle = C.muralha[1]; ctx.beginPath(); ctx.ellipse(f.x, f.y + 10, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.fonte; ctx.beginPath(); ctx.ellipse(f.x, f.y + 8, 36, 18, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.muralha[0]; ctx.fillRect(f.x - 6, f.y - 30, 12, 38);
+  }
   if (Math.random() < 0.6) particulas.push({ x: f.x + rand(-3, 3), y: f.y - 32, vx: rand(-40, 40), vy: rand(-90, -50), t: 0.6, cor: C.gota, tam: 3 });
   // árvores (ou rochas, cristais, colunas... conforme a cidade) e candeeiros
   for (const [tx, ty] of mapa.arvores) desenharArvoreCidade(C, (tx + 0.5) * TILE, (ty + 0.5) * TILE, t);
   for (const c of mapa.candeeiros) {
+    if (HD && HD.candeeiro) { spr(HD.candeeiro, c.x, c.y - 19); continue; }
     ctx.fillStyle = C.muralha[2]; ctx.fillRect(c.x - 2, c.y - 34, 4, 40);
     ctx.fillStyle = C.luz; ctx.fillRect(c.x - 6, c.y - 44, 12, 10);
   }
@@ -748,7 +769,7 @@ function desenharArvoreCidade(C, x, y, t) {
   sombra(x, y + 12, 16);
   // as copas mexem-se um bocadinho com o vento (as rochas e colunas não)
   const balanco = ['arvore', 'pinheiro', 'salgueiro', 'palmeira'].includes(C.arvore) ? Math.round(Math.sin(t * 1.3 + x * 0.05) * 0.6) : 0;
-  spr(c, x + balanco, y + 14 - c.height * ESCALA / 2);
+  spr(c, x + balanco, y + 14 - c.height * escSpr(c) / 2);
   if (C.arvore === 'cristal' && Math.random() < 0.02) particulas.push({ x: x + rand(-14, 14), y: y - rand(0, 30), vx: 0, vy: -20, t: 0.8, cor: '#ffffff', tam: 2 });
   if (C.arvore === 'rocha' && Math.random() < 0.03) particulas.push({ x: x + rand(-8, 8), y: y - 6, vx: 0, vy: -30, t: 0.6, cor: '#ff9b45', tam: 2 });
 }

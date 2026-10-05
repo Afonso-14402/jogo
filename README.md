@@ -1,6 +1,8 @@
 # Masmorra do Destino
 
-RPG 2D de masmorras em pixel art que corre direto no browser. Não precisa de instalar nada: é HTML5 Canvas com JavaScript puro, sem ficheiros de imagem e sem bibliotecas (só o modo a 2 usa a PeerJS para ligar os telemóveis). Todos os sprites são desenhados pixel a pixel no código (`js/sprites.js`).
+RPG 2D de masmorras em pixel art que corre direto no browser. Não precisa de instalar nada: é HTML5 Canvas com JavaScript puro, sem ficheiros de imagem e sem bibliotecas (só o modo a 2 usa a PeerJS para ligar os telemóveis). A arte nova (herói com 15 skins e 11 raças, monstros, bosses, objetos, ícones, chão, paredes e cidades) foi modelada em 3D no Blender e convertida em pixel art 32x32 (ver `sprites3d/`); fica embutida em `js/sprites_hd.js`. O que ainda não foi refeito continua desenhado pixel a pixel no código (`js/sprites.js`).
+
+**Gráficos** (nas Opções): *Alto detalhe* desenha o mundo com o dobro dos pixels e mostra todo o detalhe dos sprites novos; *Normal (mais leve)* é para telemóveis mais fracos.
 
 ## Como jogar
 
@@ -353,7 +355,9 @@ js/idioma_es.js     tradução para espanhol
 js/idioma_br.js     palavras do português do Brasil
 js/dados.js         itens, afixos, melhorias, raridades, probabilidades, inimigos, elites, bosses e preços
 js/mapa.js          geração das masmorras, colisões, pathfinding e desenho dos ladrilhos
-js/sprites.js       toda a pixel art (personagens, bosses, itens, ladrilhos)
+js/sprites.js       a pixel art antiga, desenhada no código (personagens, bosses, itens, ladrilhos)
+js/sprites_hd.js    sprites HD (32x32) feitos no Blender, embutidos; substituem os antigos quando carregam
+sprites3d/          modelos do Blender (Python) e conversão para pixel art: ver sprites3d/LEIA-ME.md
 js/biomas.js        cenário de cada zona, monstros novos, níveis dos monstros e as suas habilidades
 js/conteudo.js      tipos de arma, relíquias, companheiros novos, bosses dos andares 35 e 40, conquistas novas
 js/extras.js        Pacto de Castigo, missões diárias, estatísticas, salas secretas, Diabo e Anjo, bestiário

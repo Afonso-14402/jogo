@@ -128,7 +128,7 @@ canvas.addEventListener('touchcancel', largarToque, { passive: false });
 //  OPÇÕES DE TELEMÓVEL (guardadas entre partidas)
 // =====================================================================
 const CHAVE_OPCOES = 'masmorra_opcoes';
-const opcoes = { tamanho: 1, visibilidade: 1, letra: 1, tremor: 2, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
+const opcoes = { detalhe: 2, tamanho: 1, visibilidade: 1, letra: 1, tremor: 2, canhoto: false, vibracao: true, poupanca: false, tutorialFeito: false };
 try { Object.assign(opcoes, JSON.parse(localStorage.getItem(CHAVE_OPCOES) || '{}')); } catch (e) { /* sem storage */ }
 function guardarOpcoes() {
   try { localStorage.setItem(CHAVE_OPCOES, JSON.stringify(opcoes)); } catch (e) { /* sem storage */ }
@@ -308,13 +308,14 @@ function linhasOpcoes() {
     { id: 'canhoto', nome: 'Joystick', valor: opcoes.canhoto ? 'À direita (canhoto)' : 'À esquerda' },
     { id: 'tremor', nome: 'Tremor do ecrã', valor: ['Desligado', 'Fraco', 'Normal'][opcoes.tremor == null ? 2 : opcoes.tremor] },
     { id: 'vibracao', nome: 'Vibração', valor: !navigator.vibrate ? 'Não suportada' : opcoes.vibracao ? 'Ligada' : 'Desligada' },
+    { id: 'detalhe', nome: 'Gráficos', valor: DETALHE === 2 ? 'Alto detalhe' : 'Normal (mais leve)' },
     { id: 'poupanca', nome: 'Poupança de bateria', valor: opcoes.poupanca ? 'Ligada (30 FPS)' : 'Desligada (60 FPS)' },
     { id: 'som', nome: 'Som e música', valor: !somLigado ? 'Desligado' : musicaLigada ? 'Tudo ligado' : 'Só efeitos' },
     { id: 'ecra', nome: 'Ecrã inteiro', valor: comoApp() ? 'Já está (app)' : emEcraInteiro() ? 'Ligado' : 'Desligado' },
     { id: 'tutorial', nome: 'Tutorial', valor: 'Ver outra vez' },
   ];
 }
-const retOpcao = i => ({ x: 170, y: 84 + i * 48, w: 620, h: 42 });
+const retOpcao = i => ({ x: 170, y: 80 + i * 46, w: 620, h: 40 });
 
 function atualizarOpcoes(dt) {
   menuOpcoes.t += dt;
@@ -330,6 +331,7 @@ function atualizarOpcoes(dt) {
     else if (l.id === 'canhoto') opcoes.canhoto = !opcoes.canhoto;
     else if (l.id === 'vibracao') { opcoes.vibracao = !opcoes.vibracao; vibrar(80); }
     else if (l.id === 'poupanca') opcoes.poupanca = !opcoes.poupanca;
+    else if (l.id === 'detalhe') { DETALHE = DETALHE === 2 ? 1 : 2; opcoes.detalhe = DETALHE; ajustarBuffers(); }
     else if (l.id === 'tremor') { opcoes.tremor = ((opcoes.tremor == null ? 2 : opcoes.tremor) + 2) % 3; }
     else if (l.id === 'som') mudarSom();
     else if (l.id === 'tutorial') {
@@ -354,8 +356,8 @@ function desenharOpcoes(t) {
     textoEsq(l.nome, r.x + 20, r.y + r.h / 2 + 1, 17, '#ddd');
     textoDir(l.valor, r.x + r.w - 20, r.y + r.h / 2 + 1, 16, '#ffe680');
   });
-  if (menuOpcoes && menuOpcoes.msg) textoCentro(menuOpcoes.msg.txt, LARGURA / 2, 578, 15, menuOpcoes.msg.cor);
-  else textoCentro('Toca numa opção para a mudar', LARGURA / 2, 578, 13, '#888', false);
+  if (menuOpcoes && menuOpcoes.msg) textoCentro(menuOpcoes.msg.txt, LARGURA / 2, 598, 15, menuOpcoes.msg.cor);
+  else textoCentro('Toca numa opção para a mudar', LARGURA / 2, 598, 13, '#888', false);
   // pré-visualização dos controlos com as opções atuais
   desenharPreviaControlos();
 }
