@@ -366,6 +366,13 @@ LISTA = {
     'art.peixes.Peixe Dourado': ('extras', {'TIPO': 'peixe', 'COR': 'dourado'}, 28, 16, ['--caixa', '0,0,28,16', '--cores', '12']),
     'art.peixes.Garrafa com Poção': ('extras', {'TIPO': 'garrafa'}, 20, 18, ['--caixa', '2,0,16,18', '--cores', '12']),
     'art.peixes.Bota Velha': ('extras', {'TIPO': 'bota'}, 22, 18, ['--caixa', '0,0,22,18', '--cores', '12']),
+    'fx.fogo': ('fx', {'TIPO': 'fogo'}, 32, 20, ['--ancora', 'centro', '--cores', '8']),
+    'fx.flecha': ('fx', {'TIPO': 'flecha'}, 32, 10, ['--ancora', 'centro', '--cores', '6']),
+    'fx.rocha': ('fx', {'TIPO': 'rocha'}, 24, 24, ['--ancora', 'centro', '--cores', '8']),
+    'fx.lamina': ('fx', {'TIPO': 'lamina'}, 22, 22, ['--ancora', 'centro', '--cores', '6']),
+    'pet.fenix': ('pets', {'TIPO': 'fenix'}, 28, 22, ['--caixa', '0,0,28,22', '--cores', '14']),
+    'pet.golem': ('pets', {'TIPO': 'golem'}, 24, 20, ['--caixa', '0,0,24,20', '--cores', '14']),
+    'pet.fada': ('pets', {'TIPO': 'fada'}, 24, 18, ['--caixa', '0,0,24,18', '--cores', '14']),
 }
 
 

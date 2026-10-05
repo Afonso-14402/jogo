@@ -47,10 +47,10 @@ const SKIN_HD = {}, RACA_HD = {}, cacheHeroiHD = {};
 const PELE_RACA = { humano: '#f1c8a0', elfo: '#f6d6b8', anao: '#e8b48a', orc: '#8fb33a', vampiro: '#e8dcd8', gnomo: '#f1c8a0',
   draconato: '#e89a5a', mortoVivo: '#9fd8c0', anjo: '#f6d7b0', demonio: '#d04848', lagarto: '#5aa84a' };
 const OLHOS_RACA = { orc: '#ffe14d', draconato: '#ffe14d', mortoVivo: '#5dffea', vampiro: '#ff2040', demonio: '#ffe14d', lagarto: '#ffe14d' };
-// ordem das frames de cada folha: parado (b, d, c), anda x8 (b, d, c), ataque x6 (b, d, c)
+// ordem das frames de cada folha: parado x4 (b, d, c), anda x8 (b, d, c), ataque x6 (b, d, c)
 function indiceHD(anim, dir, i) {
   const d = ['baixo', 'direita', 'cima'].indexOf(dir);
-  return anim === 'parado' ? d : anim === 'anda' ? 3 + d * 8 + i : 27 + d * 6 + i;
+  return anim === 'parado' ? d * 4 + i : anim === 'anda' ? 12 + d * 8 + i : 36 + d * 6 + i;
 }
 function pintarHeroi(c, pele, olhos) {
   const g = c.getContext('2d'), img = g.getImageData(0, 0, c.width, c.height), d = img.data;
@@ -88,7 +88,7 @@ function heroiHD(raca, skin) {
     return c;
   };
   const out = {};
-  for (const [anim, n] of [['parado', 1], ['anda', 8], ['ataque', 6]]) {
+  for (const [anim, n] of [['parado', 4], ['anda', 8], ['ataque', 6]]) {
     out[anim] = {};
     for (const dir of DIRECOES_HD) { out[anim][dir] = []; for (let i = 0; i < n; i++) out[anim][dir].push(frame(anim, dir, i)); }
   }

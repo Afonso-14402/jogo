@@ -186,7 +186,12 @@ def ataque(k, i):
 DIRS = {'baixo': 0, 'direita': 90, 'cima': 180}
 ANIMS = {}
 for d, rz in DIRS.items():
-    def p0(k, i, n, rz=rz): k.v['raiz'].rotation_euler.z = R(rz); base(k)
+    def p0(k, i, n, rz=rz):  # a respirar
+        k.v['raiz'].rotation_euler.z = R(rz); base(k)
+        f = math.sin(i / n * 2 * math.pi)
+        k.v['corpo'].location.z = 0.62 - 0.02 * (1 - f) / 2
+        k.v['cabeca'].location.z = 0.58 - 0.015 * (1 - f) / 2
+        k.v['braco_e'].rotation_euler.y = R(10 + 3 * f); k.v['braco_d'].rotation_euler.z = R(-12 - 3 * f)
     def p1(k, i, n, rz=rz): k.v['raiz'].rotation_euler.z = R(rz); base(k); anda(k, i / n)
     def p2(k, i, n, rz=rz): k.v['raiz'].rotation_euler.z = R(rz); base(k); ataque(k, i)
-    ANIMS[f'parado-{d}'] = (1, p0); ANIMS[f'anda-{d}'] = (8, p1); ANIMS[f'ataque-{d}'] = (6, p2)
+    ANIMS[f'parado-{d}'] = (4, p0); ANIMS[f'anda-{d}'] = (8, p1); ANIMS[f'ataque-{d}'] = (6, p2)

@@ -715,7 +715,7 @@ function desenharJogador(t) {
     const dir = Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'baixo' : 'cima') : (dx < 0 ? 'esquerda' : 'direita');
     if (J.golpe && !J.golpe.giro) c = HD.ataque[dir][Math.min(5, Math.floor((1 - J.golpe.t / J.golpe.dur) * 6))];
     else if (J.andando) c = HD.anda[dir][Math.floor(tempoJogo * 12) % 8];
-    else c = HD.parado[dir][0];
+    else c = frameAnim(HD.parado[dir], tempoJogo, 3);
     flip = false;
   } else c = framesHeroi(J.raca, J.skin)[frame];
   const cor = (k, a) => { ctx.globalAlpha = a; desenha(silhueta(c, k), J.x, J.y - 4, flip); ctx.globalAlpha = 1; };
@@ -882,19 +882,42 @@ function desenharInimigo(e, t) {
   if (e.mini) ctx.restore();
 }
 
+// sprite rodado (projéteis HD apontam para a direita)
+function sprRot(c, x, y, ang, k = 1) {
+  const e = escSpr(c) * k, w = c.width * e, h = c.height * e;
+  ctx.save();
+  ctx.translate(alinharHD(x), alinharHD(y));
+  ctx.rotate(ang);
+  ctx.drawImage(c, -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+
 function desenharProjetil(p, t) {
   if (p.caindo) { // alvo no chão e a coisa a cair do céu
     ctx.globalAlpha = 0.6;
     aro(p.x, p.y, p.explode * 0.6, p.cor, 2);
     ctx.globalAlpha = 1;
     const y = p.y - Math.min(1, p.vida) * 260;
-    if (p.tipo === 'fogo') { circulo(p.x, y, 9, '#ff5a1a'); circulo(p.x, y, 5, '#ffe14d'); }
+    if (p.tipo === 'fogo' && SPR.fx && SPR.fx.fogo) sprRot(frameAnim(SPR.fx.fogo, t, 14), p.x, y, Math.PI / 2, 1.1);
+    else if (p.tipo === 'fogo') { circulo(p.x, y, 9, '#ff5a1a'); circulo(p.x, y, 5, '#ffe14d'); }
     else { ctx.strokeStyle = p.cor; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(alinhar(p.x), alinhar(y - 16)); ctx.lineTo(alinhar(p.x), alinhar(y)); ctx.stroke(); }
     return;
   }
   if (desenharProjetilBioma(p, t)) return;
   const x = p.x, y = p.y;
-  if (p.tipo === 'flecha') {
+  const FX = SPR.fx || {};
+  if (p.tipo === 'flecha' && FX.flecha) {
+    sprRot(FX.flecha, x - Math.cos(Math.atan2(p.vy, p.vx)) * 3, y - Math.sin(Math.atan2(p.vy, p.vx)) * 3, Math.atan2(p.vy, p.vx), 0.7);
+    if (p.cor && p.cor !== '#d8c9a3') { ctx.globalAlpha = 0.35; sprRot(silhueta(FX.flecha, p.cor), x, y, Math.atan2(p.vy, p.vx), 0.7); ctx.globalAlpha = 1; }
+  } else if (p.tipo === 'lamina' && FX.lamina) {
+    const c = frameAnim(FX.lamina, p.vida, 16);
+    sprRot(c, x, y, 0, 0.8);
+    ctx.globalAlpha = 0.4; sprRot(silhueta(c, p.cor), x, y, 0, 0.8); ctx.globalAlpha = 1;
+  } else if (p.tipo === 'rocha' && FX.rocha) {
+    sprRot(frameAnim(FX.rocha, t, 8), x, y, 0, (p.r * 2 + 4) / 24);
+  } else if (p.tipo === 'fogo' && FX.fogo) {
+    sprRot(frameAnim(FX.fogo, t + x * 0.01, 14), x, y, Math.atan2(p.vy, p.vx), Math.max(0.7, p.r / 8));
+  } else if (p.tipo === 'flecha') {
     const a = Math.atan2(p.vy, p.vx);
     ctx.strokeStyle = '#d8c9a3';
     ctx.lineWidth = 2;
