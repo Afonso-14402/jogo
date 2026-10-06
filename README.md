@@ -421,6 +421,12 @@ MODO=diario JOGOS=5 node testes/robo_jogador.js               # 5 desafios diár
 CLASSES=espada,fogo ANDARES=30 JOGOS=2 node testes/robo_jogador.js
 ```
 
+`testes/armas.js` é um campo de treino: cada uma das 64 armas ataca bonecos parados (1 perto, 8 à volta, 4 em linha e 1 longe) e mede o dano por segundo. Avisa se alguma arma dá muito mais ou muito menos dano do que as outras da mesma raridade:
+
+```
+node testes/armas.js
+```
+
 `testes/caca_bugs.js` joga sozinho do andar 1 ao 60 (abre todos os baús, usa todos os objetos, entra em portais e na cidade, fala com os habitantes) e passa por todos os ecrãs em português e inglês, no PC e no telemóvel. Avisa se houver erros de JavaScript, coisas dentro das paredes, números estragados ou textos a sair do ecrã:
 
 ```
