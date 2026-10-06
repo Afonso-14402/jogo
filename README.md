@@ -421,6 +421,13 @@ MODO=diario JOGOS=5 node testes/robo_jogador.js               # 5 desafios diár
 CLASSES=espada,fogo ANDARES=30 JOGOS=2 node testes/robo_jogador.js
 ```
 
+`testes/bosses.js` põe um caçador típico de cada andar de boss (5, 10, 15... 60), com o nível, o equipamento e as melhorias que um jogador teria, a lutar contra o boss verdadeiro desse andar. Mostra quanto tempo demora e quanta vida perde, e avisa se algum boss está muito fácil ou muito difícil:
+
+```
+node testes/bosses.js                          # 4 caçadores, 2 lutas cada
+CLASSES=espada,fogo node testes/bosses.js 5,10,15 3
+```
+
 `testes/armas.js` é um campo de treino: cada uma das 64 armas ataca bonecos parados (1 perto, 8 à volta, 4 em linha e 1 longe) e mede o dano por segundo. Avisa se alguma arma dá muito mais ou muito menos dano do que as outras da mesma raridade:
 
 ```

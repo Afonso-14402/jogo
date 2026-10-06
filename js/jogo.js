@@ -475,7 +475,7 @@ function proximoAndar() {
   levantarExercito();
   if (J.modo === 'torre' && !mapa.eBoss) popularTorre();
   else if (mapa.eBoss) {
-    boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss(null, J.modo === 'bossrush' ? forcaBossRush() : 1));
+    boss = mapa.provacao ? bossProvacao() : bossHistoria() || (J.modo === 'torre' ? criarBoss(BOSSES[(andar / 10 - 1) % BOSSES.length].id) : criarBoss(null, J.modo === 'bossrush' ? forcaBossRush() : forcaBossAndar()));
     inimigos.push(boss);
     mostrarBanner(mapa.provacao ? 'PROVAÇÃO DE CLASSE' : `ANDAR ${andar} — BOSS`, boss.nome, mapa.provacao ? '#4dc3ff' : '#ff4d4d');
     bossDuploProfundezas(); // Profundezas: de 10 em 10 andares vêm dois
@@ -685,6 +685,11 @@ function criarInimigo(tipo, x, y) {
     nv: 1, hab: new Set(HAB_BASE[tipo] || []), ia: d.ia, nasceu: tempoJogo,
   };
 }
+
+// Bosses dos andares normais: a partir do andar 10 têm mais vida e batem mais
+// (o teste testes/bosses.js mostrou que um caçador normal, com as melhorias de cada
+// nível, os matava em 6 a 8 segundos quase sem levar dano). O Boss Rush e a Torre têm a sua força.
+const forcaBossAndar = () => (andar < 10 ? 1 : 1.6);
 
 function criarBoss(idForcado = null, mult = 1) {
   const n = Math.max(1, andar / 5);

@@ -42,12 +42,14 @@ function dispararFlecha(dx, dy) {
   const vel = 560, vida = Math.max(0.3, S.alcance / vel);
   projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * vel, vy: dy * vel, r: 6, vida, cor: RARIDADES[J.arma.r].cor,
     tipo: 'flecha', dono: 'jogador', dano, crit, perfura: 1 + perfuraClasse(), atingidos: [] });
+  J.tiroArcoT = tempoJogo; // para a animação da corda (desenharArma)
   som(760, 0.07, 'triangle', 0.03, -500);
 }
 
 function dispararBolaCajado(dx, dy) {
   projeteis.push({ x: J.x + dx * 14, y: J.y + dy * 14, vx: dx * 420, vy: dy * 420, r: 6, vida: 0.9, cor: '#b48cff',
     tipo: 'bola', dono: 'jogador', dano: Math.max(1, Math.round(S.dano * 0.45 + S.poder * 0.6)) });
+  J.brilhoCajadoT = tempoJogo; // a ponta do cajado brilha (desenharArma)
 }
 
 // ---------------------------------------------------------------------

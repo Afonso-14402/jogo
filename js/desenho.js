@@ -748,12 +748,25 @@ const TAM_ARMA_MAO = 24; // tamanho da arma na mão (o herói tem 32)
 const ROTACAO_ARCO = -Math.PI / 2; // o ícone do arco está na diagonal: roda-se para ficar de pé
 function desenharArma(ang) {
   const icon = iconeItem(J.arma);
-  if (classeArma(J.arma) === 'arco') { // o arco segura-se de pé, à frente do herói, com a corda virada para ele
+  const classe = classeArma(J.arma), cx = Math.cos(ang), cy = Math.sin(ang);
+  if (classe === 'arco') { // o arco segura-se de pé, à frente do herói, com a corda virada para ele
+    // ao disparar: a corda vem puxada até à mão e solta-se, e o arco dá um pequeno coice
+    const p = J.tiroArcoT != null ? (tempoJogo - J.tiroArcoT) / 0.2 : 1, solta = p >= 0 && p < 1;
+    const recuo = solta ? (1 - p) * 3 : 0;
+    const bx = J.x + cx * (11 - recuo), by = J.y + 2 + cy * (8 - recuo);
     ctx.save();
-    ctx.translate(alinhar(J.x + Math.cos(ang) * 11), alinhar(J.y + 2 + Math.sin(ang) * 8));
+    ctx.translate(alinhar(bx), alinhar(by));
     ctx.rotate(ang + Math.PI / 4 + ROTACAO_ARCO);
     ctx.drawImage(icon, -12, -12, 24, 24);
     ctx.restore();
+    if (solta) {
+      const puxa = Math.max(0, 1 - p * 2.5) * 8; // a corda volta ao arco num instante
+      const nx = -cy, ny = cx, mx = bx - cx * (2 + puxa), my = by - cy * (2 + puxa);
+      ctx.strokeStyle = '#f0ead8'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(bx + nx * 9 - cx * 2, by + ny * 9 - cy * 2); ctx.lineTo(mx, my); ctx.lineTo(bx - nx * 9 - cx * 2, by - ny * 9 - cy * 2);
+      ctx.stroke();
+    }
     return;
   }
   // a arma fica na mão: o punho do ícone (canto de baixo à esquerda) junto ao herói
@@ -763,6 +776,12 @@ function desenharArma(ang) {
   ctx.rotate(ang + Math.PI / 4);
   ctx.drawImage(icon, -T * 0.19, -T * 0.81, T, T);
   ctx.restore();
+  if (classe === 'cajado' && J.brilhoCajadoT != null && tempoJogo - J.brilhoCajadoT < 0.3) { // a ponta brilha ao lançar a bola
+    const k = 1 - (tempoJogo - J.brilhoCajadoT) / 0.3, px = J.x + cx * (7 + T * 0.75), py = J.y + 3 + cy * (5 + T * 0.75);
+    const g = ctx.createRadialGradient(px, py, 0, px, py, 12 * k + 4);
+    g.addColorStop(0, 'rgba(230,210,255,' + (0.9 * k).toFixed(2) + ')'); g.addColorStop(1, 'rgba(180,140,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(px - 16, py - 16, 32, 32);
+  }
 }
 
 function spriteInimigo(e, t) {
