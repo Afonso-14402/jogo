@@ -470,7 +470,7 @@ function desenharLuz(t) {
     L.drawImage(manchaLuz(), bx - br, by - br, br * 2, br * 2);
     L.globalAlpha = 1;
   };
-  luz(J.x, J.y, 330 + Math.sin(t * 7) * 6, 1);
+  luz(J.x, J.y, 330, 1); // fixa: a luz a pulsar fazia parecer que o ecrã tremia
   luzParceiro(luz, t);
   if (pet && J.pet && J.pet.tipo !== 'lobo') luz(pet.x, pet.y, 70, 0.6);
   for (const tc of mapa.tochas) luz(tc.x, tc.y + 20, 150 + tremorTocha(t, tc.x), 0.85);
@@ -487,7 +487,7 @@ function desenharLuz(t) {
   for (const d of drops) if (d.tipo === 'livro' || d.tipo === 'reliquia') luz(d.x, d.y, 70, 0.6);
   for (const e of inimigos) if (e.lasersB && e.lasersB.fase === 'fogo') for (const a0 of e.lasersB.angs) for (let k = 0; k < 500; k += 80) luz(e.x + Math.cos(e.lasersB.base + a0) * k, e.y + Math.sin(e.lasersB.base + a0) * k, 60, 0.6);
   if (mapa.escada.ativa) luz(mapa.escada.x, mapa.escada.y, 80, 0.5);
-  for (const l of mapa.luzes || []) luz(l.x, l.y, 70 + Math.sin(t * 2 + l.x) * 6, 0.55);
+  for (const l of mapa.luzes || []) luz(l.x, l.y, 70, 0.55);
   for (const p of pocas) if (p.tipo !== 'gosma') luz(p.x, p.y, 60, 0.4);
   for (const e of inimigos) if (e.laser && e.laser.fase === 'fogo') for (let k = 0; k < e.laser.comp; k += 60) luz(e.x + Math.cos(e.laser.ang) * k, e.y + Math.sin(e.laser.ang) * k, 60, 0.7);
   L.globalCompositeOperation = 'source-over';
@@ -744,8 +744,17 @@ function desenharJogador(t) {
   }
 }
 
+const ROTACAO_ARCO = -Math.PI / 2; // o ícone do arco está na diagonal: roda-se para ficar de pé
 function desenharArma(ang) {
   const icon = iconeItem(J.arma);
+  if (classeArma(J.arma) === 'arco') { // o arco segura-se de pé, à frente do herói, com a corda virada para ele
+    ctx.save();
+    ctx.translate(alinhar(J.x + Math.cos(ang) * 11), alinhar(J.y + 2 + Math.sin(ang) * 8));
+    ctx.rotate(ang + Math.PI / 4 + ROTACAO_ARCO);
+    ctx.drawImage(icon, -12, -12, 24, 24);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.translate(alinhar(J.x + Math.cos(ang) * 8), alinhar(J.y + 2 + Math.sin(ang) * 6));
   ctx.rotate(ang + Math.PI / 4);
@@ -1805,7 +1814,7 @@ function desenharTitulo(t) {
   sombraParede.addColorStop(0, 'rgba(7,6,10,0.92)'); sombraParede.addColorStop(1, 'rgba(7,6,10,0.45)');
   ctx.fillStyle = sombraParede; ctx.fillRect(-MARGEM_X, 0, TELA_W, chao + 34);
   for (const tx of [44]) { // archote com luz a tremer (o dragão tapa o outro lado)
-    const luz = ctx.createRadialGradient(tx, 96, 4, tx, 96, 90 + Math.sin(t * 9 + tx) * 6);
+    const luz = ctx.createRadialGradient(tx, 96, 4, tx, 96, 92); // luz fixa (a mexer parecia que o ecrã tremia)
     luz.addColorStop(0, 'rgba(255,170,70,0.35)'); luz.addColorStop(1, 'rgba(255,170,70,0)');
     ctx.fillStyle = luz; ctx.fillRect(tx - 100, 0, 200, chao + 34);
     sprEcra(SPR.tocha[Math.floor(t * 8 + tx) % SPR.tocha.length], tx, 104, 3);
@@ -1819,12 +1828,8 @@ function desenharTitulo(t) {
   sprEcra(SPR.bau.ouro, 620, chao + 12, 3);
   sprEcra(SPR.morcego[Math.floor(t * 10) % 2], 700, chao - 40 + Math.sin(t * 3) * 8, 3);
 
-  const f = 1 + Math.sin(t * 2) * 0.02;
-  ctx.save();
-  ctx.translate(LARGURA / 2, 70);
-  ctx.scale(f, f);
-  textoCentroAjustado('MASMORRA DO DESTINO', 0, 0, 52, '#ffae00', 470);
-  ctx.restore();
+  // o título fica parado (a crescer e encolher parecia tremer quando o ecrã é esticado)
+  textoCentroAjustado('MASMORRA DO DESTINO', LARGURA / 2, 70, 52, '#ffae00', 470);
   textoCentro('Um RPG de masmorras, bosses e baús da sorte', LARGURA / 2, 118, 17, '#ccc', false);
 
   // botões do menu

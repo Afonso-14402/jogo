@@ -1,6 +1,6 @@
 // Service worker: guarda o jogo para jogar sem internet.
 // Primeiro tenta a rede (para receber atualizações) e, se falhar, usa a cópia guardada.
-const CACHE = 'masmorra-v39';
+const CACHE = 'masmorra-v40';
 const FICHEIROS = [
   './', 'index.html', 'manifest.webmanifest', 'fontes/Nunito.woff2',
   'icones/icone-180.png', 'icones/icone-192.png', 'icones/icone-512.png',
