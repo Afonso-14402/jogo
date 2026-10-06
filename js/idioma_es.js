@@ -778,7 +778,6 @@ const ES = {
   "Tecla ": "Tecla ",
   "Mana ": "Maná ",
   " · tecla ": " · tecla ",
-  "[C] Personagem   [I] Mochila   [M] Som: ": "[C] Personaje   [I] Mochila   [M] Sonido: ",
   "Rei das Sombras": "Rey de las Sombras",
   "Tem 10 sombras no teu exército": "Ten 10 sombras en tu ejército",
   "Caçador de Rank S": "Cazador de Rango S",
@@ -2105,4 +2104,5 @@ const ES = {
   "Faltam ": "Te faltan ",
   " almas para o ": " almas para el ",
   ". Joga mais partidas!": ". ¡Juega más partidas!",
+  "+30 vida": "+30 de vida",
 };

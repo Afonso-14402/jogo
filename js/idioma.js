@@ -301,8 +301,7 @@ const EN = {
   'EMBOSCADA!': 'AMBUSH!', '[Destino] Nova habilidade: ': '[Fate] New skill: ', '[Destino] Tens pontos de atributo': '[Fate] You have attribute points',
   'Abre a Janela de Estado (': 'Open the Status Window (', 'botão do herói': 'hero button', 'tecla U': 'key U', ') para os usar': ') to spend them',
   'Tecla ': 'Key ', 'Mana ': 'Mana ', ' · Recarga ': ' · Cooldown ', ' · tecla ': ' · key ', ' (nível ': ' (level ',
-  '[C] Personagem   [I] Mochila   [M] Som: ': '[C] Character   [I] Bag   [M] Sound: ',
-  'Rei das Sombras': 'Shadow King', 'Tem 10 sombras no teu exército': 'Have 10 shadows in your army',
+    'Rei das Sombras': 'Shadow King', 'Tem 10 sombras no teu exército': 'Have 10 shadows in your army',
   'Chega ao Rank S': 'Reach Rank S', 'Nível Nacional': 'National Level', 'Chega ao Rank Nacional': 'Reach National Rank',
   'Nacional': 'National',
   // pacto, missões, estatísticas, salas secretas, Diabo e Anjo, bestiário
@@ -826,7 +825,7 @@ const EN = {
   '+2 vida por segundo e poções +15%': '+2 health per second and potions +15%',
   // portais
   'Andar de Rank ': 'Floor Rank ', ' · Rank do andar ': ' · Floor rank ', 'MORTAL': 'DEADLY', 'Rutura em ': 'Break in ',
-  'RUTURA DO PORTAL!': 'PORTAL BURST!', 'Os monstros do portal Rank ': 'The monsters of the Rank ', ' saíram para a masmorra': ' gate escaped into the dungeon',
+  'RUTURA DO PORTAL!': 'GATE BURST!', 'Os monstros do portal Rank ': 'The monsters of the Rank ', ' saíram para a masmorra': ' gate escaped into the dungeon',
   'Sentes um portal: Rank ': 'You sense a gate: Rank ', 'Sentes portais: Rank ': 'You sense gates: Rank ', ' e ': ' and ', ' (vê o minimapa)': ' (see the minimap)',
   // tutorial
   'Tutorial ': 'Tutorial ',
@@ -1171,14 +1170,17 @@ const EN = {
   "Faltam ": "You need ",
   " almas para o ": " more souls for the ",
   ". Joga mais partidas!": ". Play more runs!",
+  "+30 vida": "+30 health",
 };
 
 // Lista de trocas de um idioma: das frases mais compridas para as mais curtas.
 // As palavras curtas soltas ("Tu", "Não") e todas as do Brasil só se trocam
 // quando são palavras inteiras (para "Tu" não estragar "Tutorial").
+// As frases que ficam iguais ("Segunda Vida" em espanhol) também entram: assim
+// protegem-se e uma troca mais curta ("da Vida") já não as estraga por dentro.
 const LETRA = /[\p{L}\p{N}]/u;
 function prepararLista(dic, sempreInteira) {
-  return Object.entries(dic).filter(([a, b]) => a !== b).sort((a, b) => b[0].length - a[0].length).map(([a, b]) => {
+  return Object.entries(dic).filter(([a]) => a).sort((a, b) => b[0].length - a[0].length).map(([a, b]) => {
     const inteira = sempreInteira || (a.length <= 4 && LETRA.test(a[0]) && LETRA.test(a[a.length - 1]));
     const esc = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return [a, b, inteira ? new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'gu') : null];
@@ -1202,11 +1204,16 @@ function traduzir(txt) {
   let r = cacheTraducao.get(chave);
   if (r !== undefined) return r;
   if (jaTraduzidos.has(chave)) return txt;
+  // cada pedaço traduzido fica guardado atrás de uma marca (um carácter de uso
+  // privado), para as trocas seguintes, mais curtas, não lhe mexerem
   r = txt;
+  const feitos = [];
+  const marca = b => { feitos.push(b); return String.fromCharCode(0xE000 + feitos.length - 1); };
   for (const [a, b, re] of listaIdioma()) {
     if (!r.includes(a)) continue;
-    if (re) { re.lastIndex = 0; r = r.replace(re, () => b); } else r = r.split(a).join(b);
+    if (re) { re.lastIndex = 0; let m = null; r = r.replace(re, () => m || (m = marca(b))); } else r = r.split(a).join(marca(b));
   }
+  if (feitos.length) r = r.replace(/[\uE000-\uF8FF]/g, ch => feitos[ch.charCodeAt(0) - 0xE000] ?? ch);
   if (cacheTraducao.size > 4000) { cacheTraducao.clear(); jaTraduzidos.clear(); }
   cacheTraducao.set(chave, r);
   if (r !== txt) jaTraduzidos.add(idioma + '|' + r);

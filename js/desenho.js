@@ -744,6 +744,7 @@ function desenharJogador(t) {
   }
 }
 
+const TAM_ARMA_MAO = 24; // tamanho da arma na mão (o herói tem 32)
 const ROTACAO_ARCO = -Math.PI / 2; // o ícone do arco está na diagonal: roda-se para ficar de pé
 function desenharArma(ang) {
   const icon = iconeItem(J.arma);
@@ -755,10 +756,12 @@ function desenharArma(ang) {
     ctx.restore();
     return;
   }
+  // a arma fica na mão: o punho do ícone (canto de baixo à esquerda) junto ao herói
+  const T = TAM_ARMA_MAO;
   ctx.save();
-  ctx.translate(alinhar(J.x + Math.cos(ang) * 8), alinhar(J.y + 2 + Math.sin(ang) * 6));
+  ctx.translate(alinhar(J.x + Math.cos(ang) * 7), alinhar(J.y + 3 + Math.sin(ang) * 5));
   ctx.rotate(ang + Math.PI / 4);
-  ctx.drawImage(icon, -6, -26, 32, 32);
+  ctx.drawImage(icon, -T * 0.19, -T * 0.81, T, T);
   ctx.restore();
 }
 
@@ -1500,7 +1503,7 @@ function desenharLoja(t) {
     ctx.globalAlpha = esgotado ? 0.35 : 1;
     iconeOferta(of, r.x + 62, r.y + r.h / 2);
     const cor = of.id === 'item' ? RARIDADES[of.item.r].cor : '#ffffff';
-    textoEsq(of.nome.length > 30 ? of.nome.slice(0, 29) + '…' : of.nome, r.x + 100, r.y + 20, 16, of.id === 'livro' ? FEITICOS[of.feitico].cor : cor);
+    textoEsqAjustado(of.nome, r.x + 100, r.y + 20, 16, of.id === 'livro' ? FEITICOS[of.feitico].cor : cor, r.w - 220); // encolhe em vez de cortar (cortar estragava a tradução)
     textoEsq(of.id === 'pocao' ? `Cura ${Math.round(S.curaPocao * 100)}% da vida e 40% da mana` : of.desc, r.x + 100, r.y + 40, 12, '#aaa', 'normal');
     ctx.globalAlpha = 1;
     if (esgotado) textoDir('ESGOTADO', r.x + r.w - 14, r.y + r.h / 2, 14, '#777');
@@ -1584,7 +1587,7 @@ function desenharPersonagem() {
   est.forEach((l, i) => textoEsq(l, 36 + (i % 2) * 140, 510 + Math.floor(i / 2) * 20, 13, '#888', 'normal'));
   if (J.melhorItem) {
     textoEsq('Melhor item:', 36, 562, 13, '#888', 'normal');
-    textoEsq(J.melhorItem.nome.length > 26 ? J.melhorItem.nome.slice(0, 25) + '…' : J.melhorItem.nome, 36, 582, 14, RARIDADES[J.melhorItem.r].cor);
+    textoEsqAjustado(J.melhorItem.nome, 36, 582, 14, RARIDADES[J.melhorItem.r].cor, 290);
   }
 
   // equipamento
@@ -1655,7 +1658,7 @@ function desenharMesa(t) {
     textoCentro(`${i + 1}`, r.x + 18, r.y + r.h / 2, 16, '#777', false);
     if (!it) { textoEsq(`${NOME_TIPO[k]}: nada equipado`, r.x + 44, r.y + r.h / 2, 14, '#666'); return; }
     desenharIcone(it, r.x + 70, r.y + r.h / 2, 48);
-    textoEsq(it.nome.length > 32 ? it.nome.slice(0, 31) + '…' : it.nome, r.x + 108, r.y + 28, 15, RARIDADES[it.r].cor);
+    textoEsqAjustado(it.nome, r.x + 108, r.y + 28, 15, RARIDADES[it.r].cor, r.w - 120);
     const nv = it.enc || 0;
     for (let s2 = 0; s2 < 5; s2++) {
       ctx.fillStyle = s2 < nv ? '#d9a6ff' : '#2e2640';
